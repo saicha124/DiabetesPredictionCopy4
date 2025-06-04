@@ -177,6 +177,12 @@ def main():
         
         with tab5:
             show_predictions_accuracy()
+        
+        with tab6:
+            show_timing_analysis()
+        
+        with tab7:
+            show_communication_flow()
 
 def execute_training_round(num_rounds):
     """Execute a single training round"""
@@ -422,6 +428,128 @@ def show_predictions_accuracy():
         
         with col4:
             st.metric("Current Loss", f"{latest_round.get('avg_client_loss', 0):.4f}")
+
+def show_timing_analysis():
+    """Show detailed timing analysis tab"""
+    if not st.session_state.training_history:
+        st.info("No timing data available. Complete training rounds to see timing analysis.")
+        return
+    
+    # Main timing analysis chart
+    st.subheader("⏱️ Comprehensive Timing Analysis")
+    timing_fig = create_timing_analysis_chart(st.session_state.training_history)
+    st.plotly_chart(timing_fig, use_container_width=True)
+    
+    # Timing metrics summary
+    col1, col2, col3, col4 = st.columns(4)
+    
+    if st.session_state.training_history:
+        latest_round = st.session_state.training_history[-1]
+        
+        with col1:
+            avg_client_time = latest_round.get('avg_client_training_time', 0)
+            st.metric("Avg Client Training", f"{avg_client_time:.3f}s")
+        
+        with col2:
+            avg_fog_time = latest_round.get('avg_fog_execution_time', 0)
+            st.metric("Avg Fog Execution", f"{avg_fog_time:.3f}s")
+        
+        with col3:
+            global_agg_time = latest_round.get('global_aggregation_time', 0)
+            st.metric("Global Aggregation", f"{global_agg_time:.3f}s")
+        
+        with col4:
+            total_round_time = latest_round.get('training_time', 0)
+            st.metric("Total Round Time", f"{total_round_time:.3f}s")
+    
+    # Detailed timing breakdown table
+    st.subheader("📋 Timing Breakdown by Round")
+    
+    if st.session_state.training_history:
+        timing_data = []
+        for i, round_info in enumerate(st.session_state.training_history):
+            timing_data.append({
+                "Round": i + 1,
+                "Client Training (s)": f"{round_info.get('avg_client_training_time', 0):.3f}",
+                "Fog Execution (s)": f"{round_info.get('avg_fog_execution_time', 0):.3f}",
+                "Global Aggregation (s)": f"{round_info.get('global_aggregation_time', 0):.3f}",
+                "Communication (s)": f"{round_info.get('avg_communication_time', 0):.3f}",
+                "Total Round (s)": f"{round_info.get('training_time', 0):.3f}"
+            })
+        
+        df = pd.DataFrame(timing_data)
+        st.dataframe(df, use_container_width=True)
+
+def show_communication_flow():
+    """Show communication flow and network analysis tab"""
+    if not st.session_state.training_history:
+        st.info("No communication data available. Complete training rounds to see communication analysis.")
+        return
+    
+    # Communication flow chart
+    st.subheader("📡 Communication Flow & Latency")
+    comm_fig = create_communication_flow_chart(st.session_state.training_history)
+    st.plotly_chart(comm_fig, use_container_width=True)
+    
+    # Communication metrics
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("📊 Communication Metrics")
+        if st.session_state.training_history:
+            latest_round = st.session_state.training_history[-1]
+            
+            # Communication timing metrics
+            st.metric("Client-to-Fog Comm", f"{latest_round.get('avg_communication_time', 0):.4f}s")
+            st.metric("Global Distribution", f"{latest_round.get('global_communication_time', 0):.4f}s")
+            st.metric("Fog Aggregation Phase", f"{latest_round.get('fog_aggregation_time', 0):.4f}s")
+            
+            # Calculate total communication overhead
+            total_comm = (
+                latest_round.get('avg_communication_time', 0) +
+                latest_round.get('global_communication_time', 0) +
+                latest_round.get('fog_aggregation_time', 0)
+            )
+            st.metric("Total Communication Overhead", f"{total_comm:.4f}s")
+    
+    with col2:
+        st.subheader("🔍 Performance Analysis")
+        if st.session_state.training_history and st.session_state.federated_system:
+            latest_round = st.session_state.training_history[-1]
+            
+            # Show confusion matrix if available
+            if 'confusion_matrix' in latest_round:
+                confusion_data = latest_round['confusion_matrix']
+                
+                # Display confusion matrix heatmap
+                cm_fig = create_confusion_matrix_heatmap(confusion_data)
+                st.plotly_chart(cm_fig, use_container_width=True)
+                
+                # Performance metrics dashboard
+                perf_fig = create_performance_metrics_dashboard(confusion_data)
+                st.plotly_chart(perf_fig, use_container_width=True)
+            else:
+                st.info("Confusion matrix data not available for current round.")
+    
+    # Network topology and efficiency analysis
+    st.subheader("🌐 Network Efficiency Analysis")
+    
+    if st.session_state.federated_system and st.session_state.training_history:
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            num_clients = len(st.session_state.federated_system.clients)
+            num_fogs = len(st.session_state.federated_system.fog_nodes)
+            st.metric("Network Topology", f"{num_clients} clients → {num_fogs} fogs → 1 leader")
+        
+        with col2:
+            clients_per_fog = num_clients / num_fogs if num_fogs > 0 else 0
+            st.metric("Avg Clients per Fog", f"{clients_per_fog:.1f}")
+        
+        with col3:
+            committee_size = len(st.session_state.federated_system.current_committee)
+            committee_ratio = committee_size / num_clients if num_clients > 0 else 0
+            st.metric("Committee Participation", f"{committee_ratio:.1%}")
 
 if __name__ == "__main__":
     main()
