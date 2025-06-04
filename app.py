@@ -139,10 +139,14 @@ def main():
             """)
     
     else:
+        # Get num_rounds from sidebar
+        with st.sidebar:
+            num_rounds = st.slider("Training Rounds", min_value=1, max_value=20, value=5, step=1, key="num_rounds_main")
+        
         # Training execution
         if st.session_state.training_active and st.session_state.current_round < num_rounds:
             # Execute training round
-            execute_training_round()
+            execute_training_round(num_rounds)
         
         # Create tabs for different views
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -168,7 +172,7 @@ def main():
         with tab5:
             show_predictions_accuracy()
 
-def execute_training_round():
+def execute_training_round(num_rounds):
     """Execute a single training round"""
     if st.session_state.federated_system is None:
         return
