@@ -153,14 +153,15 @@ def main():
             execute_training_round(num_rounds)
         
         # Create tabs for different views
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
             "📊 Training Progress", 
             "🌐 Network Status", 
             "🏆 Committee & Reputation", 
             "📈 Aggregation Status",
             "🎯 Predictions & Accuracy",
             "🔧 Timing Analysis",
-            "📡 Communication Flow"
+            "📡 Communication Flow",
+            "🩺 Patient Prediction"
         ])
         
         with tab1:
@@ -183,6 +184,9 @@ def main():
         
         with tab7:
             show_communication_flow()
+        
+        with tab8:
+            show_patient_prediction()
 
 def execute_training_round(num_rounds):
     """Execute a single training round"""
@@ -550,6 +554,173 @@ def show_communication_flow():
             committee_size = len(st.session_state.federated_system.current_committee)
             committee_ratio = committee_size / num_clients if num_clients > 0 else 0
             st.metric("Committee Participation", f"{committee_ratio:.1%}")
+
+def show_patient_prediction():
+    """Show patient prediction tab for individual diabetes prediction"""
+    st.subheader("🩺 Individual Patient Diabetes Prediction")
+    
+    if st.session_state.federated_system is None:
+        st.warning("Please initialize the federated system first before making predictions.")
+        return
+    
+    if not st.session_state.training_history:
+        st.warning("Please complete at least one training round before making predictions.")
+        return
+    
+    st.markdown("Enter patient information to predict diabetes risk using the trained federated model:")
+    
+    # Create input form for patient data
+    with st.form("patient_prediction_form"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**Basic Information**")
+            pregnancies = st.number_input("Number of Pregnancies", min_value=0, max_value=20, value=1, step=1)
+            glucose = st.number_input("Glucose Level (mg/dL)", min_value=0.0, max_value=300.0, value=120.0, step=1.0)
+            blood_pressure = st.number_input("Blood Pressure (mmHg)", min_value=0.0, max_value=200.0, value=80.0, step=1.0)
+            skin_thickness = st.number_input("Skin Thickness (mm)", min_value=0.0, max_value=100.0, value=20.0, step=1.0)
+        
+        with col2:
+            st.markdown("**Metabolic Information**")
+            insulin = st.number_input("Insulin Level (μU/mL)", min_value=0.0, max_value=1000.0, value=80.0, step=1.0)
+            bmi = st.number_input("Body Mass Index (BMI)", min_value=0.0, max_value=70.0, value=25.0, step=0.1)
+            diabetes_pedigree = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0, value=0.5, step=0.01)
+            age = st.number_input("Age (years)", min_value=1, max_value=120, value=30, step=1)
+        
+        submitted = st.form_submit_button("🔍 Predict Diabetes Risk", use_container_width=True)
+    
+    if submitted:
+        try:
+            # Prepare patient data for prediction
+            patient_data = np.array([[
+                pregnancies, glucose, blood_pressure, skin_thickness,
+                insulin, bmi, diabetes_pedigree, age
+            ]], dtype=np.float32)
+            
+            # Get the latest global model weights
+            if st.session_state.training_history:
+                latest_round = st.session_state.training_history[-1]
+                global_weights = latest_round.get('global_weights')
+                
+                if global_weights:
+                    # Create a temporary model for prediction
+                    import torch
+                    from neural_network import DiabetesNN
+                    
+                    # Initialize model with same architecture
+                    temp_model = DiabetesNN(input_size=8, hidden_sizes=[64, 32], output_size=1)
+                    temp_model.set_layer_weights(global_weights)
+                    temp_model.eval()
+                    
+                    # Make prediction
+                    with torch.no_grad():
+                        patient_tensor = torch.FloatTensor(patient_data)
+                        
+                        # Get prediction probability
+                        prediction_prob = temp_model.predict_proba(patient_tensor).item()
+                        prediction_binary = temp_model.predict(patient_tensor).item()
+                        
+                        # Display results
+                        st.markdown("---")
+                        st.subheader("🎯 Prediction Results")
+                        
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            risk_percentage = prediction_prob * 100
+                            st.metric("Diabetes Risk Probability", f"{risk_percentage:.1f}%")
+                        
+                        with col2:
+                            prediction_text = "High Risk" if prediction_binary == 1 else "Low Risk"
+                            color = "🔴" if prediction_binary == 1 else "🟢"
+                            st.metric("Risk Assessment", f"{color} {prediction_text}")
+                        
+                        with col3:
+                            confidence = max(prediction_prob, 1 - prediction_prob) * 100
+                            st.metric("Model Confidence", f"{confidence:.1f}%")
+                        
+                        # Risk interpretation
+                        st.markdown("### 📋 Risk Interpretation")
+                        
+                        if prediction_prob >= 0.7:
+                            st.error("**High Risk**: The model indicates a high probability of diabetes. Please consult with a healthcare professional for proper medical evaluation.")
+                        elif prediction_prob >= 0.3:
+                            st.warning("**Moderate Risk**: The model indicates moderate diabetes risk. Consider lifestyle modifications and regular health monitoring.")
+                        else:
+                            st.success("**Low Risk**: The model indicates low diabetes risk. Continue maintaining healthy lifestyle habits.")
+                        
+                        # Feature importance display
+                        st.markdown("### 📊 Input Analysis")
+                        
+                        feature_names = ['Pregnancies', 'Glucose', 'Blood Pressure', 'Skin Thickness', 
+                                       'Insulin', 'BMI', 'Diabetes Pedigree', 'Age']
+                        feature_values = [pregnancies, glucose, blood_pressure, skin_thickness,
+                                        insulin, bmi, diabetes_pedigree, age]
+                        
+                        # Create a simple feature analysis
+                        analysis_data = []
+                        for name, value in zip(feature_names, feature_values):
+                            analysis_data.append({
+                                "Feature": name,
+                                "Value": f"{value:.2f}" if isinstance(value, float) else str(value),
+                                "Status": "Normal" if name not in ['Glucose', 'BMI'] or 
+                                         (name == 'Glucose' and 70 <= value <= 140) or
+                                         (name == 'BMI' and 18.5 <= value <= 24.9) else "Elevated"
+                            })
+                        
+                        analysis_df = pd.DataFrame(analysis_data)
+                        st.dataframe(analysis_df, use_container_width=True)
+                        
+                        # Model information
+                        st.markdown("### ℹ️ Model Information")
+                        
+                        latest_accuracy = latest_round.get('global_accuracy', 0)
+                        training_rounds = len(st.session_state.training_history)
+                        
+                        info_col1, info_col2, info_col3 = st.columns(3)
+                        
+                        with info_col1:
+                            st.metric("Model Accuracy", f"{latest_accuracy:.1%}")
+                        
+                        with info_col2:
+                            st.metric("Training Rounds", training_rounds)
+                        
+                        with info_col3:
+                            num_clients = len(st.session_state.federated_system.clients)
+                            st.metric("Federated Clients", num_clients)
+                        
+                        st.info("**Disclaimer**: This prediction is for educational purposes only and should not replace professional medical advice. Always consult with healthcare professionals for medical decisions.")
+                
+                else:
+                    st.error("No trained model weights available. Please complete training rounds first.")
+            
+        except Exception as e:
+            st.error(f"Error making prediction: {str(e)}")
+            st.info("Please ensure the federated system is properly initialized and trained.")
+    
+    # Add sample patient data for testing
+    st.markdown("---")
+    st.markdown("### 📝 Sample Patient Profiles")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Low Risk Profile**")
+        if st.button("Load Low Risk Sample", key="low_risk"):
+            st.session_state.sample_data = {
+                'pregnancies': 1, 'glucose': 85, 'blood_pressure': 70, 'skin_thickness': 20,
+                'insulin': 80, 'bmi': 22.5, 'diabetes_pedigree': 0.3, 'age': 25
+            }
+            st.rerun()
+    
+    with col2:
+        st.markdown("**High Risk Profile**")
+        if st.button("Load High Risk Sample", key="high_risk"):
+            st.session_state.sample_data = {
+                'pregnancies': 8, 'glucose': 180, 'blood_pressure': 90, 'skin_thickness': 35,
+                'insulin': 150, 'bmi': 35.2, 'diabetes_pedigree': 1.2, 'age': 55
+            }
+            st.rerun()
 
 if __name__ == "__main__":
     main()
