@@ -9,7 +9,11 @@ import threading
 from datetime import datetime
 
 from federated_system import FederatedLearningSystem
-from visualization import create_network_diagram, create_reputation_chart, create_accuracy_chart
+from visualization import (
+    create_network_diagram, create_reputation_chart, create_accuracy_chart,
+    create_confusion_matrix_heatmap, create_timing_analysis_chart, 
+    create_communication_flow_chart, create_performance_metrics_dashboard
+)
 from data_loader import load_diabetes_data
 
 # Page configuration
@@ -149,12 +153,14 @@ def main():
             execute_training_round(num_rounds)
         
         # Create tabs for different views
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
             "📊 Training Progress", 
             "🌐 Network Status", 
             "🏆 Committee & Reputation", 
             "📈 Aggregation Status",
-            "🎯 Predictions & Accuracy"
+            "🎯 Predictions & Accuracy",
+            "🔧 Timing Analysis",
+            "📡 Communication Flow"
         ])
         
         with tab1:

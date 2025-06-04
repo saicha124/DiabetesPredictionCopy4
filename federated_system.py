@@ -241,32 +241,57 @@ class FederatedLearningSystem:
             if progress_callbacks and 'client' in progress_callbacks:
                 progress_callbacks['client'](0.1)
             
+            client_training_start = time.time()
             client_updates = []
+            client_training_times = []
+            
             for i, client in enumerate(self.clients):
+                client_start = time.time()
                 update = client.local_training(
                     global_weights=self.leader_fog.global_model_weights,
                     epochs=3
                 )
+                client_end = time.time()
+                
                 if update:
                     client_updates.append(update)
+                    client_training_times.append(client_end - client_start)
                 
                 # Update progress
                 if progress_callbacks and 'client' in progress_callbacks:
                     progress = 0.1 + (0.8 * (i + 1) / len(self.clients))
                     progress_callbacks['client'](progress)
             
+            client_training_time = time.time() - client_training_start
+            
             if progress_callbacks and 'client' in progress_callbacks:
                 progress_callbacks['client'](1.0)
             
-            # Phase 2: Fog Aggregation
+            # Phase 2: Fog Aggregation with detailed timing
             if progress_callbacks and 'fog' in progress_callbacks:
                 progress_callbacks['fog'](0.1)
             
             fog_aggregation_start = time.time()
             fog_updates = []
+            fog_execution_times = []
+            communication_times = []
             
             for i, fog in enumerate(self.fog_nodes):
+                # Communication time: time to collect updates from clients
+                comm_start = time.time()
+                relevant_updates = [
+                    update for update in client_updates 
+                    if update['client_id'] in fog.assigned_clients
+                ]
+                comm_time = time.time() - comm_start
+                communication_times.append(comm_time)
+                
+                # Fog execution time: actual aggregation time
+                fog_exec_start = time.time()
                 fog_update = fog.aggregate_client_updates(client_updates)
+                fog_exec_time = time.time() - fog_exec_start
+                fog_execution_times.append(fog_exec_time)
+                
                 if fog_update:
                     fog_updates.append(fog_update)
                 
@@ -288,6 +313,12 @@ class FederatedLearningSystem:
             global_result = self.leader_fog.global_aggregation(fog_updates)
             global_aggregation_time = time.time() - global_aggregation_start
             
+            # Communication time for global result distribution
+            global_comm_start = time.time()
+            # Simulate distributing global weights to all clients
+            time.sleep(0.001 * len(self.clients))  # Simulate network latency
+            global_communication_time = time.time() - global_comm_start
+            
             if progress_callbacks and 'global' in progress_callbacks:
                 progress_callbacks['global'](1.0)
             
@@ -295,19 +326,27 @@ class FederatedLearningSystem:
             self._form_committee()
             self._update_reputations(client_updates)
             
-            # Calculate round statistics
+            # Calculate round statistics and confusion matrix
             total_time = time.time() - round_start_time
             avg_client_loss = np.mean([update['loss'] for update in client_updates if update])
-            global_accuracy = self._calculate_global_accuracy()
+            global_accuracy, confusion_matrix = self._calculate_global_accuracy_with_confusion()
             
             round_results = {
                 'client_updates': len(client_updates),
                 'fog_updates': len(fog_updates),
                 'global_accuracy': global_accuracy,
+                'confusion_matrix': confusion_matrix,
                 'avg_client_loss': avg_client_loss,
                 'training_time': total_time,
+                'client_training_time': client_training_time,
                 'fog_aggregation_time': fog_aggregation_time,
                 'global_aggregation_time': global_aggregation_time,
+                'global_communication_time': global_communication_time,
+                'avg_client_training_time': np.mean(client_training_times) if client_training_times else 0,
+                'avg_fog_execution_time': np.mean(fog_execution_times) if fog_execution_times else 0,
+                'avg_communication_time': np.mean(communication_times) if communication_times else 0,
+                'fog_execution_times': fog_execution_times,
+                'communication_times': communication_times,
                 'num_committees': len(self.current_committee),
                 'timestamp': datetime.now().isoformat()
             }
@@ -374,6 +413,54 @@ class FederatedLearningSystem:
         except Exception as e:
             print(f"Global accuracy calculation failed: {e}")
             return 0.0
+    
+    def _calculate_global_accuracy_with_confusion(self) -> Tuple[float, Dict]:
+        """Calculate global model accuracy and confusion matrix"""
+        try:
+            if self.leader_fog.global_model_weights is None:
+                return 0.0, {'TP': 0, 'TN': 0, 'FP': 0, 'FN': 0}
+            
+            # Use first client's data for global evaluation
+            test_client = self.clients[0]
+            
+            # Create model with global weights
+            model = DiabetesNN(
+                input_size=test_client.model.fc1.in_features,
+                hidden_sizes=[64, 32],
+                output_size=1
+            )
+            model.load_state_dict(self.leader_fog.global_model_weights)
+            
+            # Calculate predictions and confusion matrix
+            with torch.no_grad():
+                X_tensor = torch.FloatTensor(test_client.X_train)
+                y_tensor = torch.FloatTensor(test_client.y_train).unsqueeze(1)
+                
+                predictions = (model(X_tensor) > 0.5).float()
+                accuracy = (predictions == y_tensor).float().mean().item()
+                
+                # Calculate confusion matrix components
+                y_true = y_tensor.squeeze().numpy()
+                y_pred = predictions.squeeze().numpy()
+                
+                TP = int(np.sum((y_true == 1) & (y_pred == 1)))
+                TN = int(np.sum((y_true == 0) & (y_pred == 0)))
+                FP = int(np.sum((y_true == 0) & (y_pred == 1)))
+                FN = int(np.sum((y_true == 1) & (y_pred == 0)))
+                
+                confusion_matrix = {
+                    'TP': TP, 'TN': TN, 'FP': FP, 'FN': FN,
+                    'precision': TP / (TP + FP) if (TP + FP) > 0 else 0.0,
+                    'recall': TP / (TP + FN) if (TP + FN) > 0 else 0.0,
+                    'specificity': TN / (TN + FP) if (TN + FP) > 0 else 0.0,
+                    'f1_score': 2 * TP / (2 * TP + FP + FN) if (2 * TP + FP + FN) > 0 else 0.0
+                }
+            
+            return accuracy, confusion_matrix
+            
+        except Exception as e:
+            print(f"Global accuracy with confusion matrix calculation failed: {e}")
+            return 0.0, {'TP': 0, 'TN': 0, 'FP': 0, 'FN': 0}
     
     def get_client_reputation(self, client_id: int) -> float:
         """Get client reputation with differential privacy"""
