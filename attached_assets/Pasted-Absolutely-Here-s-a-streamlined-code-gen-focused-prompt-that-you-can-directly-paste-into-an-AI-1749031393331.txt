@@ -1,0 +1,80 @@
+Absolutely! Here’s a **streamlined, code-gen focused prompt** that you can directly paste into an AI coding assistant (like GPT-4, Claude, etc.) or give to a dev to clarify exactly what you need:
+
+---
+
+## Project Prompt (for Code Generation)
+
+**Project Title:**  
+Hierarchical Federated Deep Learning with Fog-level Aggregation, Differential Privacy, and Committee-Based Security
+
+**Dataset:**  
+Use `diabetes.csv` for all client nodes.
+
+---
+
+### Core Description
+
+- **Federated Setup:**  
+  - Simulate multiple clients, each with their own data partition from `diabetes.csv`.
+  - Only clients execute training.  
+  - After local training, each client sends their updated (secret-shared) model weights to their assigned fog node.
+  - **Fog nodes aggregate these updates** from their respective clients—fog nodes themselves DO NOT perform any training, only aggregation.
+  - Among fogs, a single "leader fog" collects and performs global aggregation of all fog-level aggregates.
+  - After each round, **leader fog sends the new global model weights to all clients**, who then start their next local training round using these updated global weights.
+
+- **Committee Protocol:**  
+  - Each round, form committees for secure validation and aggregation, using a reputation system (scores masked with differential privacy).
+  - Committee members are chosen based on privacy-protected reputation scores.
+  - All reputation-related stats shared or reported in the system are masked with Laplace or Gaussian noise (ε-differential privacy).
+
+- **Security:**  
+  - Protect against Sybil and Byzantine attacks using rotating random committees, DP-masked reputations, and aggregated updates.
+  - No node has access to exact reputations—only noisy/aggregated values are visible.
+
+- **User Interface (Web Dashboard):**  
+  - Use Streamlit or Dash.
+  - Tabs ("onglets") for:
+    - Training Progress (with per-step progress bars for each round)
+    - Fog/Committee Membership & Reputations
+    - Aggregation Status
+    - Real-time Predictions vs. Ground Truth
+  - User controls for number of communication rounds and privacy parameter ε.
+  - After each round, interface displays:
+    - Progress of local training, fog aggregation, and global aggregation
+    - Reputation bar for each client node
+    - Committee membership for current round
+    - Prediction results and accuracy  
+  - **Attack simulation toggle:** Present in the UI but marked as **incompatible with hierarchical fog setup (feature for future updates only)**.
+
+- **Framework File/README Request:**  
+  - Include a file (or doc string) that describes:
+    - The role and communication of each entity (clients, fogs, leader fog, committees)
+    - Methods used for aggregation, reputation scoring, privacy masking, and communication patterns
+    - Each round’s workflow (clients train, send to fog, fogs aggregate, leader fog aggregates, leader sends to clients for next round)
+    - Security and privacy mechanisms
+    - Limitations (e.g. attack simulation not yet compatible with fog structure)
+
+- **Key Libraries:**  
+  - numpy, pandas, torch or tensorflow/keras, scikit-learn, streamlit/dash, matplotlib/plotly; diffprivlib or manual DP, secretsharing for secure communication.
+
+**Express**:
+- All code should be modular and well-commented
+- The simulation should visualize every main step and allow user control over core parameters
+- Documentation/readme must clearly outline structure, workflow, and future features
+
+---
+
+**You may add:**
+- Sample user flow (from setup → progress → prediction)
+- Any best practices for modular coding/federated simulation in Python
+
+---
+
+**Special Note:**  
+For aggregation, **fog nodes only aggregate**—they do not train. After each aggregation, the round restarts at clients with the updated global model from the leader fog.  
+**Attack simulation is not yet compatible with hierarchical fog. Include the UI option, but mark as “future update”.**
+
+---
+
+This will direct a code generator or developer to produce precisely what you described.  
+Let me know if you need a version focused on a specific file, a starter code template, or an English/French translation!
