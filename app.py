@@ -14,6 +14,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 from federated_learning import FederatedLearningManager
 from data_preprocessing import DataPreprocessor
 from data_distribution import get_distribution_strategy, visualize_data_distribution
+from fog_aggregation import HierarchicalFederatedLearning
 from utils import calculate_metrics, plot_confusion_matrix
 
 # Page configuration
@@ -61,8 +62,9 @@ def init_session_state():
 
 def start_training(data, num_clients, max_rounds, target_accuracy, 
                   aggregation_algorithm, enable_dp, epsilon, delta, committee_size,
-                  distribution_strategy, strategy_params):
-    """Start federated learning training with custom data distribution"""
+                  distribution_strategy, strategy_params, enable_fog=True, 
+                  num_fog_nodes=3, fog_aggregation_method="Mixed Methods"):
+    """Start federated learning training with custom data distribution and fog aggregation"""
     try:
         # Create FL manager
         st.session_state.fl_manager = FederatedLearningManager(
@@ -75,6 +77,21 @@ def start_training(data, num_clients, max_rounds, target_accuracy,
             delta=delta,
             committee_size=committee_size
         )
+        
+        # Initialize hierarchical fog aggregation if enabled
+        if enable_fog and num_fog_nodes > 0:
+            fog_manager = HierarchicalFederatedLearning(
+                num_clients=num_clients,
+                num_fog_nodes=num_fog_nodes,
+                fog_aggregation_method=fog_aggregation_method
+            )
+            st.session_state.fl_manager.fog_manager = fog_manager
+            st.session_state.fog_enabled = True
+            st.session_state.fog_manager = fog_manager
+        else:
+            st.session_state.fl_manager.fog_manager = None
+            st.session_state.fog_enabled = False
+            st.session_state.fog_manager = None
         
         # Store distribution configuration
         st.session_state.distribution_strategy = distribution_strategy
@@ -496,6 +513,103 @@ def make_prediction(sample_data):
     
     return 0, 0.0
 
+def get_risk_factors(patient):
+    """Analyze key risk factors for a patient"""
+    factors = []
+    
+    if patient['Glucose'] > 140:
+        factors.append("High glucose")
+    if patient['BMI'] > 30:
+        factors.append("Obesity")
+    if patient['Age'] > 45:
+        factors.append("Advanced age")
+    if patient['BloodPressure'] > 90:
+        factors.append("High blood pressure")
+    if patient['DiabetesPedigreeFunction'] > 0.5:
+        factors.append("Family history")
+    
+    return ", ".join(factors) if factors else "No major risk factors"
+
+def analyze_risk_factors(patient_data):
+    """Detailed analysis of individual risk factors"""
+    factors = {}
+    
+    # Glucose analysis
+    glucose = patient_data['Glucose']
+    if glucose < 100:
+        factors['Glucose Level'] = {'risk': 'low', 'description': f'{glucose} mg/dL - Normal fasting glucose'}
+    elif glucose < 126:
+        factors['Glucose Level'] = {'risk': 'moderate', 'description': f'{glucose} mg/dL - Prediabetes range'}
+    else:
+        factors['Glucose Level'] = {'risk': 'high', 'description': f'{glucose} mg/dL - Diabetes range'}
+    
+    # BMI analysis
+    bmi = patient_data['BMI']
+    if bmi < 25:
+        factors['BMI'] = {'risk': 'low', 'description': f'{bmi:.1f} - Normal weight'}
+    elif bmi < 30:
+        factors['BMI'] = {'risk': 'moderate', 'description': f'{bmi:.1f} - Overweight'}
+    else:
+        factors['BMI'] = {'risk': 'high', 'description': f'{bmi:.1f} - Obese'}
+    
+    # Age analysis
+    age = patient_data['Age']
+    if age < 35:
+        factors['Age'] = {'risk': 'low', 'description': f'{age} years - Low risk age group'}
+    elif age < 50:
+        factors['Age'] = {'risk': 'moderate', 'description': f'{age} years - Moderate risk age group'}
+    else:
+        factors['Age'] = {'risk': 'high', 'description': f'{age} years - High risk age group'}
+    
+    # Blood pressure analysis
+    bp = patient_data['BloodPressure']
+    if bp < 80:
+        factors['Blood Pressure'] = {'risk': 'low', 'description': f'{bp} mmHg - Normal'}
+    elif bp < 90:
+        factors['Blood Pressure'] = {'risk': 'moderate', 'description': f'{bp} mmHg - Elevated'}
+    else:
+        factors['Blood Pressure'] = {'risk': 'high', 'description': f'{bp} mmHg - High'}
+    
+    return factors
+
+def get_recommendations(probability, patient_data):
+    """Generate personalized recommendations based on risk assessment"""
+    recommendations = []
+    
+    if probability >= 0.7:
+        recommendations.extend([
+            "Schedule immediate consultation with healthcare provider",
+            "Request comprehensive diabetes screening tests",
+            "Begin glucose monitoring if advised by doctor",
+            "Implement strict dietary modifications"
+        ])
+    elif probability >= 0.4:
+        recommendations.extend([
+            "Schedule routine check-up within 3-6 months",
+            "Adopt healthier eating habits with reduced sugar intake",
+            "Increase physical activity to 150 minutes per week",
+            "Monitor weight and blood pressure regularly"
+        ])
+    else:
+        recommendations.extend([
+            "Maintain current healthy lifestyle",
+            "Continue regular exercise routine",
+            "Annual health screenings as recommended",
+            "Maintain healthy weight and diet"
+        ])
+    
+    # Specific recommendations based on risk factors
+    if patient_data['BMI'] > 30:
+        recommendations.append("Focus on weight reduction through diet and exercise")
+    
+    if patient_data['Glucose'] > 140:
+        recommendations.append("Monitor carbohydrate intake and meal timing")
+    
+    if patient_data['BloodPressure'] > 90:
+        recommendations.append("Reduce sodium intake and manage stress levels")
+    
+    return recommendations
+
 def reset_training():
     """Reset training state"""
     st.session_state.training_started = False
@@ -567,6 +681,16 @@ def main():
             else:
                 epsilon = delta = None
             committee_size = st.slider("👥 Security Committee Size", min_value=2, max_value=5, value=3)
+            
+            st.markdown("**🌐 Fog Computing Configuration**")
+            enable_fog = st.checkbox("Enable Hierarchical Fog Aggregation", value=True)
+            if enable_fog:
+                num_fog_nodes = st.slider("Number of Fog Nodes", min_value=2, max_value=5, value=3)
+                fog_aggregation_method = st.selectbox("Fog Aggregation Strategy", 
+                                                    ["Mixed Methods", "All FedAvg", "All WeightedAvg", "All Median"])
+            else:
+                num_fog_nodes = 0
+                fog_aggregation_method = "None"
         
         with col3:
             st.subheader("🌍 Data Distribution Strategy")
@@ -834,114 +958,228 @@ def main():
             st.info("🌾 Complete training to see detailed results analysis")
     
     with tab4:
-        st.header("🔍 Crop Health Risk Prediction")
+        st.header("🏥 Patient Diabetes Risk Assessment")
+        
+        # Patient Database Management
+        st.subheader("👥 Patient Database")
+        
+        # Initialize patient database in session state
+        if 'patient_database' not in st.session_state:
+            st.session_state.patient_database = []
+        
+        # Add new patient section
+        with st.expander("➕ Add New Patient", expanded=False):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**Personal Information**")
+                patient_name = st.text_input("Patient Name")
+                patient_id = st.text_input("Patient ID")
+                pregnancies = st.number_input("Number of Pregnancies", min_value=0, max_value=20, value=1)
+                age = st.number_input("Age (years)", min_value=18, max_value=120, value=30)
+                
+            with col2:
+                st.markdown("**Medical Information**")
+                glucose = st.number_input("Glucose Level (mg/dL)", min_value=0, max_value=300, value=120)
+                blood_pressure = st.number_input("Blood Pressure (mmHg)", min_value=0, max_value=200, value=80)
+                skin_thickness = st.number_input("Skin Thickness (mm)", min_value=0, max_value=100, value=20)
+                insulin = st.number_input("Insulin Level (μU/mL)", min_value=0, max_value=900, value=80)
+                bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0, step=0.1)
+                diabetes_pedigree = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0, value=0.5, step=0.01)
+            
+            if st.button("💾 Add Patient to Database"):
+                if patient_name and patient_id:
+                    patient_data = {
+                        'name': patient_name,
+                        'id': patient_id,
+                        'Pregnancies': pregnancies,
+                        'Glucose': glucose,
+                        'BloodPressure': blood_pressure,
+                        'SkinThickness': skin_thickness,
+                        'Insulin': insulin,
+                        'BMI': bmi,
+                        'DiabetesPedigreeFunction': diabetes_pedigree,
+                        'Age': age,
+                        'timestamp': pd.Timestamp.now()
+                    }
+                    
+                    # Check if patient ID already exists
+                    existing_patient = next((p for p in st.session_state.patient_database if p['id'] == patient_id), None)
+                    if existing_patient:
+                        st.warning(f"Patient ID {patient_id} already exists. Please use a unique ID.")
+                    else:
+                        st.session_state.patient_database.append(patient_data)
+                        st.success(f"Patient {patient_name} added successfully!")
+                else:
+                    st.error("Please provide both patient name and ID.")
+        
+        # Display patient database
+        if st.session_state.patient_database:
+            st.subheader("📋 Registered Patients")
+            
+            # Create DataFrame for display
+            patients_df = pd.DataFrame(st.session_state.patient_database)
+            display_df = patients_df[['name', 'id', 'Age', 'Glucose', 'BMI', 'timestamp']].copy()
+            display_df['timestamp'] = display_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M')
+            
+            # Add selection column
+            selected_patients = st.multiselect(
+                "Select patients for risk assessment:",
+                options=patients_df.index.tolist(),
+                format_func=lambda x: f"{patients_df.iloc[x]['name']} (ID: {patients_df.iloc[x]['id']})"
+            )
+            
+            st.dataframe(display_df, use_container_width=True)
+            
+            # Batch risk assessment
+            if selected_patients and st.session_state.training_completed:
+                if st.button("🔬 Assess Diabetes Risk for Selected Patients"):
+                    st.subheader("🎯 Risk Assessment Results")
+                    
+                    results = []
+                    for idx in selected_patients:
+                        patient = patients_df.iloc[idx]
+                        
+                        # Create prediction data
+                        pred_data = pd.DataFrame({
+                            'Pregnancies': [patient['Pregnancies']],
+                            'Glucose': [patient['Glucose']],
+                            'BloodPressure': [patient['BloodPressure']],
+                            'SkinThickness': [patient['SkinThickness']],
+                            'Insulin': [patient['Insulin']],
+                            'BMI': [patient['BMI']],
+                            'DiabetesPedigreeFunction': [patient['DiabetesPedigreeFunction']],
+                            'Age': [patient['Age']]
+                        })
+                        
+                        prediction, probability = make_prediction(pred_data)
+                        
+                        # Risk categorization
+                        if probability >= 0.7:
+                            risk_category = "High Risk"
+                            risk_color = "🔴"
+                            recommendation = "Immediate medical consultation recommended"
+                        elif probability >= 0.4:
+                            risk_category = "Moderate Risk"
+                            risk_color = "🟡"
+                            recommendation = "Regular monitoring and lifestyle modifications"
+                        else:
+                            risk_category = "Low Risk"
+                            risk_color = "🟢"
+                            recommendation = "Maintain healthy lifestyle habits"
+                        
+                        results.append({
+                            'Patient': patient['name'],
+                            'ID': patient['id'],
+                            'Risk Level': f"{risk_color} {risk_category}",
+                            'Probability': f"{probability:.1%}",
+                            'Recommendation': recommendation,
+                            'Key Factors': get_risk_factors(patient)
+                        })
+                    
+                    # Display results table
+                    results_df = pd.DataFrame(results)
+                    st.dataframe(results_df, use_container_width=True)
+                    
+                    # Generate summary statistics
+                    col1, col2, col3 = st.columns(3)
+                    high_risk = sum(1 for r in results if "High Risk" in r['Risk Level'])
+                    moderate_risk = sum(1 for r in results if "Moderate Risk" in r['Risk Level'])
+                    low_risk = sum(1 for r in results if "Low Risk" in r['Risk Level'])
+                    
+                    with col1:
+                        st.metric("High Risk Patients", high_risk)
+                    with col2:
+                        st.metric("Moderate Risk Patients", moderate_risk)
+                    with col3:
+                        st.metric("Low Risk Patients", low_risk)
+        
+        # Quick Risk Assessment Tool
+        st.subheader("⚡ Quick Risk Assessment")
         
         if st.session_state.training_completed and st.session_state.results:
-            # Prediction examples section
-            st.subheader("📝 Example Predictions")
-            
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("### 🟢 Low Risk Example")
-                if st.button("Test Low Risk Sample"):
-                    # Low risk example data
-                    low_risk_data = pd.DataFrame({
-                        'Pregnancies': [1],
-                        'Glucose': [85],
-                        'BloodPressure': [66],
-                        'SkinThickness': [29],
-                        'Insulin': [0],
-                        'BMI': [26.6],
-                        'DiabetesPedigreeFunction': [0.351],
-                        'Age': [31]
-                    })
-                    
-                    prediction, probability = make_prediction(low_risk_data)
-                    
-                    st.success(f"**Prediction:** {'High Risk' if prediction == 1 else 'Low Risk'}")
-                    st.metric("Risk Probability", f"{probability:.1%}")
-                    st.json(low_risk_data.iloc[0].to_dict())
-            
-            with col2:
-                st.markdown("### 🔴 High Risk Example")
-                if st.button("Test High Risk Sample"):
-                    # High risk example data
-                    high_risk_data = pd.DataFrame({
-                        'Pregnancies': [6],
-                        'Glucose': [148],
-                        'BloodPressure': [72],
-                        'SkinThickness': [35],
-                        'Insulin': [0],
-                        'BMI': [33.6],
-                        'DiabetesPedigreeFunction': [0.627],
-                        'Age': [50]
-                    })
-                    
-                    prediction, probability = make_prediction(high_risk_data)
-                    
-                    if prediction == 1:
-                        st.error(f"**Prediction:** High Risk")
-                    else:
-                        st.success(f"**Prediction:** Low Risk")
-                    st.metric("Risk Probability", f"{probability:.1%}")
-                    st.json(high_risk_data.iloc[0].to_dict())
-            
-            st.markdown("---")
-            
-            # Custom prediction interface
-            st.subheader("🧪 Custom Field Sample Analysis")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Growth Conditions**")
-                pregnancies = st.number_input("Growth Cycles", min_value=0, max_value=20, value=1)
-                glucose = st.number_input("Nutrient Level", min_value=0, max_value=300, value=120)
-                blood_pressure = st.number_input("Soil Pressure", min_value=0, max_value=200, value=80)
-                skin_thickness = st.number_input("Leaf Thickness", min_value=0, max_value=100, value=20)
+                st.markdown("**Basic Health Metrics**")
+                quick_glucose = st.number_input("Glucose Level", min_value=0, max_value=300, value=120, key="quick_glucose")
+                quick_bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0, step=0.1, key="quick_bmi")
+                quick_age = st.number_input("Age", min_value=18, max_value=120, value=30, key="quick_age")
+                quick_pregnancies = st.number_input("Pregnancies", min_value=0, max_value=20, value=1, key="quick_pregnancies")
                 
             with col2:
-                st.markdown("**Environmental Factors**")
-                insulin = st.number_input("Water Content", min_value=0, max_value=900, value=80)
-                bmi = st.number_input("Plant Density Index", min_value=0.0, max_value=70.0, value=25.0, step=0.1)
-                diabetes_pedigree = st.number_input("Genetic Risk Factor", min_value=0.0, max_value=3.0, value=0.5, step=0.01)
-                age = st.number_input("Plant Maturity (days)", min_value=18, max_value=120, value=30)
+                st.markdown("**Additional Factors**")
+                quick_bp = st.number_input("Blood Pressure", min_value=0, max_value=200, value=80, key="quick_bp")
+                quick_insulin = st.number_input("Insulin", min_value=0, max_value=900, value=80, key="quick_insulin")
+                quick_skin = st.number_input("Skin Thickness", min_value=0, max_value=100, value=20, key="quick_skin")
+                quick_pedigree = st.number_input("Family History Factor", min_value=0.0, max_value=3.0, value=0.5, step=0.01, key="quick_pedigree")
             
-            if st.button("🔬 Analyze Crop Sample"):
-                # Create sample data
-                sample_data = pd.DataFrame({
-                    'Pregnancies': [pregnancies],
-                    'Glucose': [glucose],
-                    'BloodPressure': [blood_pressure],
-                    'SkinThickness': [skin_thickness],
-                    'Insulin': [insulin],
-                    'BMI': [bmi],
-                    'DiabetesPedigreeFunction': [diabetes_pedigree],
-                    'Age': [age]
+            if st.button("🎯 Assess Risk Now"):
+                quick_data = pd.DataFrame({
+                    'Pregnancies': [quick_pregnancies],
+                    'Glucose': [quick_glucose],
+                    'BloodPressure': [quick_bp],
+                    'SkinThickness': [quick_skin],
+                    'Insulin': [quick_insulin],
+                    'BMI': [quick_bmi],
+                    'DiabetesPedigreeFunction': [quick_pedigree],
+                    'Age': [quick_age]
                 })
                 
-                prediction, probability = make_prediction(sample_data)
+                prediction, probability = make_prediction(quick_data)
                 
-                # Display prediction
-                col1, col2 = st.columns(2)
+                # Enhanced result display
+                st.markdown("---")
+                st.subheader("📊 Risk Assessment Result")
+                
+                col1, col2 = st.columns([1, 2])
+                
                 with col1:
                     risk_level = "High Risk" if prediction == 1 else "Low Risk"
                     color = "red" if prediction == 1 else "green"
-                    st.markdown(f"### Crop Status: <span style='color: {color}'>{risk_level}</span>", unsafe_allow_html=True)
-                    
-                with col2:
+                    st.markdown(f"### <span style='color: {color}'>{risk_level}</span>", unsafe_allow_html=True)
                     st.metric("Risk Probability", f"{probability:.1%}")
-                    
-                # Risk interpretation
-                if probability > 0.7:
-                    st.warning("🚨 High disease risk detected. Recommend immediate field intervention.")
-                elif probability > 0.3:
-                    st.info("⚠️ Moderate risk. Consider preventive treatments and increased monitoring.")
-                else:
-                    st.success("✅ Healthy crop status. Continue current care protocols.")
+                
+                with col2:
+                    # Risk meter visualization
+                    fig_meter = go.Figure(go.Indicator(
+                        mode = "gauge+number+delta",
+                        value = probability * 100,
+                        domain = {'x': [0, 1], 'y': [0, 1]},
+                        title = {'text': "Diabetes Risk %"},
+                        gauge = {
+                            'axis': {'range': [None, 100]},
+                            'bar': {'color': "darkblue"},
+                            'steps': [
+                                {'range': [0, 40], 'color': "lightgreen"},
+                                {'range': [40, 70], 'color': "yellow"},
+                                {'range': [70, 100], 'color': "red"}
+                            ],
+                            'threshold': {
+                                'line': {'color': "red", 'width': 4},
+                                'thickness': 0.75,
+                                'value': 70
+                            }
+                        }
+                    ))
+                    fig_meter.update_layout(height=300)
+                    st.plotly_chart(fig_meter, use_container_width=True)
+                
+                # Detailed risk factors analysis
+                st.subheader("🔍 Risk Factors Analysis")
+                factors = analyze_risk_factors(quick_data.iloc[0])
+                
+                for factor, info in factors.items():
+                    status = "🔴 High" if info['risk'] == 'high' else "🟡 Moderate" if info['risk'] == 'moderate' else "🟢 Normal"
+                    st.write(f"**{factor}:** {status} - {info['description']}")
+                
+                # Recommendations
+                st.subheader("💡 Recommendations")
+                recommendations = get_recommendations(probability, quick_data.iloc[0])
+                for rec in recommendations:
+                    st.write(f"• {rec}")
         else:
-            st.info("🌾 Complete training to enable crop risk prediction")
+            st.info("Complete federated learning training to enable diabetes risk assessment")
 
 if __name__ == "__main__":
     main()
