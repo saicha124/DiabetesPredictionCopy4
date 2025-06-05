@@ -67,6 +67,7 @@ def start_training(data, num_clients, max_rounds, target_accuracy,
                   model_type="logistic_regression", privacy_mechanism="gaussian", 
                   gradient_clip_norm=1.0):
     """Start federated learning training with custom data distribution and fog aggregation"""
+    import numpy as np
     try:
         # Create FL manager with advanced parameters
         st.session_state.fl_manager = FederatedLearningManager(
@@ -764,7 +765,9 @@ def main():
                 gradient_clip_norm = st.number_input("✂️ Gradient Clipping Norm", min_value=0.1, max_value=5.0, value=1.0, step=0.1)
             else:
                 privacy_mechanism = "gaussian"
-                epsilon = delta = gradient_clip_norm = None
+                epsilon = 1.0
+                delta = 1e-5
+                gradient_clip_norm = 1.0
             committee_size = st.slider("👥 Security Committee Size", min_value=2, max_value=5, value=3)
             
             st.markdown("**🌐 Fog Computing Configuration**")
