@@ -870,9 +870,15 @@ def main():
                             
                             if final_update:
                                 # Update global model with fog-aggregated parameters
-                                for param_name, param_value in final_update['parameters'].items():
-                                    if hasattr(fl_manager.global_model, param_name):
-                                        setattr(fl_manager.global_model, param_name, param_value)
+                                if isinstance(final_update['parameters'], dict):
+                                    for param_name, param_value in final_update['parameters'].items():
+                                        if hasattr(fl_manager.global_model, param_name):
+                                            setattr(fl_manager.global_model, param_name, param_value)
+                                else:
+                                    # Handle array-based parameters - use standard aggregation
+                                    fl_manager.global_model = fl_manager.aggregator.aggregate(
+                                        fl_manager.global_model, client_updates
+                                    )
                             
                             # Calculate hierarchical loss
                             loss_info = fl_manager.fog_manager.calculate_hierarchical_loss(

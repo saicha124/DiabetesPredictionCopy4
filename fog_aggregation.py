@@ -73,18 +73,30 @@ class FogNode:
         # Initialize aggregated parameters
         aggregated_params = {}
         
-        # Get parameter structure from first update
+        # Handle different parameter formats
         first_update = client_updates[0]
-        param_keys = first_update['parameters'].keys()
         
-        for key in param_keys:
-            weighted_sum = np.zeros_like(first_update['parameters'][key])
+        if isinstance(first_update['parameters'], dict):
+            param_keys = first_update['parameters'].keys()
+            
+            for key in param_keys:
+                weighted_sum = np.zeros_like(first_update['parameters'][key])
+                
+                for update in client_updates:
+                    weight = update['num_samples'] / total_samples
+                    weighted_sum += weight * update['parameters'][key]
+                
+                aggregated_params[key] = weighted_sum
+        else:
+            # Handle array-based parameters
+            param_array = first_update['parameters']
+            weighted_sum = np.zeros_like(param_array)
             
             for update in client_updates:
                 weight = update['num_samples'] / total_samples
-                weighted_sum += weight * update['parameters'][key]
+                weighted_sum += weight * update['parameters']
             
-            aggregated_params[key] = weighted_sum
+            aggregated_params = weighted_sum
         
         return {
             'parameters': aggregated_params,
@@ -112,15 +124,26 @@ class FogNode:
         # Aggregate parameters
         aggregated_params = {}
         first_update = client_updates[0]
-        param_keys = first_update['parameters'].keys()
         
-        for key in param_keys:
-            weighted_sum = np.zeros_like(first_update['parameters'][key])
+        if isinstance(first_update['parameters'], dict):
+            param_keys = first_update['parameters'].keys()
+            
+            for key in param_keys:
+                weighted_sum = np.zeros_like(first_update['parameters'][key])
+                
+                for i, update in enumerate(client_updates):
+                    weighted_sum += normalized_weights[i] * update['parameters'][key]
+                
+                aggregated_params[key] = weighted_sum
+        else:
+            # Handle array-based parameters
+            param_array = first_update['parameters']
+            weighted_sum = np.zeros_like(param_array)
             
             for i, update in enumerate(client_updates):
-                weighted_sum += normalized_weights[i] * update['parameters'][key]
+                weighted_sum += normalized_weights[i] * update['parameters']
             
-            aggregated_params[key] = weighted_sum
+            aggregated_params = weighted_sum
         
         return {
             'parameters': aggregated_params,
@@ -136,16 +159,23 @@ class FogNode:
         
         aggregated_params = {}
         first_update = client_updates[0]
-        param_keys = first_update['parameters'].keys()
         
-        for key in param_keys:
-            # Collect all parameter values for this key
-            param_values = [update['parameters'][key] for update in client_updates]
-            param_stack = np.stack(param_values, axis=0)
+        if isinstance(first_update['parameters'], dict):
+            param_keys = first_update['parameters'].keys()
             
-            # Calculate median along the client axis
-            median_params = np.median(param_stack, axis=0)
-            aggregated_params[key] = median_params
+            for key in param_keys:
+                # Collect all parameter values for this key
+                param_values = [update['parameters'][key] for update in client_updates]
+                param_stack = np.stack(param_values, axis=0)
+                
+                # Calculate median along the client axis
+                median_params = np.median(param_stack, axis=0)
+                aggregated_params[key] = median_params
+        else:
+            # Handle array-based parameters
+            param_values = [update['parameters'] for update in client_updates]
+            param_stack = np.stack(param_values, axis=0)
+            aggregated_params = np.median(param_stack, axis=0)
         
         return {
             'parameters': aggregated_params,
@@ -238,16 +268,28 @@ class HierarchicalFederatedLearning:
         # Initialize aggregated parameters
         aggregated_params = {}
         first_update = fog_updates[0]['update']
-        param_keys = first_update['parameters'].keys()
         
-        for key in param_keys:
-            weighted_sum = np.zeros_like(first_update['parameters'][key])
+        if isinstance(first_update['parameters'], dict):
+            param_keys = first_update['parameters'].keys()
+            
+            for key in param_keys:
+                weighted_sum = np.zeros_like(first_update['parameters'][key])
+                
+                for fog_update in fog_updates:
+                    weight = fog_update['update']['num_samples'] / total_samples
+                    weighted_sum += weight * fog_update['update']['parameters'][key]
+                
+                aggregated_params[key] = weighted_sum
+        else:
+            # Handle array-based parameters
+            param_array = first_update['parameters']
+            weighted_sum = np.zeros_like(param_array)
             
             for fog_update in fog_updates:
                 weight = fog_update['update']['num_samples'] / total_samples
-                weighted_sum += weight * fog_update['update']['parameters'][key]
+                weighted_sum += weight * fog_update['update']['parameters']
             
-            aggregated_params[key] = weighted_sum
+            aggregated_params = weighted_sum
         
         leader_aggregation_time = time.time() - start_time
         
