@@ -1710,6 +1710,8 @@ def main():
                 # Create heatmap for fog nodes vs epochs
                 pivot_fog = fog_df.pivot(index='Epochs', columns='Fog Nodes', values='Accuracy')
                 
+                import numpy as np
+                
                 fig_fog = go.Figure(data=go.Heatmap(
                     z=pivot_fog.values,
                     x=pivot_fog.columns,
