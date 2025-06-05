@@ -3,561 +3,310 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import plotly.graph_objects as go
 import plotly.express as px
+import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import time
 import threading
-from concurrent.futures import ThreadPoolExecutor
-import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, f1_score
 
 from federated_learning import FederatedLearningManager
 from data_preprocessing import DataPreprocessor
 from utils import calculate_metrics, plot_confusion_matrix
 
-# Configure page
+# Page configuration
 st.set_page_config(
-    page_title="Hierarchical Federated Learning",
-    page_icon="🏥",
+    page_title="Agronomic Federated Learning Dashboard",
+    page_icon="🌾",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Initialize session state variables
-if 'training_started' not in st.session_state:
-    st.session_state.training_started = False
-if 'training_completed' not in st.session_state:
-    st.session_state.training_completed = False
-if 'results' not in st.session_state:
-    st.session_state.results = None
-if 'fl_manager' not in st.session_state:
-    st.session_state.fl_manager = None
-if 'training_metrics' not in st.session_state:
-    st.session_state.training_metrics = []
-if 'confusion_matrices' not in st.session_state:
-    st.session_state.confusion_matrices = []
-if 'execution_times' not in st.session_state:
-    st.session_state.execution_times = []
-if 'communication_times' not in st.session_state:
-    st.session_state.communication_times = []
-if 'client_status' not in st.session_state:
-    st.session_state.client_status = {}
-
-def main():
-    st.title("🏥 Hierarchical Federated Deep Learning")
-    st.subheader("Diabetes Prediction with Differential Privacy & Committee-Based Security")
-    
-    # Sidebar configuration
-    st.sidebar.header("Configuration")
-    
-    # Dataset section
-    st.sidebar.subheader("Dataset Configuration")
-    uploaded_file = st.sidebar.file_uploader(
-        "Upload diabetes.csv", 
-        type=['csv'],
-        help="Upload the diabetes dataset for federated learning"
-    )
-    
-    # Load default dataset if no file uploaded
-    if uploaded_file is None:
-        try:
-            data = pd.read_csv('diabetes.csv')
-            st.sidebar.success(f"Default dataset loaded: {len(data)} samples")
-        except FileNotFoundError:
-            st.sidebar.error("Default diabetes.csv not found. Please upload the dataset.")
-            st.error("Please upload the diabetes.csv dataset to proceed.")
-            return
-    else:
-        data = pd.read_csv(uploaded_file)
-        st.sidebar.success(f"Dataset uploaded: {len(data)} samples")
-    
-    # Federated Learning Configuration
-    st.sidebar.subheader("Federated Learning Parameters")
-    num_clients = st.sidebar.slider("Number of Clients", 2, 10, 5)
-    max_rounds = st.sidebar.slider("Maximum Rounds", 5, 50, 20)
-    target_accuracy = st.sidebar.slider("Target Accuracy", 0.7, 0.95, 0.85, 0.01)
-    aggregation_algorithm = st.sidebar.selectbox(
-        "Aggregation Algorithm", 
-        ["FedAvg", "FedProx"]
-    )
-    
-    # Differential Privacy Configuration
-    st.sidebar.subheader("Differential Privacy")
-    enable_dp = st.sidebar.checkbox("Enable Differential Privacy", value=True)
-    epsilon = st.sidebar.slider("Privacy Budget (ε)", 0.1, 10.0, 1.0, 0.1) if enable_dp else None
-    delta = st.sidebar.slider("Delta (δ)", 1e-6, 1e-3, 1e-5, format="%.2e") if enable_dp else None
-    
-    # Committee Security
-    st.sidebar.subheader("Committee-Based Security")
-    committee_size = st.sidebar.slider("Committee Size", 3, num_clients, min(5, num_clients))
-    
-    # Debug information (can be removed later)
-    with st.expander("Debug Information", expanded=False):
-        st.write("Training Started:", st.session_state.training_started)
-        st.write("Training Completed:", st.session_state.training_completed)
-        st.write("Results Available:", st.session_state.results is not None)
-        st.write("Training Metrics Count:", len(st.session_state.training_metrics))
-        st.write("Execution Times Count:", len(st.session_state.execution_times))
-        st.write("Communication Times Count:", len(st.session_state.communication_times))
-        if st.session_state.fl_manager:
-            st.write("Current Round:", getattr(st.session_state.fl_manager, 'current_round', 0))
-    
-    # Main content area
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        # Dataset Overview
-        st.subheader("📊 Dataset Overview")
-        if data is not None:
-            st.write(f"**Dataset Shape:** {data.shape}")
-            st.write(f"**Features:** {', '.join(data.columns[:-1])}")
-            st.write(f"**Target Distribution:**")
-            target_dist = data['Outcome'].value_counts()
-            fig_dist = px.pie(
-                values=target_dist.values, 
-                names=['No Diabetes', 'Diabetes'],
-                title="Target Distribution"
-            )
-            st.plotly_chart(fig_dist, use_container_width=True)
-        
-        # Training Section
-        st.subheader("🚀 Federated Training")
-        
-        if not st.session_state.training_started:
-            if st.button("Start Federated Training", type="primary"):
-                start_training(
-                    data, num_clients, max_rounds, target_accuracy,
-                    aggregation_algorithm, enable_dp, epsilon, delta, committee_size
-                )
-        else:
-            if st.session_state.training_completed:
-                st.success("Training completed successfully!")
-                if st.button("Reset Training"):
-                    reset_training()
-            else:
-                st.info("Training in progress...")
-                if st.button("Stop Training"):
-                    st.session_state.training_started = False
-                    reset_training()
-        
-        # Progress monitoring
-        if st.session_state.training_started and not st.session_state.training_completed:
-            show_training_progress()
-        elif st.session_state.training_started and st.session_state.training_completed:
-            st.success("Training completed successfully!")
-            st.session_state.training_started = False  # Reset training flag
-        
-        # Results section
-        if st.session_state.training_completed:
-            st.success("🎉 Training Completed Successfully!")
-            
-            if st.session_state.results:
-                show_results()
-            else:
-                st.warning("Training completed but results not available. Please check the logs.")
-                
-            # Show final metrics even if full results not available
-            if st.session_state.training_metrics:
-                st.subheader("Final Training Metrics")
-                final_metrics = st.session_state.training_metrics[-1]
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    st.metric("Final Accuracy", f"{final_metrics.get('accuracy', 0):.3f}")
-                with col2:
-                    st.metric("Final Loss", f"{final_metrics.get('loss', 0):.3f}")
-                with col3:
-                    st.metric("Final F1 Score", f"{final_metrics.get('f1_score', 0):.3f}")
-                with col4:
-                    st.metric("Total Rounds", len(st.session_state.training_metrics))
-    
-    with col2:
-        # Patient Prediction
-        st.subheader("🔮 Patient Prediction")
-        
-        if st.session_state.training_completed and st.session_state.fl_manager:
-            with st.form("prediction_form"):
-                st.write("Enter patient information:")
-                
-                pregnancies = st.number_input("Pregnancies", 0, 20, 0)
-                glucose = st.number_input("Glucose", 0, 300, 120)
-                blood_pressure = st.number_input("Blood Pressure", 0, 200, 80)
-                skin_thickness = st.number_input("Skin Thickness", 0, 100, 20)
-                insulin = st.number_input("Insulin", 0, 1000, 80)
-                bmi = st.number_input("BMI", 0.0, 100.0, 25.0)
-                dpf = st.number_input("Diabetes Pedigree Function", 0.0, 3.0, 0.5)
-                age = st.number_input("Age", 0, 120, 30)
-                
-                predict_btn = st.form_submit_button("Predict Diabetes Risk", type="primary")
-                
-                if predict_btn:
-                    patient_data = np.array([[pregnancies, glucose, blood_pressure, 
-                                           skin_thickness, insulin, bmi, dpf, age]])
-                    
-                    prediction, probability = make_prediction(patient_data)
-                    
-                    st.subheader("🏥 Prediction Results")
-                    if prediction == 1:
-                        st.error(f"**High Risk of Diabetes**")
-                        st.write(f"Probability: {probability:.2%}")
-                    else:
-                        st.success(f"**Low Risk of Diabetes**")
-                        st.write(f"Probability of No Diabetes: {1-probability:.2%}")
-                    
-                    # Risk gauge
-                    fig_gauge = go.Figure(go.Indicator(
-                        mode = "gauge+number+delta",
-                        value = probability * 100,
-                        domain = {'x': [0, 1], 'y': [0, 1]},
-                        title = {'text': "Diabetes Risk %"},
-                        delta = {'reference': 50},
-                        gauge = {
-                            'axis': {'range': [None, 100]},
-                            'bar': {'color': "darkblue"},
-                            'steps': [
-                                {'range': [0, 25], 'color': "lightgreen"},
-                                {'range': [25, 50], 'color': "yellow"},
-                                {'range': [50, 75], 'color': "orange"},
-                                {'range': [75, 100], 'color': "red"}],
-                            'threshold': {
-                                'line': {'color': "red", 'width': 4},
-                                'thickness': 0.75,
-                                'value': 75}}))
-                    st.plotly_chart(fig_gauge, use_container_width=True)
-        else:
-            st.info("Complete training first to enable predictions")
+# Initialize session state
+def init_session_state():
+    if 'training_started' not in st.session_state:
+        st.session_state.training_started = False
+    if 'training_completed' not in st.session_state:
+        st.session_state.training_completed = False
+    if 'results' not in st.session_state:
+        st.session_state.results = None
+    if 'fl_manager' not in st.session_state:
+        st.session_state.fl_manager = None
+    if 'training_metrics' not in st.session_state:
+        st.session_state.training_metrics = []
+    if 'confusion_matrices' not in st.session_state:
+        st.session_state.confusion_matrices = []
+    if 'execution_times' not in st.session_state:
+        st.session_state.execution_times = []
+    if 'communication_times' not in st.session_state:
+        st.session_state.communication_times = []
+    if 'client_status' not in st.session_state:
+        st.session_state.client_status = {}
+    if 'best_accuracy' not in st.session_state:
+        st.session_state.best_accuracy = 0.0
+    if 'early_stopped' not in st.session_state:
+        st.session_state.early_stopped = False
+    if 'current_round' not in st.session_state:
+        st.session_state.current_round = 0
+    if 'client_results' not in st.session_state:
+        st.session_state.client_results = []
+    if 'fog_results' not in st.session_state:
+        st.session_state.fog_results = []
 
 def start_training(data, num_clients, max_rounds, target_accuracy, 
                   aggregation_algorithm, enable_dp, epsilon, delta, committee_size):
-    """Start federated learning training"""
+    """Start federated learning training with early stopping"""
     try:
-        st.session_state.training_started = True
-        st.session_state.training_completed = False
-        st.session_state.training_metrics = []
-        st.session_state.confusion_matrices = []
-        st.session_state.execution_times = []
-        st.session_state.communication_times = []
-        st.session_state.client_status = {}
-        st.session_state.results = None
-        
-        # Initialize federated learning manager
-        fl_manager = FederatedLearningManager(
-            num_clients=num_clients,
-            max_rounds=max_rounds,
-            target_accuracy=target_accuracy,
-            aggregation_algorithm=aggregation_algorithm,
-            enable_dp=enable_dp,
-            epsilon=epsilon,
-            delta=delta,
-            committee_size=committee_size
-        )
-        
-        st.session_state.fl_manager = fl_manager
-        
-        # Run training directly without threading to avoid session state issues
-        with st.spinner("Training federated learning model..."):
-            results = fl_manager.train(data)
-            st.session_state.results = results
-            st.session_state.training_completed = True
-            st.session_state.training_started = False
-        
-        st.rerun()
-        
+        with st.spinner("Initializing Federated Learning System..."):
+            # Create FL manager
+            st.session_state.fl_manager = FederatedLearningManager(
+                num_clients=num_clients,
+                max_rounds=max_rounds,
+                target_accuracy=target_accuracy,
+                aggregation_algorithm=aggregation_algorithm,
+                enable_dp=enable_dp,
+                epsilon=epsilon,
+                delta=delta,
+                committee_size=committee_size
+            )
+            
+            # Reset training state
+            st.session_state.training_started = True
+            st.session_state.training_completed = False
+            st.session_state.training_metrics = []
+            st.session_state.confusion_matrices = []
+            st.session_state.execution_times = []
+            st.session_state.communication_times = []
+            st.session_state.client_status = {}
+            st.session_state.best_accuracy = 0.0
+            st.session_state.early_stopped = False
+            st.session_state.current_round = 0
+            st.session_state.client_results = []
+            st.session_state.fog_results = []
+            
+            # Start training in background thread
+            threading.Thread(
+                target=run_training_loop,
+                args=(st.session_state.fl_manager, data),
+                daemon=True
+            ).start()
+            
+            st.success("Training initiated successfully!")
+            time.sleep(1)
+            st.rerun()
+            
     except Exception as e:
         st.error(f"Error starting training: {str(e)}")
-        st.session_state.training_started = False
-        st.session_state.training_completed = False
 
 def run_training_loop(fl_manager, data):
-    """Run the training loop in background"""
+    """Run the training loop with early stopping"""
     try:
+        # Train with monitoring
         results = fl_manager.train(data)
         
-        # Force update session state
+        # Store results in session state
         st.session_state.results = results
         st.session_state.training_completed = True
         st.session_state.training_started = False
         
-        print(f"Training completed successfully! Final accuracy: {results.get('final_accuracy', 0):.3f}")
+        # Extract client and fog results for tables
+        extract_training_results(fl_manager)
         
     except Exception as e:
         st.session_state.training_started = False
-        st.session_state.training_completed = False
         print(f"Training failed: {str(e)}")
+
+def extract_training_results(fl_manager):
+    """Extract detailed client and fog results for tabular display"""
+    client_results = []
+    fog_results = []
+    
+    # Extract client metrics
+    for i, client in enumerate(fl_manager.clients):
+        if hasattr(client, 'training_history') and client.training_history:
+            latest_metrics = client.training_history[-1]
+            client_results.append({
+                'Station ID': f'Field-{i+1}',
+                'Samples': latest_metrics.get('samples', 0),
+                'Accuracy': f"{latest_metrics.get('test_accuracy', 0):.3f}",
+                'F1 Score': f"{latest_metrics.get('f1_score', 0):.3f}",
+                'Training Time': f"{latest_metrics.get('training_time', 0):.2f}s",
+                'Classes': latest_metrics.get('classes', 0),
+                'Status': 'Active' if latest_metrics.get('test_accuracy', 0) > 0 else 'Inactive'
+            })
+    
+    # Extract fog-level aggregation results
+    for round_num in range(len(st.session_state.training_metrics)):
+        metrics = st.session_state.training_metrics[round_num]
+        fog_results.append({
+            'Round': round_num + 1,
+            'Global Accuracy': f"{metrics.get('accuracy', 0):.3f}",
+            'Global F1': f"{metrics.get('f1_score', 0):.3f}",
+            'Aggregation Time': f"{st.session_state.execution_times[round_num] if round_num < len(st.session_state.execution_times) else 0:.2f}s",
+            'Communication Time': f"{st.session_state.communication_times[round_num] if round_num < len(st.session_state.communication_times) else 0:.2f}s",
+            'Algorithm': st.session_state.fl_manager.aggregation_algorithm,
+            'Privacy': 'Enabled' if st.session_state.fl_manager.enable_dp else 'Disabled'
+        })
+    
+    st.session_state.client_results = client_results
+    st.session_state.fog_results = fog_results
 
 def show_training_progress():
     """Display real-time training progress"""
-    if st.session_state.fl_manager:
-        st.subheader("🚀 Training Progress")
-        
-        # Overall progress section
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            # Round progress
+    st.header("📊 Live Training Progress")
+    
+    # Overall progress
+    progress_col1, progress_col2, progress_col3 = st.columns(3)
+    
+    with progress_col1:
+        if st.session_state.fl_manager:
             current_round = getattr(st.session_state.fl_manager, 'current_round', 0)
             max_rounds = st.session_state.fl_manager.max_rounds
-            round_progress = st.progress(min(current_round / max_rounds, 1.0))
-            st.write(f"Round {current_round} of {max_rounds}")
-            
-        with col2:
-            # Target accuracy indicator
-            target_accuracy = st.session_state.fl_manager.target_accuracy
-            current_accuracy = 0.0
-            if st.session_state.training_metrics:
-                current_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
-            
-            accuracy_progress = st.progress(min(current_accuracy / target_accuracy, 1.0))
-            st.write(f"Accuracy: {current_accuracy:.3f} / {target_accuracy:.3f}")
+            progress = min(current_round / max_rounds, 1.0)
+            st.metric("Training Round", f"{current_round}/{max_rounds}")
+            st.progress(progress)
+    
+    with progress_col2:
+        current_accuracy = st.session_state.best_accuracy
+        target_accuracy = st.session_state.fl_manager.target_accuracy if st.session_state.fl_manager else 0.85
+        st.metric("Best Accuracy", f"{current_accuracy:.3f}")
+        st.metric("Target", f"{target_accuracy:.3f}")
+    
+    with progress_col3:
+        if st.session_state.early_stopped:
+            st.success("🎯 Target Accuracy Reached!")
+        elif st.session_state.training_completed:
+            st.info("✅ Training Completed")
+        else:
+            st.info("🔄 Training in Progress")
+    
+    # Client status grid
+    if st.session_state.client_status:
+        st.subheader("🏢 Field Station Status")
         
-        # Client progress section
-        st.subheader("📊 Client Training Status")
-        num_clients = st.session_state.fl_manager.num_clients
-        
-        # Create client progress bars
-        client_cols = st.columns(min(num_clients, 5))  # Max 5 columns for display
-        
-        for i in range(num_clients):
-            col_idx = i % len(client_cols)
-            with client_cols[col_idx]:
-                # Get client status
-                client_status = st.session_state.client_status.get(i, 'waiting')
-                
-                # Calculate progress based on status
-                if client_status == 'waiting':
-                    progress_val = 0.0
-                    status_color = "🔄"
-                elif client_status == 'training':
-                    progress_val = 0.5
-                    status_color = "🟡"
-                elif client_status == 'completed':
-                    progress_val = 1.0
-                    status_color = "🟢"
-                else:  # failed
-                    progress_val = 0.0
-                    status_color = "🔴"
-                
-                st.progress(progress_val)
-                st.caption(f"{status_color} Client {i}")
-                st.caption(f"Status: {client_status.title()}")
-        
-        # Current metrics display
-        if st.session_state.training_metrics:
-            latest_metrics = st.session_state.training_metrics[-1]
-            
-            st.subheader("📈 Current Metrics")
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Round", current_round, delta=1 if current_round > 1 else None)
-            with col2:
-                accuracy = latest_metrics.get('accuracy', 0)
-                prev_accuracy = 0
-                if len(st.session_state.training_metrics) > 1:
-                    prev_accuracy = st.session_state.training_metrics[-2].get('accuracy', 0)
-                delta_accuracy = accuracy - prev_accuracy if len(st.session_state.training_metrics) > 1 else None
-                st.metric("Accuracy", f"{accuracy:.3f}", delta=f"{delta_accuracy:.3f}" if delta_accuracy else None)
-            with col3:
-                loss = latest_metrics.get('loss', 0)
-                prev_loss = 0
-                if len(st.session_state.training_metrics) > 1:
-                    prev_loss = st.session_state.training_metrics[-2].get('loss', 0)
-                delta_loss = loss - prev_loss if len(st.session_state.training_metrics) > 1 else None
-                st.metric("Loss", f"{loss:.3f}", delta=f"{delta_loss:.3f}" if delta_loss else None)
-            with col4:
-                f1 = latest_metrics.get('f1_score', 0)
-                prev_f1 = 0
-                if len(st.session_state.training_metrics) > 1:
-                    prev_f1 = st.session_state.training_metrics[-2].get('f1_score', 0)
-                delta_f1 = f1 - prev_f1 if len(st.session_state.training_metrics) > 1 else None
-                st.metric("F1 Score", f"{f1:.3f}", delta=f"{delta_f1:.3f}" if delta_f1 else None)
-        
-        # Real-time charts
-        if len(st.session_state.training_metrics) > 1:
-            st.subheader("📊 Real-time Training Charts")
-            show_training_charts()
-            
-        # Execution and Communication Times
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.session_state.execution_times:
-                st.subheader("⏱️ Fog Execution Times")
-                current_exec_time = st.session_state.execution_times[-1] if st.session_state.execution_times else 0
-                avg_exec_time = np.mean(st.session_state.execution_times) if st.session_state.execution_times else 0
-                st.metric("Current Round Time", f"{current_exec_time:.2f}s")
-                st.metric("Average Time", f"{avg_exec_time:.2f}s")
-        
-        with col2:
-            if st.session_state.communication_times:
-                st.subheader("📡 Communication Times")
-                current_comm_time = st.session_state.communication_times[-1] if st.session_state.communication_times else 0
-                avg_comm_time = np.mean(st.session_state.communication_times) if st.session_state.communication_times else 0
-                st.metric("Current Comm Time", f"{current_comm_time:.2f}s")
-                st.metric("Average Comm Time", f"{avg_comm_time:.2f}s")
+        cols = st.columns(min(5, len(st.session_state.client_status)))
+        for i, (client_id, status) in enumerate(st.session_state.client_status.items()):
+            with cols[i % len(cols)]:
+                status_color = "🟢" if status == "completed" else "🟡" if status == "training" else "⚪"
+                st.metric(f"Station {client_id}", f"{status_color} {status.title()}")
 
 def show_training_charts():
     """Display training progress charts"""
     if not st.session_state.training_metrics:
         return
     
-    df_metrics = pd.DataFrame(st.session_state.training_metrics)
+    st.header("📈 Training Analytics")
     
-    # Main training metrics chart
+    # Create metrics dataframe
+    metrics_df = pd.DataFrame(st.session_state.training_metrics)
+    
     col1, col2 = st.columns(2)
     
     with col1:
-        # Accuracy and Loss chart
-        fig_metrics = make_subplots(
-            rows=2, cols=1,
-            subplot_titles=('Training Accuracy', 'Training Loss'),
-            specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
-        )
-        
-        # Accuracy
-        fig_metrics.add_trace(
-            go.Scatter(x=df_metrics['round'], y=df_metrics['accuracy'], 
-                      mode='lines+markers', name='Accuracy', 
-                      line=dict(color='blue', width=3)),
-            row=1, col=1
-        )
+        # Accuracy and F1 over rounds
+        fig = go.Figure()
+        if 'accuracy' in metrics_df.columns:
+            fig.add_trace(go.Scatter(
+                x=list(range(1, len(metrics_df) + 1)),
+                y=metrics_df['accuracy'],
+                mode='lines+markers',
+                name='Accuracy',
+                line=dict(color='blue', width=3)
+            ))
+        if 'f1_score' in metrics_df.columns:
+            fig.add_trace(go.Scatter(
+                x=list(range(1, len(metrics_df) + 1)),
+                y=metrics_df['f1_score'],
+                mode='lines+markers',
+                name='F1 Score',
+                line=dict(color='green', width=3)
+            ))
         
         # Add target accuracy line
-        target_acc = st.session_state.fl_manager.target_accuracy if st.session_state.fl_manager else 0.85
-        fig_metrics.add_hline(y=target_acc, line_dash="dash", line_color="green", 
-                             annotation_text="Target Accuracy")
+        if st.session_state.fl_manager:
+            target = st.session_state.fl_manager.target_accuracy
+            fig.add_hline(y=target, line_dash="dash", line_color="red", 
+                         annotation_text=f"Target: {target:.3f}")
         
-        # Loss
-        fig_metrics.add_trace(
-            go.Scatter(x=df_metrics['round'], y=df_metrics['loss'], 
-                      mode='lines+markers', name='Loss', 
-                      line=dict(color='red', width=3)),
-            row=2, col=1
+        fig.update_layout(
+            title="Model Performance Over Rounds",
+            xaxis_title="Training Round",
+            yaxis_title="Score",
+            template="plotly_white"
         )
-        
-        fig_metrics.update_layout(height=400, showlegend=False, 
-                                 title_text="Training Performance")
-        st.plotly_chart(fig_metrics, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # F1 Score and Communication Time
-        fig_other = make_subplots(
-            rows=2, cols=1,
-            subplot_titles=('F1 Score', 'Communication Time'),
-            specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
-        )
-        
-        # F1 Score
-        fig_other.add_trace(
-            go.Scatter(x=df_metrics['round'], y=df_metrics['f1_score'], 
-                      mode='lines+markers', name='F1 Score', 
-                      line=dict(color='green', width=3)),
-            row=1, col=1
-        )
-        
-        # Communication Time
-        if st.session_state.communication_times:
-            comm_rounds = list(range(1, len(st.session_state.communication_times) + 1))
-            fig_other.add_trace(
-                go.Scatter(x=comm_rounds, y=st.session_state.communication_times, 
-                          mode='lines+markers', name='Comm Time', 
-                          line=dict(color='purple', width=3)),
-                row=2, col=1
+        # Execution times
+        if st.session_state.execution_times:
+            fig_time = px.bar(
+                x=list(range(1, len(st.session_state.execution_times) + 1)),
+                y=st.session_state.execution_times,
+                title="Training Time per Round",
+                labels={'x': 'Round', 'y': 'Time (seconds)'}
             )
-        
-        fig_other.update_layout(height=400, showlegend=False, 
-                               title_text="Additional Metrics")
-        st.plotly_chart(fig_other, use_container_width=True)
-    
-    # Execution time chart
-    if st.session_state.execution_times:
-        st.subheader("Fog Execution Times Per Round")
-        exec_rounds = list(range(1, len(st.session_state.execution_times) + 1))
-        fig_exec = go.Figure()
-        
-        fig_exec.add_trace(go.Scatter(
-            x=exec_rounds, 
-            y=st.session_state.execution_times,
-            mode='lines+markers',
-            name='Execution Time',
-            line=dict(color='orange', width=3),
-            fill='tonexty'
-        ))
-        
-        fig_exec.update_layout(
-            title="Fog Execution Times",
-            xaxis_title="Round",
-            yaxis_title="Time (seconds)",
-            height=300
-        )
-        
-        st.plotly_chart(fig_exec, use_container_width=True)
+            st.plotly_chart(fig_time, use_container_width=True)
 
 def show_results():
-    """Display final training results"""
-    results = st.session_state.results
+    """Display final training results in tables"""
+    st.header("📋 Training Results Analysis")
     
-    st.subheader("📈 Training Results")
+    if not st.session_state.results:
+        return
     
-    # Final metrics
+    # Summary metrics
     col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
-        st.metric("Final Accuracy", f"{results['final_accuracy']:.3f}")
+        final_accuracy = st.session_state.results.get('accuracy', 0)
+        st.metric("Final Accuracy", f"{final_accuracy:.3f}")
+    
     with col2:
-        st.metric("Final Loss", f"{results['final_loss']:.3f}")
+        final_f1 = st.session_state.results.get('f1_score', 0)
+        st.metric("Final F1 Score", f"{final_f1:.3f}")
+    
     with col3:
-        st.metric("Rounds Completed", results['rounds_completed'])
+        total_rounds = len(st.session_state.training_metrics)
+        st.metric("Total Rounds", total_rounds)
+    
     with col4:
-        st.metric("Total Time", f"{results['total_time']:.2f}s")
+        total_time = sum(st.session_state.execution_times) if st.session_state.execution_times else 0
+        st.metric("Total Time", f"{total_time:.1f}s")
     
-    # Performance charts
-    if st.session_state.training_metrics:
-        show_training_charts()
-    
-    # Confusion Matrix
-    if st.session_state.confusion_matrices:
-        st.subheader("🎯 Final Confusion Matrix")
-        final_cm = st.session_state.confusion_matrices[-1]
-        fig_cm = plot_confusion_matrix(final_cm)
-        st.pyplot(fig_cm)
-    
-    # Execution and Communication Times
+    # Results tables
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.session_state.execution_times:
-            st.subheader("⏱️ Fog Execution Times")
-            fig_exec = px.line(
-                x=list(range(len(st.session_state.execution_times))),
-                y=st.session_state.execution_times,
-                title="Execution Time per Round",
-                labels={'x': 'Round', 'y': 'Time (seconds)'}
-            )
-            st.plotly_chart(fig_exec, use_container_width=True)
+        st.subheader("🏢 Field Station Results")
+        if st.session_state.client_results:
+            client_df = pd.DataFrame(st.session_state.client_results)
+            st.dataframe(client_df, use_container_width=True)
+        else:
+            st.info("No client results available")
     
     with col2:
-        if st.session_state.communication_times:
-            st.subheader("📡 Communication Times")
-            fig_comm = px.line(
-                x=list(range(len(st.session_state.communication_times))),
-                y=st.session_state.communication_times,
-                title="Communication Time per Round",
-                labels={'x': 'Round', 'y': 'Time (seconds)'}
-            )
-            st.plotly_chart(fig_comm, use_container_width=True)
+        st.subheader("🌐 Fog Aggregation Results")
+        if st.session_state.fog_results:
+            fog_df = pd.DataFrame(st.session_state.fog_results)
+            st.dataframe(fog_df, use_container_width=True)
+        else:
+            st.info("No fog results available")
 
-def make_prediction(patient_data):
-    """Make prediction for new patient data"""
+def make_prediction(sample_data):
+    """Make prediction for crop sample data"""
     if st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model') and st.session_state.fl_manager.global_model is not None:
         try:
             # Use the fitted preprocessor from the federated learning manager
             if hasattr(st.session_state.fl_manager, 'preprocessor') and st.session_state.fl_manager.preprocessor.is_fitted:
-                processed_data = st.session_state.fl_manager.preprocessor.transform(patient_data)
+                processed_data = st.session_state.fl_manager.preprocessor.transform(sample_data)
             else:
                 # Fallback: create temporary preprocessor and fit on available data
                 preprocessor = DataPreprocessor()
                 # Load the diabetes dataset to fit the preprocessor
                 data = pd.read_csv('diabetes.csv')
                 X, y = preprocessor.fit_transform(data)
-                processed_data = preprocessor.transform(patient_data)
+                processed_data = preprocessor.transform(sample_data)
             
             # Make prediction
             prediction = st.session_state.fl_manager.global_model.predict(processed_data)[0]
@@ -581,7 +330,209 @@ def reset_training():
     st.session_state.confusion_matrices = []
     st.session_state.execution_times = []
     st.session_state.communication_times = []
-    st.rerun()
+    st.session_state.client_status = {}
+    st.session_state.best_accuracy = 0.0
+    st.session_state.early_stopped = False
+    st.session_state.current_round = 0
+    st.session_state.client_results = []
+    st.session_state.fog_results = []
+
+def main():
+    init_session_state()
+    
+    st.title("🌾 Agronomic Display - Hierarchical Federated Learning")
+    st.markdown("**Advanced Crop Health Analytics & Prediction System**")
+    st.markdown("---")
+    
+    # Data loading and preprocessing
+    try:
+        data = pd.read_csv('diabetes.csv')
+        preprocessor = DataPreprocessor()
+        X, y = preprocessor.fit_transform(data)
+        
+        st.success(f"✅ Field Data loaded: {len(data)} crop samples with {len(data.columns)} health indicators")
+        
+        # Display data overview in agronomic terms
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("🌱 Field Samples", len(data))
+        with col2:
+            st.metric("📊 Health Indicators", len(data.columns) - 1)
+        with col3:
+            positive_ratio = (data['Outcome'] == 1).mean()
+            st.metric("🚨 Risk Cases", f"{positive_ratio:.1%}")
+            
+    except Exception as e:
+        st.error(f"❌ Error loading field data: {str(e)}")
+        return
+    
+    # Multi-tab interface
+    tab1, tab2, tab3, tab4 = st.tabs(["🎛️ Training Control", "📈 Live Monitoring", "📋 Results Analysis", "🔍 Risk Prediction"])
+    
+    with tab1:
+        st.header("🎛️ Federated Training Configuration")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            num_clients = st.slider("🏢 Number of Field Stations", min_value=3, max_value=10, value=5)
+            max_rounds = st.slider("🔄 Maximum Training Cycles", min_value=5, max_value=50, value=20)
+            target_accuracy = st.slider("🎯 Target Accuracy (Auto-Stop)", min_value=0.7, max_value=0.95, value=0.85, step=0.05)
+            
+        with col2:
+            aggregation_algorithm = st.selectbox("🔧 Aggregation Algorithm", ["FedAvg", "FedProx", "SecureAgg"])
+            enable_dp = st.checkbox("🔒 Enable Privacy Protection", value=True)
+            if enable_dp:
+                epsilon = st.number_input("🛡️ Privacy Budget (ε)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
+                delta = st.number_input("🔐 Privacy Parameter (δ)", min_value=1e-6, max_value=1e-3, value=1e-5, format="%.1e")
+            else:
+                epsilon = delta = None
+            committee_size = st.slider("👥 Security Committee Size", min_value=2, max_value=5, value=3)
+        
+        # Training controls
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            if st.button("🚀 Start Federated Learning", disabled=st.session_state.training_started):
+                start_training(data, num_clients, max_rounds, target_accuracy, 
+                              aggregation_algorithm, enable_dp, epsilon, delta, committee_size)
+        
+        with col2:
+            if st.button("🔄 Reset System"):
+                reset_training()
+                st.rerun()
+    
+    with tab2:
+        st.header("📈 Live Training Monitoring")
+        
+        # Training Progress
+        if st.session_state.training_started:
+            show_training_progress()
+            
+            # Show real-time charts
+            if len(st.session_state.training_metrics) > 0:
+                show_training_charts()
+        else:
+            st.info("🌱 Start training to see live monitoring data")
+    
+    with tab3:
+        st.header("📋 Training Results Analysis")
+        
+        # Results
+        if st.session_state.training_completed and st.session_state.results:
+            show_results()
+        else:
+            st.info("🌾 Complete training to see detailed results analysis")
+    
+    with tab4:
+        st.header("🔍 Crop Health Risk Prediction")
+        
+        if st.session_state.training_completed and st.session_state.results:
+            # Prediction examples section
+            st.subheader("📝 Example Predictions")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("### 🟢 Low Risk Example")
+                if st.button("Test Low Risk Sample"):
+                    # Low risk example data
+                    low_risk_data = pd.DataFrame({
+                        'Pregnancies': [1],
+                        'Glucose': [85],
+                        'BloodPressure': [66],
+                        'SkinThickness': [29],
+                        'Insulin': [0],
+                        'BMI': [26.6],
+                        'DiabetesPedigreeFunction': [0.351],
+                        'Age': [31]
+                    })
+                    
+                    prediction, probability = make_prediction(low_risk_data)
+                    
+                    st.success(f"**Prediction:** {'High Risk' if prediction == 1 else 'Low Risk'}")
+                    st.metric("Risk Probability", f"{probability:.1%}")
+                    st.json(low_risk_data.iloc[0].to_dict())
+            
+            with col2:
+                st.markdown("### 🔴 High Risk Example")
+                if st.button("Test High Risk Sample"):
+                    # High risk example data
+                    high_risk_data = pd.DataFrame({
+                        'Pregnancies': [6],
+                        'Glucose': [148],
+                        'BloodPressure': [72],
+                        'SkinThickness': [35],
+                        'Insulin': [0],
+                        'BMI': [33.6],
+                        'DiabetesPedigreeFunction': [0.627],
+                        'Age': [50]
+                    })
+                    
+                    prediction, probability = make_prediction(high_risk_data)
+                    
+                    if prediction == 1:
+                        st.error(f"**Prediction:** High Risk")
+                    else:
+                        st.success(f"**Prediction:** Low Risk")
+                    st.metric("Risk Probability", f"{probability:.1%}")
+                    st.json(high_risk_data.iloc[0].to_dict())
+            
+            st.markdown("---")
+            
+            # Custom prediction interface
+            st.subheader("🧪 Custom Field Sample Analysis")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**Growth Conditions**")
+                pregnancies = st.number_input("Growth Cycles", min_value=0, max_value=20, value=1)
+                glucose = st.number_input("Nutrient Level", min_value=0, max_value=300, value=120)
+                blood_pressure = st.number_input("Soil Pressure", min_value=0, max_value=200, value=80)
+                skin_thickness = st.number_input("Leaf Thickness", min_value=0, max_value=100, value=20)
+                
+            with col2:
+                st.markdown("**Environmental Factors**")
+                insulin = st.number_input("Water Content", min_value=0, max_value=900, value=80)
+                bmi = st.number_input("Plant Density Index", min_value=0.0, max_value=70.0, value=25.0, step=0.1)
+                diabetes_pedigree = st.number_input("Genetic Risk Factor", min_value=0.0, max_value=3.0, value=0.5, step=0.01)
+                age = st.number_input("Plant Maturity (days)", min_value=18, max_value=120, value=30)
+            
+            if st.button("🔬 Analyze Crop Sample"):
+                # Create sample data
+                sample_data = pd.DataFrame({
+                    'Pregnancies': [pregnancies],
+                    'Glucose': [glucose],
+                    'BloodPressure': [blood_pressure],
+                    'SkinThickness': [skin_thickness],
+                    'Insulin': [insulin],
+                    'BMI': [bmi],
+                    'DiabetesPedigreeFunction': [diabetes_pedigree],
+                    'Age': [age]
+                })
+                
+                prediction, probability = make_prediction(sample_data)
+                
+                # Display prediction
+                col1, col2 = st.columns(2)
+                with col1:
+                    risk_level = "High Risk" if prediction == 1 else "Low Risk"
+                    color = "red" if prediction == 1 else "green"
+                    st.markdown(f"### Crop Status: <span style='color: {color}'>{risk_level}</span>", unsafe_allow_html=True)
+                    
+                with col2:
+                    st.metric("Risk Probability", f"{probability:.1%}")
+                    
+                # Risk interpretation
+                if probability > 0.7:
+                    st.warning("🚨 High disease risk detected. Recommend immediate field intervention.")
+                elif probability > 0.3:
+                    st.info("⚠️ Moderate risk. Consider preventive treatments and increased monitoring.")
+                else:
+                    st.success("✅ Healthy crop status. Continue current care protocols.")
+        else:
+            st.info("🌾 Complete training to enable crop risk prediction")
 
 if __name__ == "__main__":
     main()

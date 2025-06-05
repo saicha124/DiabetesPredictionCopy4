@@ -217,24 +217,40 @@ class FederatedLearningManager:
                 
                 self.training_history.append(metrics)
                 
-                # Check for convergence
+                # Check for convergence and early stopping
                 if accuracy > self.best_accuracy:
                     self.best_accuracy = accuracy
+                    
+                # Update session state for best accuracy tracking
+                with self.lock:
+                    if 'best_accuracy' in st.session_state:
+                        st.session_state.best_accuracy = self.best_accuracy
                 
                 if accuracy >= self.target_accuracy:
+                    print(f"🎯 Target accuracy {self.target_accuracy:.3f} reached at round {self.current_round}!")
+                    with self.lock:
+                        if 'early_stopped' in st.session_state:
+                            st.session_state.early_stopped = True
                     break
                 
                 # Simulate some delay for demonstration
                 time.sleep(1)
             
-            # Prepare final results
+            # Prepare final results with additional metrics
             total_time = sum([m['execution_time'] for m in self.training_history])
+            target_reached = self.best_accuracy >= self.target_accuracy
+            
             results = {
+                'accuracy': self.best_accuracy,
                 'final_accuracy': self.best_accuracy,
                 'final_loss': self.training_history[-1]['loss'] if self.training_history else 0,
+                'f1_score': self.training_history[-1]['f1_score'] if self.training_history else 0,
                 'rounds_completed': self.current_round,
                 'total_time': total_time,
-                'training_history': self.training_history
+                'training_history': self.training_history,
+                'target_reached': target_reached,
+                'early_stopped': target_reached,
+                'best_accuracy': self.best_accuracy
             }
             
             return results
