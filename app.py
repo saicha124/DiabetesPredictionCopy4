@@ -389,7 +389,7 @@ def show_training_charts():
         # Add target accuracy line
         target_acc = st.session_state.fl_manager.target_accuracy if st.session_state.fl_manager else 0.85
         fig_metrics.add_hline(y=target_acc, line_dash="dash", line_color="green", 
-                             annotation_text="Target Accuracy", row=1, col=1)
+                             annotation_text="Target Accuracy")
         
         # Loss
         fig_metrics.add_trace(
