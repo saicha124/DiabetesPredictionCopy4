@@ -125,6 +125,7 @@ def start_training(data, num_clients, max_rounds, target_accuracy,
 
 def run_training_loop(fl_manager, data):
     """Run the training loop with early stopping"""
+    import numpy as np
     try:
         # Train with monitoring
         results = fl_manager.train(data)
@@ -847,8 +848,9 @@ def main():
                         st.metric("Total Samples", distribution_stats['total_samples'])
                     
                     with stats_col2:
-                        avg_size = np.mean(distribution_stats['client_sizes'])
-                        std_size = np.std(distribution_stats['client_sizes'])
+                        avg_size = sum(distribution_stats['client_sizes']) / len(distribution_stats['client_sizes'])
+                        variance = sum((x - avg_size) ** 2 for x in distribution_stats['client_sizes']) / len(distribution_stats['client_sizes'])
+                        std_size = variance ** 0.5
                         st.metric("Avg Station Size", f"{avg_size:.1f}")
                         st.metric("Size Std Dev", f"{std_size:.1f}")
                     
@@ -1140,7 +1142,7 @@ def main():
                             'execution_time': round_time,
                             'client_accuracies': client_accuracies,
                             'client_f1_scores': client_f1_scores,
-                            'accuracy_variance': np.var(client_accuracies) if client_accuracies else 0,
+                            'accuracy_variance': sum((x - sum(client_accuracies)/len(client_accuracies))**2 for x in client_accuracies)/len(client_accuracies) if client_accuracies else 0,
                             'min_client_accuracy': min(client_accuracies) if client_accuracies else 0,
                             'max_client_accuracy': max(client_accuracies) if client_accuracies else 0
                         }
@@ -1185,7 +1187,11 @@ def main():
                                     st.metric("🌍 Overall Field Error", f"{latest_fog['loss_info']['global_loss']:.4f}")
                                 with col2:
                                     fog_losses = latest_fog['loss_info']['fog_losses']
-                                    avg_fog_loss = np.mean([f['loss'] for f in fog_losses.values()]) if fog_losses else 0
+                                    if fog_losses:
+                                        loss_values = [f['loss'] for f in fog_losses.values()]
+                                        avg_fog_loss = sum(loss_values) / len(loss_values)
+                                    else:
+                                        avg_fog_loss = 0
                                     st.metric("🏭 Avg Regional Error", f"{avg_fog_loss:.4f}")
                                 with col3:
                                     aggregation_info = latest_fog.get('aggregation_info', {})
