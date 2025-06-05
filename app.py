@@ -718,7 +718,7 @@ def main():
         return
     
     # Multi-tab interface
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🎛️ Training Control", "📈 Live Monitoring", "📊 Communication Network", "📋 Results Analysis", "🔍 Risk Prediction"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🎛️ Training Control", "📈 Live Monitoring", "🗺️ Learning Journey Map", "📊 Communication Network", "📋 Results Analysis", "🔍 Risk Prediction"])
     
     with tab1:
         st.header("🎛️ Federated Training Configuration")
@@ -1016,6 +1016,241 @@ def main():
                     st.metric("Total Communications", total_communications)
         else:
             st.info("Start and complete a training session to view the communication network.")
+    
+    with tab3:
+        st.header("🗺️ Federated Learning Journey Map")
+        
+        # Journey stages definition
+        journey_stages = [
+            {"id": 1, "name": "Patient Enrollment", "icon": "👥", "description": "Register patient agents in the federated network"},
+            {"id": 2, "name": "Data Distribution", "icon": "📊", "description": "Distribute health data across patient agents"},
+            {"id": 3, "name": "Privacy Setup", "icon": "🔒", "description": "Configure differential privacy protection"},
+            {"id": 4, "name": "Model Initialization", "icon": "🧠", "description": "Initialize global diabetes prediction model"},
+            {"id": 5, "name": "Local Training", "icon": "💻", "description": "Patient agents train on local health data"},
+            {"id": 6, "name": "Fog Aggregation", "icon": "🌐", "description": "Regional fog nodes aggregate patient updates"},
+            {"id": 7, "name": "Global Aggregation", "icon": "🏥", "description": "Global server combines all knowledge"},
+            {"id": 8, "name": "Model Convergence", "icon": "🎯", "description": "Achieve target accuracy for diabetes prediction"},
+            {"id": 9, "name": "Deployment Ready", "icon": "✅", "description": "Model ready for clinical deployment"}
+        ]
+        
+        # Determine current stage based on training state
+        current_stage = 1
+        if st.session_state.training_started:
+            current_stage = 2
+            if hasattr(st.session_state, 'fl_manager'):
+                current_stage = 4
+            if st.session_state.training_metrics:
+                current_stage = 5 + len(st.session_state.training_metrics) // 3
+                if st.session_state.training_completed:
+                    current_stage = 9
+        
+        # Create journey map visualization
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            st.subheader("🛤️ Training Progress Journey")
+            
+            # Create interactive journey map using plotly
+            import plotly.graph_objects as go
+            import plotly.express as px
+            
+            # Calculate positions for journey stages
+            fig = go.Figure()
+            
+            # Journey path coordinates (circular/spiral layout)
+            import math
+            positions = []
+            for i, stage in enumerate(journey_stages):
+                angle = 2 * math.pi * i / len(journey_stages)
+                radius = 2 + (i % 3) * 0.5  # Spiral effect
+                x = radius * math.cos(angle)
+                y = radius * math.sin(angle)
+                positions.append((x, y))
+            
+            # Draw journey path
+            path_x = [pos[0] for pos in positions] + [positions[0][0]]
+            path_y = [pos[1] for pos in positions] + [positions[0][1]]
+            
+            fig.add_trace(go.Scatter(
+                x=path_x,
+                y=path_y,
+                mode='lines',
+                line=dict(color='lightgray', width=3, dash='dot'),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+            
+            # Add stage markers
+            for i, (stage, pos) in enumerate(zip(journey_stages, positions)):
+                stage_num = stage["id"]
+                is_completed = stage_num <= current_stage
+                is_current = stage_num == current_stage
+                
+                # Stage color logic
+                if is_completed and not is_current:
+                    color = 'green'
+                    size = 25
+                elif is_current:
+                    color = 'orange'
+                    size = 35
+                else:
+                    color = 'lightgray'
+                    size = 20
+                
+                # Stage marker
+                fig.add_trace(go.Scatter(
+                    x=[pos[0]],
+                    y=[pos[1]],
+                    mode='markers+text',
+                    marker=dict(
+                        size=size,
+                        color=color,
+                        line=dict(width=3, color='white'),
+                        symbol='circle'
+                    ),
+                    text=[f"{stage['icon']}<br>{stage_num}"],
+                    textposition="middle center",
+                    textfont=dict(size=12, color='white' if is_completed else 'black'),
+                    name=stage['name'],
+                    hovertemplate=f"<b>{stage['name']}</b><br>{stage['description']}<extra></extra>",
+                    showlegend=False
+                ))
+            
+            # Add progress indicators
+            if current_stage > 1:
+                completed_positions = positions[:current_stage-1]
+                if completed_positions:
+                    completed_x = [pos[0] for pos in completed_positions]
+                    completed_y = [pos[1] for pos in completed_positions]
+                    
+                    fig.add_trace(go.Scatter(
+                        x=completed_x,
+                        y=completed_y,
+                        mode='lines',
+                        line=dict(color='green', width=5),
+                        showlegend=False,
+                        hoverinfo='skip'
+                    ))
+            
+            fig.update_layout(
+                title="🗺️ Patient Health Data Federated Learning Journey",
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                height=500,
+                plot_bgcolor='white',
+                margin=dict(l=50, r=50, t=80, b=50)
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.subheader("📍 Current Status")
+            
+            current_stage_info = journey_stages[min(current_stage-1, len(journey_stages)-1)]
+            st.info(f"**{current_stage_info['icon']} Stage {current_stage}**\n\n{current_stage_info['name']}\n\n{current_stage_info['description']}")
+            
+            # Progress metrics
+            progress_percentage = (current_stage / len(journey_stages)) * 100
+            st.metric("Journey Progress", f"{progress_percentage:.0f}%")
+            
+            if st.session_state.training_started:
+                st.metric("Active Agents", st.session_state.fl_manager.num_clients if hasattr(st.session_state, 'fl_manager') else 0)
+            
+            if st.session_state.training_metrics:
+                st.metric("Completed Rounds", len(st.session_state.training_metrics))
+                latest_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
+                st.metric("Current Accuracy", f"{latest_accuracy:.3f}")
+        
+        # Detailed stage information
+        st.subheader("📋 Journey Stage Details")
+        
+        # Create expandable sections for each stage
+        for stage in journey_stages:
+            stage_num = stage["id"]
+            is_completed = stage_num <= current_stage
+            is_current = stage_num == current_stage
+            
+            status_icon = "✅" if is_completed and not is_current else "🔄" if is_current else "⏳"
+            
+            with st.expander(f"{status_icon} Stage {stage_num}: {stage['icon']} {stage['name']}", expanded=is_current):
+                st.write(stage['description'])
+                
+                # Add specific information based on stage and training state
+                if stage_num == 1:  # Patient Enrollment
+                    if hasattr(st.session_state, 'fl_manager'):
+                        st.success(f"✅ {st.session_state.fl_manager.num_clients} patient agents enrolled")
+                    else:
+                        st.info("🔄 Configure patient agents in Training Control tab")
+                
+                elif stage_num == 2:  # Data Distribution
+                    if st.session_state.get('distribution_stats'):
+                        stats = st.session_state.distribution_stats
+                        st.success(f"✅ Data distributed using {stats['strategy']} strategy")
+                        st.write(f"📊 Total samples: {stats['total_samples']}")
+                    else:
+                        st.info("🔄 Data distribution will be configured during training setup")
+                
+                elif stage_num == 3:  # Privacy Setup
+                    if hasattr(st.session_state, 'fl_manager') and hasattr(st.session_state.fl_manager, 'dp_manager'):
+                        dp_params = st.session_state.fl_manager.dp_manager.get_privacy_parameters()
+                        st.success(f"✅ Privacy protection configured (ε={dp_params['epsilon']:.2f})")
+                    else:
+                        st.info("🔄 Privacy parameters will be set during training")
+                
+                elif stage_num == 4:  # Model Initialization
+                    if hasattr(st.session_state, 'fl_manager'):
+                        st.success(f"✅ Global model initialized with {st.session_state.fl_manager.model_type}")
+                    else:
+                        st.info("🔄 Global model will be initialized when training starts")
+                
+                elif stage_num == 5:  # Local Training
+                    if st.session_state.training_metrics:
+                        current_round = len(st.session_state.training_metrics)
+                        st.success(f"✅ Local training in progress - Round {current_round}")
+                        if st.session_state.training_metrics:
+                            latest_metrics = st.session_state.training_metrics[-1]
+                            st.write(f"📈 Current accuracy: {latest_metrics.get('accuracy', 0):.3f}")
+                    else:
+                        st.info("🔄 Local training will begin once setup is complete")
+                
+                elif stage_num == 6:  # Fog Aggregation
+                    if st.session_state.fog_results:
+                        st.success(f"✅ Fog aggregation active - {len(st.session_state.fog_results)} rounds completed")
+                    elif hasattr(st.session_state, 'fl_manager') and hasattr(st.session_state.fl_manager, 'fog_manager'):
+                        st.info("🔄 Fog nodes ready for aggregation")
+                    else:
+                        st.info("🔄 Fog aggregation will activate during training")
+                
+                elif stage_num == 7:  # Global Aggregation
+                    if st.session_state.training_metrics:
+                        st.success(f"✅ Global aggregation in progress")
+                        convergence_trend = []
+                        for i, metrics in enumerate(st.session_state.training_metrics[-3:]):
+                            convergence_trend.append(metrics.get('accuracy', 0))
+                        if len(convergence_trend) > 1:
+                            trend = "improving" if convergence_trend[-1] > convergence_trend[0] else "stabilizing"
+                            st.write(f"📊 Model performance: {trend}")
+                    else:
+                        st.info("🔄 Global aggregation begins after local training")
+                
+                elif stage_num == 8:  # Model Convergence
+                    if st.session_state.training_completed:
+                        final_accuracy = st.session_state.results.get('accuracy', 0)
+                        st.success(f"✅ Model converged with {final_accuracy:.3f} accuracy")
+                    elif st.session_state.training_metrics:
+                        current_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
+                        target_accuracy = 0.85  # Default target
+                        progress = (current_accuracy / target_accuracy) * 100
+                        st.info(f"🔄 Convergence progress: {progress:.1f}% to target")
+                    else:
+                        st.info("🔄 Model will converge through iterative training")
+                
+                elif stage_num == 9:  # Deployment Ready
+                    if st.session_state.training_completed:
+                        st.success("✅ Model ready for clinical deployment!")
+                        st.write("🏥 Can now be used for patient diabetes risk assessment")
+                    else:
+                        st.info("🔄 Complete training to reach deployment readiness")
     
     with tab2:
         st.header("🏥 Patient Agent Monitoring")
