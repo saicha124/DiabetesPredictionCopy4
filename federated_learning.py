@@ -162,6 +162,41 @@ class FederatedLearningManager:
         
         return client_data
     
+    def setup_clients_with_data(self, client_data):
+        """Setup federated clients with pre-distributed data"""
+        from client_simulator import ClientSimulator
+        from sklearn.linear_model import LogisticRegression
+        
+        # Create client instances with provided data
+        self.clients = []
+        for i, data_partition in enumerate(client_data):
+            client = ClientSimulator(
+                client_id=i,
+                data=data_partition,
+                model_type='logistic_regression'
+            )
+            self.clients.append(client)
+        
+        # Initialize global model
+        self.global_model = LogisticRegression(
+            random_state=42, 
+            max_iter=1000,
+            solver='liblinear'
+        )
+        
+        # Initialize global model with sample data from first non-empty client
+        for data_partition in client_data:
+            if len(data_partition['X_train']) > 0:
+                sample_X = data_partition['X_train'][:min(50, len(data_partition['X_train']))]
+                sample_y = data_partition['y_train'][:min(50, len(data_partition['y_train']))]
+                if len(sample_X) > 0 and len(np.unique(sample_y)) > 1:
+                    try:
+                        self.global_model.fit(sample_X, sample_y)
+                        break
+                    except Exception as e:
+                        print(f"Failed to initialize global model: {e}")
+                        continue
+    
     def train(self, data):
         """Main federated training loop"""
         try:
