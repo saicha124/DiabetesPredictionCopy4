@@ -59,6 +59,8 @@ def init_session_state():
         st.session_state.distribution_strategy = 'IID'
     if 'distribution_stats' not in st.session_state:
         st.session_state.distribution_stats = None
+    if 'training_history' not in st.session_state:
+        st.session_state.training_history = []
 
 def start_training(data, num_clients, max_rounds, target_accuracy, 
                   aggregation_algorithm, enable_dp, epsilon, delta, committee_size,
@@ -1508,7 +1510,10 @@ def main():
                     simulated_accuracies = []
                     
                     # Base accuracy without privacy
-                    base_accuracy = st.session_state.training_history[-1].get('accuracy', 0.85)
+                    if st.session_state.training_history:
+                        base_accuracy = st.session_state.training_history[-1].get('accuracy', 0.85)
+                    else:
+                        base_accuracy = 0.85
                     
                     for eps in epsilon_values:
                         # Simulate privacy-accuracy trade-off
