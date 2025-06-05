@@ -91,6 +91,17 @@ def main():
     st.sidebar.subheader("Committee-Based Security")
     committee_size = st.sidebar.slider("Committee Size", 3, num_clients, min(5, num_clients))
     
+    # Debug information (can be removed later)
+    with st.expander("Debug Information", expanded=False):
+        st.write("Training Started:", st.session_state.training_started)
+        st.write("Training Completed:", st.session_state.training_completed)
+        st.write("Results Available:", st.session_state.results is not None)
+        st.write("Training Metrics Count:", len(st.session_state.training_metrics))
+        st.write("Execution Times Count:", len(st.session_state.execution_times))
+        st.write("Communication Times Count:", len(st.session_state.communication_times))
+        if st.session_state.fl_manager:
+            st.write("Current Round:", getattr(st.session_state.fl_manager, 'current_round', 0))
+    
     # Main content area
     col1, col2 = st.columns([2, 1])
     
@@ -129,20 +140,35 @@ def main():
                     st.session_state.training_started = False
                     reset_training()
         
-        # Progress monitoring with auto-refresh
+        # Progress monitoring
         if st.session_state.training_started and not st.session_state.training_completed:
-            progress_container = st.empty()
-            with progress_container.container():
-                show_training_progress()
-            
-            # Auto-refresh every 2 seconds during training
-            if st.session_state.training_started:
-                time.sleep(0.1)  # Small delay to prevent excessive refreshing
-                st.rerun()
+            show_training_progress()
+        elif st.session_state.training_started and st.session_state.training_completed:
+            st.success("Training completed successfully!")
+            st.session_state.training_started = False  # Reset training flag
         
         # Results section
-        if st.session_state.training_completed and st.session_state.results:
-            show_results()
+        if st.session_state.training_completed:
+            st.success("🎉 Training Completed Successfully!")
+            
+            if st.session_state.results:
+                show_results()
+            else:
+                st.warning("Training completed but results not available. Please check the logs.")
+                
+            # Show final metrics even if full results not available
+            if st.session_state.training_metrics:
+                st.subheader("Final Training Metrics")
+                final_metrics = st.session_state.training_metrics[-1]
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Final Accuracy", f"{final_metrics.get('accuracy', 0):.3f}")
+                with col2:
+                    st.metric("Final Loss", f"{final_metrics.get('loss', 0):.3f}")
+                with col3:
+                    st.metric("Final F1 Score", f"{final_metrics.get('f1_score', 0):.3f}")
+                with col4:
+                    st.metric("Total Rounds", len(st.session_state.training_metrics))
     
     with col2:
         # Patient Prediction
@@ -243,12 +269,18 @@ def run_training_loop(fl_manager, data):
     """Run the training loop in background"""
     try:
         results = fl_manager.train(data)
+        
+        # Force update session state
         st.session_state.results = results
         st.session_state.training_completed = True
         st.session_state.training_started = False
+        
+        print(f"Training completed successfully! Final accuracy: {results.get('final_accuracy', 0):.3f}")
+        
     except Exception as e:
         st.session_state.training_started = False
-        st.error(f"Training failed: {str(e)}")
+        st.session_state.training_completed = False
+        print(f"Training failed: {str(e)}")
 
 def show_training_progress():
     """Display real-time training progress"""
