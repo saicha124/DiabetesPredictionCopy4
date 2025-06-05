@@ -46,6 +46,7 @@ class FederatedLearningManager:
         self.clients = []
         self.training_history = []
         self.best_accuracy = 0.0
+        self.client_status = {}  # Track individual client training status
         
         # Thread safety
         self.lock = threading.Lock()
@@ -76,8 +77,10 @@ class FederatedLearningManager:
         )
         
         # Fit global model on a small sample to initialize parameters
-        sample_X, sample_y = X[:100], y[:100]
-        self.global_model.fit(sample_X, sample_y)
+        if len(X) > 0:
+            sample_size = min(100, len(X))
+            sample_X, sample_y = X[:sample_size], y[:sample_size]
+            self.global_model.fit(sample_X, sample_y)
     
     def _partition_data(self, X, y):
         """Partition data among clients (non-IID distribution)"""
@@ -207,16 +210,36 @@ class FederatedLearningManager:
         
         def train_single_client(client):
             try:
+                # Update client status
+                with self.lock:
+                    self.client_status[client.client_id] = 'training'
+                    if 'client_status' in st.session_state:
+                        st.session_state.client_status = self.client_status.copy()
+                
                 # Send global model parameters to client
                 client.receive_global_model(self.global_model)
                 
                 # Train client model
                 update = client.train()
                 
+                # Update client status
+                with self.lock:
+                    self.client_status[client.client_id] = 'completed'
+                    if 'client_status' in st.session_state:
+                        st.session_state.client_status = self.client_status.copy()
+                
                 return update
             except Exception as e:
+                with self.lock:
+                    self.client_status[client.client_id] = 'failed'
+                    if 'client_status' in st.session_state:
+                        st.session_state.client_status = self.client_status.copy()
                 print(f"Client {client.client_id} training failed: {e}")
                 return None
+        
+        # Initialize client status
+        for client in self.clients:
+            self.client_status[client.client_id] = 'waiting'
         
         # Execute parallel training
         with ThreadPoolExecutor(max_workers=min(self.num_clients, 4)) as executor:
@@ -284,6 +307,9 @@ class FederatedLearningManager:
     
     def _evaluate_global_model(self):
         """Evaluate global model on all clients' test data"""
+        if self.global_model is None:
+            return 0.0, 1.0, 0.0, np.zeros((2, 2))
+            
         all_predictions = []
         all_true_labels = []
         all_probabilities = []
@@ -292,13 +318,17 @@ class FederatedLearningManager:
             X_test = client.data['X_test']
             y_test = client.data['y_test']
             
-            if len(X_test) > 0:
-                predictions = self.global_model.predict(X_test)
-                probabilities = self.global_model.predict_proba(X_test)[:, 1]
-                
-                all_predictions.extend(predictions)
-                all_true_labels.extend(y_test)
-                all_probabilities.extend(probabilities)
+            if len(X_test) > 0 and self.global_model is not None:
+                try:
+                    predictions = self.global_model.predict(X_test)
+                    probabilities = self.global_model.predict_proba(X_test)[:, 1]
+                    
+                    all_predictions.extend(predictions)
+                    all_true_labels.extend(y_test)
+                    all_probabilities.extend(probabilities)
+                except Exception as e:
+                    print(f"Error evaluating client {client.client_id}: {e}")
+                    continue
         
         if len(all_predictions) == 0:
             return 0.0, 1.0, 0.0, np.zeros((2, 2))

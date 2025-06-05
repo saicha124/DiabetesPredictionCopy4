@@ -40,6 +40,8 @@ if 'execution_times' not in st.session_state:
     st.session_state.execution_times = []
 if 'communication_times' not in st.session_state:
     st.session_state.communication_times = []
+if 'client_status' not in st.session_state:
+    st.session_state.client_status = {}
 
 def main():
     st.title("🏥 Hierarchical Federated Deep Learning")
@@ -127,9 +129,16 @@ def main():
                     st.session_state.training_started = False
                     reset_training()
         
-        # Progress monitoring
+        # Progress monitoring with auto-refresh
         if st.session_state.training_started and not st.session_state.training_completed:
-            show_training_progress()
+            progress_container = st.empty()
+            with progress_container.container():
+                show_training_progress()
+            
+            # Auto-refresh every 2 seconds during training
+            if st.session_state.training_started:
+                time.sleep(0.1)  # Small delay to prevent excessive refreshing
+                st.rerun()
         
         # Results section
         if st.session_state.training_completed and st.session_state.results:
@@ -244,49 +253,112 @@ def run_training_loop(fl_manager, data):
 def show_training_progress():
     """Display real-time training progress"""
     if st.session_state.fl_manager:
-        # Progress bars
-        round_progress = st.progress(0)
-        client_progress = st.progress(0)
+        st.subheader("🚀 Training Progress")
         
-        # Metrics placeholders
-        metrics_placeholder = st.empty()
-        chart_placeholder = st.empty()
+        # Overall progress section
+        col1, col2 = st.columns([2, 1])
         
-        # Update progress periodically
-        while st.session_state.training_started and not st.session_state.training_completed:
-            try:
-                # Get current progress from FL manager
-                current_round = getattr(st.session_state.fl_manager, 'current_round', 0)
-                max_rounds = st.session_state.fl_manager.max_rounds
+        with col1:
+            # Round progress
+            current_round = getattr(st.session_state.fl_manager, 'current_round', 0)
+            max_rounds = st.session_state.fl_manager.max_rounds
+            round_progress = st.progress(min(current_round / max_rounds, 1.0))
+            st.write(f"Round {current_round} of {max_rounds}")
+            
+        with col2:
+            # Target accuracy indicator
+            target_accuracy = st.session_state.fl_manager.target_accuracy
+            current_accuracy = 0.0
+            if st.session_state.training_metrics:
+                current_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
+            
+            accuracy_progress = st.progress(min(current_accuracy / target_accuracy, 1.0))
+            st.write(f"Accuracy: {current_accuracy:.3f} / {target_accuracy:.3f}")
+        
+        # Client progress section
+        st.subheader("📊 Client Training Status")
+        num_clients = st.session_state.fl_manager.num_clients
+        
+        # Create client progress bars
+        client_cols = st.columns(min(num_clients, 5))  # Max 5 columns for display
+        
+        for i in range(num_clients):
+            col_idx = i % len(client_cols)
+            with client_cols[col_idx]:
+                # Get client status
+                client_status = st.session_state.client_status.get(i, 'waiting')
                 
-                # Update progress bars
-                round_progress.progress(min(current_round / max_rounds, 1.0))
+                # Calculate progress based on status
+                if client_status == 'waiting':
+                    progress_val = 0.0
+                    status_color = "🔄"
+                elif client_status == 'training':
+                    progress_val = 0.5
+                    status_color = "🟡"
+                elif client_status == 'completed':
+                    progress_val = 1.0
+                    status_color = "🟢"
+                else:  # failed
+                    progress_val = 0.0
+                    status_color = "🔴"
                 
-                # Display current metrics
-                if st.session_state.training_metrics:
-                    latest_metrics = st.session_state.training_metrics[-1]
-                    
-                    with metrics_placeholder.container():
-                        col1, col2, col3, col4 = st.columns(4)
-                        with col1:
-                            st.metric("Round", current_round)
-                        with col2:
-                            st.metric("Accuracy", f"{latest_metrics.get('accuracy', 0):.3f}")
-                        with col3:
-                            st.metric("Loss", f"{latest_metrics.get('loss', 0):.3f}")
-                        with col4:
-                            st.metric("F1 Score", f"{latest_metrics.get('f1_score', 0):.3f}")
-                
-                # Update training chart
+                st.progress(progress_val)
+                st.caption(f"{status_color} Client {i}")
+                st.caption(f"Status: {client_status.title()}")
+        
+        # Current metrics display
+        if st.session_state.training_metrics:
+            latest_metrics = st.session_state.training_metrics[-1]
+            
+            st.subheader("📈 Current Metrics")
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Round", current_round, delta=1 if current_round > 1 else None)
+            with col2:
+                accuracy = latest_metrics.get('accuracy', 0)
+                prev_accuracy = 0
                 if len(st.session_state.training_metrics) > 1:
-                    with chart_placeholder.container():
-                        show_training_charts()
-                
-                time.sleep(2)  # Update every 2 seconds
-                
-            except Exception as e:
-                st.error(f"Error updating progress: {str(e)}")
-                break
+                    prev_accuracy = st.session_state.training_metrics[-2].get('accuracy', 0)
+                delta_accuracy = accuracy - prev_accuracy if len(st.session_state.training_metrics) > 1 else None
+                st.metric("Accuracy", f"{accuracy:.3f}", delta=f"{delta_accuracy:.3f}" if delta_accuracy else None)
+            with col3:
+                loss = latest_metrics.get('loss', 0)
+                prev_loss = 0
+                if len(st.session_state.training_metrics) > 1:
+                    prev_loss = st.session_state.training_metrics[-2].get('loss', 0)
+                delta_loss = loss - prev_loss if len(st.session_state.training_metrics) > 1 else None
+                st.metric("Loss", f"{loss:.3f}", delta=f"{delta_loss:.3f}" if delta_loss else None)
+            with col4:
+                f1 = latest_metrics.get('f1_score', 0)
+                prev_f1 = 0
+                if len(st.session_state.training_metrics) > 1:
+                    prev_f1 = st.session_state.training_metrics[-2].get('f1_score', 0)
+                delta_f1 = f1 - prev_f1 if len(st.session_state.training_metrics) > 1 else None
+                st.metric("F1 Score", f"{f1:.3f}", delta=f"{delta_f1:.3f}" if delta_f1 else None)
+        
+        # Real-time charts
+        if len(st.session_state.training_metrics) > 1:
+            st.subheader("📊 Real-time Training Charts")
+            show_training_charts()
+            
+        # Execution and Communication Times
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.session_state.execution_times:
+                st.subheader("⏱️ Fog Execution Times")
+                current_exec_time = st.session_state.execution_times[-1] if st.session_state.execution_times else 0
+                avg_exec_time = np.mean(st.session_state.execution_times) if st.session_state.execution_times else 0
+                st.metric("Current Round Time", f"{current_exec_time:.2f}s")
+                st.metric("Average Time", f"{avg_exec_time:.2f}s")
+        
+        with col2:
+            if st.session_state.communication_times:
+                st.subheader("📡 Communication Times")
+                current_comm_time = st.session_state.communication_times[-1] if st.session_state.communication_times else 0
+                avg_comm_time = np.mean(st.session_state.communication_times) if st.session_state.communication_times else 0
+                st.metric("Current Comm Time", f"{current_comm_time:.2f}s")
+                st.metric("Average Comm Time", f"{avg_comm_time:.2f}s")
 
 def show_training_charts():
     """Display training progress charts"""
@@ -295,46 +367,95 @@ def show_training_charts():
     
     df_metrics = pd.DataFrame(st.session_state.training_metrics)
     
-    # Create subplots
-    fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=('Accuracy', 'Loss', 'F1 Score', 'Execution Time'),
-        specs=[[{"secondary_y": False}, {"secondary_y": False}],
-               [{"secondary_y": False}, {"secondary_y": False}]]
-    )
+    # Main training metrics chart
+    col1, col2 = st.columns(2)
     
-    # Accuracy
-    fig.add_trace(
-        go.Scatter(x=df_metrics.index, y=df_metrics['accuracy'], 
-                  mode='lines+markers', name='Accuracy'),
-        row=1, col=1
-    )
-    
-    # Loss
-    fig.add_trace(
-        go.Scatter(x=df_metrics.index, y=df_metrics['loss'], 
-                  mode='lines+markers', name='Loss', line=dict(color='red')),
-        row=1, col=2
-    )
-    
-    # F1 Score
-    fig.add_trace(
-        go.Scatter(x=df_metrics.index, y=df_metrics['f1_score'], 
-                  mode='lines+markers', name='F1 Score', line=dict(color='green')),
-        row=2, col=1
-    )
-    
-    # Execution Time
-    if st.session_state.execution_times:
-        fig.add_trace(
-            go.Scatter(x=list(range(len(st.session_state.execution_times))), 
-                      y=st.session_state.execution_times, 
-                      mode='lines+markers', name='Execution Time', line=dict(color='orange')),
-            row=2, col=2
+    with col1:
+        # Accuracy and Loss chart
+        fig_metrics = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=('Training Accuracy', 'Training Loss'),
+            specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
         )
+        
+        # Accuracy
+        fig_metrics.add_trace(
+            go.Scatter(x=df_metrics['round'], y=df_metrics['accuracy'], 
+                      mode='lines+markers', name='Accuracy', 
+                      line=dict(color='blue', width=3)),
+            row=1, col=1
+        )
+        
+        # Add target accuracy line
+        target_acc = st.session_state.fl_manager.target_accuracy if st.session_state.fl_manager else 0.85
+        fig_metrics.add_hline(y=target_acc, line_dash="dash", line_color="green", 
+                             annotation_text="Target Accuracy", row=1, col=1)
+        
+        # Loss
+        fig_metrics.add_trace(
+            go.Scatter(x=df_metrics['round'], y=df_metrics['loss'], 
+                      mode='lines+markers', name='Loss', 
+                      line=dict(color='red', width=3)),
+            row=2, col=1
+        )
+        
+        fig_metrics.update_layout(height=400, showlegend=False, 
+                                 title_text="Training Performance")
+        st.plotly_chart(fig_metrics, use_container_width=True)
     
-    fig.update_layout(height=500, showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+    with col2:
+        # F1 Score and Communication Time
+        fig_other = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=('F1 Score', 'Communication Time'),
+            specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
+        )
+        
+        # F1 Score
+        fig_other.add_trace(
+            go.Scatter(x=df_metrics['round'], y=df_metrics['f1_score'], 
+                      mode='lines+markers', name='F1 Score', 
+                      line=dict(color='green', width=3)),
+            row=1, col=1
+        )
+        
+        # Communication Time
+        if st.session_state.communication_times:
+            comm_rounds = list(range(1, len(st.session_state.communication_times) + 1))
+            fig_other.add_trace(
+                go.Scatter(x=comm_rounds, y=st.session_state.communication_times, 
+                          mode='lines+markers', name='Comm Time', 
+                          line=dict(color='purple', width=3)),
+                row=2, col=1
+            )
+        
+        fig_other.update_layout(height=400, showlegend=False, 
+                               title_text="Additional Metrics")
+        st.plotly_chart(fig_other, use_container_width=True)
+    
+    # Execution time chart
+    if st.session_state.execution_times:
+        st.subheader("Fog Execution Times Per Round")
+        exec_rounds = list(range(1, len(st.session_state.execution_times) + 1))
+        fig_exec = go.Figure()
+        
+        fig_exec.add_trace(go.Scatter(
+            x=exec_rounds, 
+            y=st.session_state.execution_times,
+            mode='lines+markers',
+            name='Execution Time',
+            line=dict(color='orange', width=3),
+            fill='tonexty'
+        ))
+        
+        fig_exec.update_layout(
+            title="Fog Execution Times",
+            xaxis_title="Round",
+            yaxis_title="Time (seconds)",
+            height=300
+        )
+        
+        st.plotly_chart(fig_exec, use_container_width=True)
 
 def show_results():
     """Display final training results"""
