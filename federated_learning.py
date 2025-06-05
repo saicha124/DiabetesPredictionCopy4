@@ -202,18 +202,29 @@ class FederatedLearningManager:
                     'execution_time': round_time
                 }
                 
-                # Update session state for real-time monitoring
+                # Update session state for real-time monitoring (with safe initialization)
                 with self.lock:
-                    if 'training_metrics' in st.session_state:
+                    try:
+                        if not hasattr(st.session_state, 'training_metrics'):
+                            st.session_state.training_metrics = []
                         st.session_state.training_metrics.append(metrics)
-                    if 'confusion_matrices' in st.session_state:
+                        
+                        if not hasattr(st.session_state, 'confusion_matrices'):
+                            st.session_state.confusion_matrices = []
                         st.session_state.confusion_matrices.append(cm)
-                    if 'execution_times' in st.session_state:
+                        
+                        if not hasattr(st.session_state, 'execution_times'):
+                            st.session_state.execution_times = []
                         st.session_state.execution_times.append(round_time)
-                    if 'communication_times' in st.session_state:
+                        
+                        if not hasattr(st.session_state, 'communication_times'):
+                            st.session_state.communication_times = []
                         # Simulate communication time
                         comm_time = np.random.normal(0.5, 0.1)
                         st.session_state.communication_times.append(max(0.1, comm_time))
+                    except Exception as e:
+                        # If session state access fails, continue without updating
+                        print(f"Session state update failed: {e}")
                 
                 self.training_history.append(metrics)
                 
@@ -223,14 +234,22 @@ class FederatedLearningManager:
                     
                 # Update session state for best accuracy tracking
                 with self.lock:
-                    if 'best_accuracy' in st.session_state:
+                    try:
+                        if not hasattr(st.session_state, 'best_accuracy'):
+                            st.session_state.best_accuracy = 0.0
                         st.session_state.best_accuracy = self.best_accuracy
+                    except Exception as e:
+                        print(f"Best accuracy update failed: {e}")
                 
                 if accuracy >= self.target_accuracy:
                     print(f"🎯 Target accuracy {self.target_accuracy:.3f} reached at round {self.current_round}!")
                     with self.lock:
-                        if 'early_stopped' in st.session_state:
+                        try:
+                            if not hasattr(st.session_state, 'early_stopped'):
+                                st.session_state.early_stopped = False
                             st.session_state.early_stopped = True
+                        except Exception as e:
+                            print(f"Early stopped update failed: {e}")
                     break
                 
                 # Simulate some delay for demonstration
