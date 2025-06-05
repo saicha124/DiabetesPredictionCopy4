@@ -236,6 +236,8 @@ def start_training(data, num_clients, max_rounds, target_accuracy,
         st.session_state.confusion_matrices = []
         st.session_state.execution_times = []
         st.session_state.communication_times = []
+        st.session_state.client_status = {}
+        st.session_state.results = None
         
         # Initialize federated learning manager
         fl_manager = FederatedLearningManager(
@@ -251,19 +253,19 @@ def start_training(data, num_clients, max_rounds, target_accuracy,
         
         st.session_state.fl_manager = fl_manager
         
-        # Run training in a separate thread
-        training_thread = threading.Thread(
-            target=run_training_loop,
-            args=(fl_manager, data)
-        )
-        training_thread.daemon = True
-        training_thread.start()
+        # Run training directly without threading to avoid session state issues
+        with st.spinner("Training federated learning model..."):
+            results = fl_manager.train(data)
+            st.session_state.results = results
+            st.session_state.training_completed = True
+            st.session_state.training_started = False
         
         st.rerun()
         
     except Exception as e:
         st.error(f"Error starting training: {str(e)}")
         st.session_state.training_started = False
+        st.session_state.training_completed = False
 
 def run_training_loop(fl_manager, data):
     """Run the training loop in background"""

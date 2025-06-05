@@ -24,7 +24,7 @@ class FedAvgAggregator:
             # Initialize aggregated parameters
             aggregated_params = None
             
-            # Weighted aggregation
+            # Weighted aggregation - ensure consistent parameter shapes
             for update in client_updates:
                 weight = update['num_samples'] / total_samples
                 params = update['parameters']
@@ -32,6 +32,14 @@ class FedAvgAggregator:
                 if aggregated_params is None:
                     aggregated_params = weight * params
                 else:
+                    # Handle shape mismatches by padding or truncating
+                    if len(params) != len(aggregated_params):
+                        min_len = min(len(params), len(aggregated_params))
+                        if len(params) > len(aggregated_params):
+                            aggregated_params = np.pad(aggregated_params, (0, len(params) - len(aggregated_params)))
+                        params = params[:min_len] if len(params) > min_len else np.pad(params, (0, min_len - len(params)))
+                        aggregated_params = aggregated_params[:min_len] if len(aggregated_params) > min_len else np.pad(aggregated_params, (0, min_len - len(aggregated_params)))
+                    
                     aggregated_params += weight * params
             
             # Update global model with aggregated parameters

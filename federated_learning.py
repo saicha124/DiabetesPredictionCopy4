@@ -104,12 +104,21 @@ class FederatedLearningManager:
             client_y = y[start_idx:end_idx]
             
             # Split into train/test for each client
-            if len(client_X) > 1:
+            if len(client_X) > 1 and len(np.unique(client_y)) > 1:
                 X_train, X_test, y_train, y_test = train_test_split(
                     client_X, client_y, test_size=0.2, random_state=42, stratify=client_y
                 )
             else:
-                X_train, X_test, y_train, y_test = client_X, client_X, client_y, client_y
+                # If not enough samples or only one class, use simple split
+                split_idx = max(1, len(client_X) // 2)
+                X_train, X_test = client_X[:split_idx], client_X[split_idx:]
+                y_train, y_test = client_y[:split_idx], client_y[split_idx:]
+                
+                # Ensure minimum data for training
+                if len(X_train) == 0:
+                    X_train, y_train = client_X, client_y
+                if len(X_test) == 0:
+                    X_test, y_test = X_train, y_train
             
             client_data.append({
                 'X_train': X_train,
