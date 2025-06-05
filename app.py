@@ -13,6 +13,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 
 from federated_learning import FederatedLearningManager
 from data_preprocessing import DataPreprocessor
+from data_distribution import get_distribution_strategy, visualize_data_distribution
 from utils import calculate_metrics, plot_confusion_matrix
 
 # Page configuration
@@ -53,10 +54,15 @@ def init_session_state():
         st.session_state.client_results = []
     if 'fog_results' not in st.session_state:
         st.session_state.fog_results = []
+    if 'distribution_strategy' not in st.session_state:
+        st.session_state.distribution_strategy = 'IID'
+    if 'distribution_stats' not in st.session_state:
+        st.session_state.distribution_stats = None
 
 def start_training(data, num_clients, max_rounds, target_accuracy, 
-                  aggregation_algorithm, enable_dp, epsilon, delta, committee_size):
-    """Start federated learning training"""
+                  aggregation_algorithm, enable_dp, epsilon, delta, committee_size,
+                  distribution_strategy, strategy_params):
+    """Start federated learning training with custom data distribution"""
     try:
         # Create FL manager
         st.session_state.fl_manager = FederatedLearningManager(
@@ -69,6 +75,10 @@ def start_training(data, num_clients, max_rounds, target_accuracy,
             delta=delta,
             committee_size=committee_size
         )
+        
+        # Store distribution configuration
+        st.session_state.distribution_strategy = distribution_strategy
+        st.session_state.strategy_params = strategy_params
         
         # Reset training state
         st.session_state.training_started = True
@@ -85,7 +95,7 @@ def start_training(data, num_clients, max_rounds, target_accuracy,
         st.session_state.fog_results = []
         st.session_state.training_data = data
         
-        st.success("Training initialized! Switch to Live Monitoring tab to start.")
+        st.success(f"Training initialized with {distribution_strategy} distribution! Switch to Live Monitoring tab to start.")
         
     except Exception as e:
         st.error(f"Error starting training: {str(e)}")
@@ -220,61 +230,199 @@ def show_training_progress():
                 st.metric(f"Station {i+1}", f"{status_color} {status}")
 
 def show_training_charts():
-    """Display training progress charts"""
+    """Display advanced training progress visualizations"""
     if not st.session_state.training_metrics:
         return
     
-    st.header("📈 Training Analytics")
+    st.header("📈 Real-Time Training Analytics")
     
     # Create metrics dataframe
     metrics_df = pd.DataFrame(st.session_state.training_metrics)
     
+    # Main performance chart with multiple metrics
     col1, col2 = st.columns(2)
     
     with col1:
-        # Accuracy and F1 over rounds
-        fig = go.Figure()
+        # Multi-metric performance chart
+        fig = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=('Model Performance', 'Training Loss'),
+            vertical_spacing=0.1
+        )
+        
+        # Performance metrics
         if 'accuracy' in metrics_df.columns:
             fig.add_trace(go.Scatter(
                 x=list(range(1, len(metrics_df) + 1)),
                 y=metrics_df['accuracy'],
                 mode='lines+markers',
                 name='Accuracy',
-                line=dict(color='blue', width=3)
-            ))
+                line=dict(color='#2E86AB', width=3),
+                marker=dict(size=8)
+            ), row=1, col=1)
+            
         if 'f1_score' in metrics_df.columns:
             fig.add_trace(go.Scatter(
                 x=list(range(1, len(metrics_df) + 1)),
                 y=metrics_df['f1_score'],
                 mode='lines+markers',
                 name='F1 Score',
-                line=dict(color='green', width=3)
-            ))
+                line=dict(color='#A23B72', width=3),
+                marker=dict(size=8)
+            ), row=1, col=1)
         
         # Add target accuracy line
         if st.session_state.fl_manager:
             target = st.session_state.fl_manager.target_accuracy
             fig.add_hline(y=target, line_dash="dash", line_color="red", 
-                         annotation_text=f"Target: {target:.3f}")
+                         annotation_text=f"Target: {target:.3f}", row=1, col=1)
+        
+        # Loss chart
+        if 'loss' in metrics_df.columns:
+            fig.add_trace(go.Scatter(
+                x=list(range(1, len(metrics_df) + 1)),
+                y=metrics_df['loss'],
+                mode='lines+markers',
+                name='Loss',
+                line=dict(color='#F18F01', width=3),
+                marker=dict(size=8)
+            ), row=2, col=1)
         
         fig.update_layout(
-            title="Model Performance Over Rounds",
-            xaxis_title="Training Round",
-            yaxis_title="Score",
-            template="plotly_white"
+            height=600,
+            title_text="Training Performance Metrics",
+            template="plotly_white",
+            showlegend=True
         )
+        fig.update_xaxes(title_text="Training Round")
+        fig.update_yaxes(title_text="Score", row=1, col=1)
+        fig.update_yaxes(title_text="Loss", row=2, col=1)
+        
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # Execution times
+        # Execution time analysis
         if st.session_state.execution_times:
-            fig_time = px.bar(
+            fig_time = go.Figure()
+            
+            # Bar chart for execution times
+            fig_time.add_trace(go.Bar(
                 x=list(range(1, len(st.session_state.execution_times) + 1)),
                 y=st.session_state.execution_times,
+                name='Execution Time',
+                marker_color='#C73E1D',
+                text=[f'{t:.2f}s' for t in st.session_state.execution_times],
+                textposition='auto'
+            ))
+            
+            # Add average line
+            avg_time = np.mean(st.session_state.execution_times)
+            fig_time.add_hline(y=avg_time, line_dash="dash", line_color="green",
+                              annotation_text=f"Avg: {avg_time:.2f}s")
+            
+            fig_time.update_layout(
                 title="Training Time per Round",
-                labels={'x': 'Round', 'y': 'Time (seconds)'}
+                xaxis_title="Training Round",
+                yaxis_title="Time (seconds)",
+                template="plotly_white",
+                height=300
             )
             st.plotly_chart(fig_time, use_container_width=True)
+        
+        # Communication overhead visualization
+        if st.session_state.communication_times:
+            fig_comm = go.Figure()
+            
+            fig_comm.add_trace(go.Scatter(
+                x=list(range(1, len(st.session_state.communication_times) + 1)),
+                y=st.session_state.communication_times,
+                mode='lines+markers',
+                name='Communication Time',
+                line=dict(color='#3F7CAC', width=2),
+                fill='tonexty',
+                fillcolor='rgba(63, 124, 172, 0.1)'
+            ))
+            
+            fig_comm.update_layout(
+                title="Communication Overhead",
+                xaxis_title="Training Round",
+                yaxis_title="Time (seconds)",
+                template="plotly_white",
+                height=250
+            )
+            st.plotly_chart(fig_comm, use_container_width=True)
+    
+    # Advanced analytics section
+    st.subheader("🔍 Advanced Analytics")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        # Convergence analysis
+        if len(metrics_df) > 1:
+            accuracy_trend = np.diff(metrics_df['accuracy']) if 'accuracy' in metrics_df.columns else []
+            convergence_rate = np.mean(accuracy_trend) if len(accuracy_trend) > 0 else 0
+            
+            fig_conv = go.Figure()
+            fig_conv.add_trace(go.Scatter(
+                x=list(range(2, len(metrics_df) + 1)),
+                y=accuracy_trend,
+                mode='lines+markers',
+                name='Accuracy Change',
+                line=dict(color='purple', width=2)
+            ))
+            fig_conv.add_hline(y=0, line_dash="dash", line_color="gray")
+            fig_conv.update_layout(
+                title=f"Convergence Rate: {convergence_rate:.4f}",
+                xaxis_title="Round",
+                yaxis_title="Accuracy Change",
+                template="plotly_white",
+                height=300
+            )
+            st.plotly_chart(fig_conv, use_container_width=True)
+    
+    with col2:
+        # Efficiency metrics
+        if st.session_state.execution_times and 'accuracy' in metrics_df.columns:
+            efficiency = metrics_df['accuracy'] / np.array(st.session_state.execution_times)
+            
+            fig_eff = go.Figure()
+            fig_eff.add_trace(go.Bar(
+                x=list(range(1, len(efficiency) + 1)),
+                y=efficiency,
+                name='Efficiency',
+                marker_color='lightgreen',
+                text=[f'{e:.3f}' for e in efficiency],
+                textposition='auto'
+            ))
+            fig_eff.update_layout(
+                title="Training Efficiency (Accuracy/Time)",
+                xaxis_title="Round",
+                yaxis_title="Efficiency Score",
+                template="plotly_white",
+                height=300
+            )
+            st.plotly_chart(fig_eff, use_container_width=True)
+    
+    with col3:
+        # Performance distribution
+        if 'accuracy' in metrics_df.columns and len(metrics_df) > 2:
+            fig_dist = go.Figure()
+            fig_dist.add_trace(go.Histogram(
+                x=metrics_df['accuracy'],
+                nbinsx=10,
+                name='Accuracy Distribution',
+                marker_color='orange',
+                opacity=0.7
+            ))
+            fig_dist.update_layout(
+                title="Accuracy Distribution",
+                xaxis_title="Accuracy",
+                yaxis_title="Frequency",
+                template="plotly_white",
+                height=300
+            )
+            st.plotly_chart(fig_dist, use_container_width=True)
 
 def show_results():
     """Display final training results in tables"""
@@ -400,15 +548,18 @@ def main():
     with tab1:
         st.header("🎛️ Federated Training Configuration")
         
-        col1, col2 = st.columns(2)
+        # Create three columns for better organization
+        col1, col2, col3 = st.columns(3)
         
         with col1:
+            st.subheader("📊 Basic Settings")
             num_clients = st.slider("🏢 Number of Field Stations", min_value=3, max_value=10, value=5)
             max_rounds = st.slider("🔄 Maximum Training Cycles", min_value=5, max_value=50, value=20)
             target_accuracy = st.slider("🎯 Target Accuracy (Auto-Stop)", min_value=0.7, max_value=0.95, value=0.85, step=0.05)
             
         with col2:
-            aggregation_algorithm = st.selectbox("🔧 Aggregation Algorithm", ["FedAvg", "FedProx", "SecureAgg"])
+            st.subheader("🔧 Algorithm Settings")
+            aggregation_algorithm = st.selectbox("Aggregation Algorithm", ["FedAvg", "FedProx", "SecureAgg"])
             enable_dp = st.checkbox("🔒 Enable Privacy Protection", value=True)
             if enable_dp:
                 epsilon = st.number_input("🛡️ Privacy Budget (ε)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
@@ -417,13 +568,98 @@ def main():
                 epsilon = delta = None
             committee_size = st.slider("👥 Security Committee Size", min_value=2, max_value=5, value=3)
         
+        with col3:
+            st.subheader("🌍 Data Distribution Strategy")
+            distribution_strategy = st.selectbox(
+                "Distribution Pattern",
+                ["IID", "Non-IID (Dirichlet)", "Pathological Non-IID", "Quantity Skew", "Geographic"],
+                index=0
+            )
+            
+            # Strategy-specific parameters
+            strategy_params = {}
+            if distribution_strategy == "Non-IID (Dirichlet)":
+                alpha = st.slider("Alpha (Non-IID strength)", min_value=0.1, max_value=2.0, value=0.5, step=0.1)
+                strategy_params['alpha'] = alpha
+                st.info("Lower alpha = more non-IID")
+            elif distribution_strategy == "Pathological Non-IID":
+                classes_per_client = st.slider("Classes per Station", min_value=1, max_value=2, value=1)
+                strategy_params['classes_per_client'] = classes_per_client
+            elif distribution_strategy == "Quantity Skew":
+                skew_factor = st.slider("Skew Factor", min_value=0.5, max_value=3.0, value=2.0, step=0.1)
+                strategy_params['skew_factor'] = skew_factor
+                st.info("Higher factor = more skewed")
+            elif distribution_strategy == "Geographic":
+                correlation_strength = st.slider("Geographic Correlation", min_value=0.1, max_value=1.0, value=0.8, step=0.1)
+                strategy_params['correlation_strength'] = correlation_strength
+            
+            st.session_state.distribution_strategy = distribution_strategy
+            st.session_state.strategy_params = strategy_params
+        
+        # Data distribution preview
+        st.subheader("📈 Data Distribution Preview")
+        if st.button("🔍 Preview Data Distribution"):
+            with st.spinner("Generating distribution preview..."):
+                try:
+                    # Create distribution strategy
+                    strategy = get_distribution_strategy(
+                        distribution_strategy, 
+                        num_clients, 
+                        random_state=42,
+                        **strategy_params
+                    )
+                    
+                    # Apply distribution
+                    client_data = strategy.distribute_data(X, y)
+                    distribution_stats = strategy.get_distribution_stats(client_data)
+                    
+                    # Store for later use
+                    st.session_state.distribution_stats = distribution_stats
+                    st.session_state.preview_client_data = client_data
+                    
+                    # Create visualizations
+                    fig_sizes, fig_heatmap = visualize_data_distribution(client_data, distribution_stats)
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.plotly_chart(fig_sizes, use_container_width=True)
+                    with col2:
+                        st.plotly_chart(fig_heatmap, use_container_width=True)
+                    
+                    # Display statistics
+                    st.subheader("Distribution Statistics")
+                    stats_col1, stats_col2, stats_col3 = st.columns(3)
+                    
+                    with stats_col1:
+                        st.metric("Strategy", distribution_stats['strategy'])
+                        st.metric("Total Samples", distribution_stats['total_samples'])
+                    
+                    with stats_col2:
+                        avg_size = np.mean(distribution_stats['client_sizes'])
+                        std_size = np.std(distribution_stats['client_sizes'])
+                        st.metric("Avg Station Size", f"{avg_size:.1f}")
+                        st.metric("Size Std Dev", f"{std_size:.1f}")
+                    
+                    with stats_col3:
+                        min_size = min(distribution_stats['client_sizes'])
+                        max_size = max(distribution_stats['client_sizes'])
+                        st.metric("Min Station Size", min_size)
+                        st.metric("Max Station Size", max_size)
+                    
+                    st.success("Distribution preview generated successfully!")
+                    
+                except Exception as e:
+                    st.error(f"Error generating preview: {str(e)}")
+        
         # Training controls
+        st.subheader("🚀 Training Controls")
         col1, col2 = st.columns([1, 1])
         
         with col1:
             if st.button("🚀 Start Federated Learning", disabled=st.session_state.training_started):
                 start_training(data, num_clients, max_rounds, target_accuracy, 
-                              aggregation_algorithm, enable_dp, epsilon, delta, committee_size)
+                              aggregation_algorithm, enable_dp, epsilon, delta, committee_size,
+                              distribution_strategy, strategy_params)
         
         with col2:
             if st.button("🔄 Reset System"):
@@ -448,8 +684,31 @@ def main():
                     fl_manager = st.session_state.fl_manager
                     data = st.session_state.training_data
                     
-                    # Setup clients
-                    fl_manager.setup_clients(data)
+                    # Apply custom data distribution
+                    distribution_strategy = getattr(st.session_state, 'distribution_strategy', 'IID')
+                    strategy_params = getattr(st.session_state, 'strategy_params', {})
+                    
+                    # Create distribution strategy
+                    strategy = get_distribution_strategy(
+                        distribution_strategy, 
+                        fl_manager.num_clients, 
+                        random_state=42,
+                        **strategy_params
+                    )
+                    
+                    # Preprocess data
+                    preprocessor = DataPreprocessor()
+                    X, y = preprocessor.fit_transform(data)
+                    
+                    # Apply distribution
+                    client_data = strategy.distribute_data(X, y)
+                    distribution_stats = strategy.get_distribution_stats(client_data)
+                    
+                    # Store distribution stats
+                    st.session_state.distribution_stats = distribution_stats
+                    
+                    # Setup clients with distributed data
+                    fl_manager.setup_clients_with_data(client_data)
                     
                     # Training loop
                     for round_num in range(fl_manager.max_rounds):
