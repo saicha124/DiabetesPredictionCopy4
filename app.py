@@ -56,46 +56,37 @@ def init_session_state():
 
 def start_training(data, num_clients, max_rounds, target_accuracy, 
                   aggregation_algorithm, enable_dp, epsilon, delta, committee_size):
-    """Start federated learning training with early stopping"""
+    """Start federated learning training"""
     try:
-        with st.spinner("Initializing Federated Learning System..."):
-            # Create FL manager
-            st.session_state.fl_manager = FederatedLearningManager(
-                num_clients=num_clients,
-                max_rounds=max_rounds,
-                target_accuracy=target_accuracy,
-                aggregation_algorithm=aggregation_algorithm,
-                enable_dp=enable_dp,
-                epsilon=epsilon,
-                delta=delta,
-                committee_size=committee_size
-            )
-            
-            # Reset training state
-            st.session_state.training_started = True
-            st.session_state.training_completed = False
-            st.session_state.training_metrics = []
-            st.session_state.confusion_matrices = []
-            st.session_state.execution_times = []
-            st.session_state.communication_times = []
-            st.session_state.client_status = {}
-            st.session_state.best_accuracy = 0.0
-            st.session_state.early_stopped = False
-            st.session_state.current_round = 0
-            st.session_state.client_results = []
-            st.session_state.fog_results = []
-            
-            # Start training in background thread
-            threading.Thread(
-                target=run_training_loop,
-                args=(st.session_state.fl_manager, data),
-                daemon=True
-            ).start()
-            
-            st.success("Training initiated successfully!")
-            time.sleep(1)
-            st.rerun()
-            
+        # Create FL manager
+        st.session_state.fl_manager = FederatedLearningManager(
+            num_clients=num_clients,
+            max_rounds=max_rounds,
+            target_accuracy=target_accuracy,
+            aggregation_algorithm=aggregation_algorithm,
+            enable_dp=enable_dp,
+            epsilon=epsilon,
+            delta=delta,
+            committee_size=committee_size
+        )
+        
+        # Reset training state
+        st.session_state.training_started = True
+        st.session_state.training_completed = False
+        st.session_state.training_metrics = []
+        st.session_state.confusion_matrices = []
+        st.session_state.execution_times = []
+        st.session_state.communication_times = []
+        st.session_state.client_status = {}
+        st.session_state.best_accuracy = 0.0
+        st.session_state.early_stopped = False
+        st.session_state.current_round = 0
+        st.session_state.client_results = []
+        st.session_state.fog_results = []
+        st.session_state.training_data = data
+        
+        st.success("Training initialized! Switch to Live Monitoring tab to start.")
+        
     except Exception as e:
         st.error(f"Error starting training: {str(e)}")
 
@@ -442,18 +433,134 @@ def main():
     with tab2:
         st.header("📈 Live Training Monitoring")
         
-        # Auto-refresh for live monitoring
+        # Direct training execution
         if st.session_state.training_started and not st.session_state.training_completed:
-            st.info("🔄 Training in progress - Auto-refreshing every 3 seconds")
-            time.sleep(3)
-            st.rerun()
+            if hasattr(st.session_state, 'training_data') and st.session_state.fl_manager:
+                st.info("🔄 Starting federated learning training...")
+                
+                # Create progress containers
+                progress_container = st.empty()
+                metrics_container = st.empty()
+                charts_container = st.empty()
+                
+                # Run training with real-time updates
+                try:
+                    fl_manager = st.session_state.fl_manager
+                    data = st.session_state.training_data
+                    
+                    # Setup clients
+                    fl_manager.setup_clients(data)
+                    
+                    # Training loop
+                    for round_num in range(fl_manager.max_rounds):
+                        current_round = round_num + 1
+                        
+                        # Update progress
+                        with progress_container.container():
+                            st.subheader(f"Round {current_round}/{fl_manager.max_rounds}")
+                            progress_bar = st.progress(current_round / fl_manager.max_rounds)
+                            
+                            # Field station status
+                            cols = st.columns(fl_manager.num_clients)
+                            for i in range(fl_manager.num_clients):
+                                with cols[i]:
+                                    st.metric(f"Station {i+1}", "🟡 Training")
+                        
+                        # Run training round
+                        start_time = time.time()
+                        
+                        # Train clients
+                        client_updates = fl_manager._train_clients_parallel()
+                        
+                        # Aggregate
+                        fl_manager.global_model = fl_manager.aggregator.aggregate(
+                            fl_manager.global_model, client_updates
+                        )
+                        
+                        # Evaluate
+                        accuracy, loss, f1, cm = fl_manager._evaluate_global_model()
+                        
+                        round_time = time.time() - start_time
+                        
+                        # Store metrics
+                        metrics = {
+                            'round': current_round,
+                            'accuracy': accuracy,
+                            'loss': loss,
+                            'f1_score': f1,
+                            'execution_time': round_time
+                        }
+                        
+                        st.session_state.training_metrics.append(metrics)
+                        st.session_state.execution_times.append(round_time)
+                        st.session_state.confusion_matrices.append(cm)
+                        st.session_state.communication_times.append(0.5)
+                        st.session_state.best_accuracy = max(st.session_state.best_accuracy, accuracy)
+                        st.session_state.current_round = current_round
+                        
+                        # Update metrics display
+                        with metrics_container.container():
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("Accuracy", f"{accuracy:.3f}")
+                            with col2:
+                                st.metric("F1 Score", f"{f1:.3f}")
+                            with col3:
+                                st.metric("Best Accuracy", f"{st.session_state.best_accuracy:.3f}")
+                        
+                        # Update charts
+                        with charts_container.container():
+                            if len(st.session_state.training_metrics) > 1:
+                                show_training_charts()
+                        
+                        # Check early stopping
+                        if accuracy >= fl_manager.target_accuracy:
+                            st.success(f"🎯 Target accuracy {fl_manager.target_accuracy:.3f} reached!")
+                            st.session_state.early_stopped = True
+                            break
+                        
+                        # Update station status to completed
+                        with progress_container.container():
+                            st.subheader(f"Round {current_round}/{fl_manager.max_rounds}")
+                            progress_bar = st.progress(current_round / fl_manager.max_rounds)
+                            
+                            cols = st.columns(fl_manager.num_clients)
+                            for i in range(fl_manager.num_clients):
+                                with cols[i]:
+                                    st.metric(f"Station {i+1}", "🟢 Completed")
+                        
+                        time.sleep(1)  # Brief pause between rounds
+                    
+                    # Training completed
+                    st.session_state.training_completed = True
+                    st.session_state.training_started = False
+                    
+                    # Final results
+                    final_accuracy = st.session_state.best_accuracy
+                    st.session_state.results = {
+                        'accuracy': final_accuracy,
+                        'f1_score': f1,
+                        'rounds_completed': current_round,
+                        'early_stopped': st.session_state.early_stopped,
+                        'training_history': st.session_state.training_metrics
+                    }
+                    
+                    # Extract results for tables
+                    extract_training_results(fl_manager)
+                    
+                    st.success("Training completed successfully!")
+                    
+                except Exception as e:
+                    st.error(f"Training failed: {str(e)}")
+                    st.session_state.training_started = False
+            else:
+                st.warning("Please start training from the Training Control tab first.")
         
-        # Training Progress
-        if st.session_state.training_started or st.session_state.training_completed:
+        # Show completed training results
+        elif st.session_state.training_completed:
+            st.success("✅ Training Completed")
             show_training_progress()
-            
-            # Show real-time charts
-            if hasattr(st.session_state, 'training_metrics') and len(st.session_state.training_metrics) > 0:
+            if len(st.session_state.training_metrics) > 0:
                 show_training_charts()
         else:
             st.info("🌱 Start training to see live monitoring data")
