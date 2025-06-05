@@ -20,7 +20,8 @@ class FederatedLearningManager:
     
     def __init__(self, num_clients=5, max_rounds=20, target_accuracy=0.85,
                  aggregation_algorithm='FedAvg', enable_dp=True, epsilon=1.0, 
-                 delta=1e-5, committee_size=3):
+                 delta=1e-5, committee_size=3, model_type='logistic_regression',
+                 privacy_mechanism='gaussian', gradient_clip_norm=1.0):
         self.num_clients = num_clients
         self.max_rounds = max_rounds
         self.target_accuracy = target_accuracy
@@ -29,10 +30,23 @@ class FederatedLearningManager:
         self.epsilon = epsilon
         self.delta = delta
         self.committee_size = committee_size
+        self.model_type = model_type
+        self.privacy_mechanism = privacy_mechanism
+        self.gradient_clip_norm = gradient_clip_norm
         
         # Initialize components
         self.preprocessor = DataPreprocessor()
-        self.dp_manager = DifferentialPrivacyManager(epsilon, delta) if enable_dp else None
+        if enable_dp:
+            self.dp_manager = DifferentialPrivacyManager(
+                epsilon=epsilon, 
+                delta=delta, 
+                mechanism=privacy_mechanism,
+                sensitivity=1.0
+            )
+            if hasattr(self.dp_manager, 'gradient_clip_norm'):
+                self.dp_manager.gradient_clip_norm = gradient_clip_norm
+        else:
+            self.dp_manager = None
         
         # Initialize aggregator
         if aggregation_algorithm == 'FedAvg':

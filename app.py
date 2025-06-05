@@ -63,10 +63,12 @@ def init_session_state():
 def start_training(data, num_clients, max_rounds, target_accuracy, 
                   aggregation_algorithm, enable_dp, epsilon, delta, committee_size,
                   distribution_strategy, strategy_params, enable_fog=True, 
-                  num_fog_nodes=3, fog_aggregation_method="Mixed Methods"):
+                  num_fog_nodes=3, fog_aggregation_method="Mixed Methods",
+                  model_type="logistic_regression", privacy_mechanism="gaussian", 
+                  gradient_clip_norm=1.0):
     """Start federated learning training with custom data distribution and fog aggregation"""
     try:
-        # Create FL manager
+        # Create FL manager with advanced parameters
         st.session_state.fl_manager = FederatedLearningManager(
             num_clients=num_clients,
             max_rounds=max_rounds,
@@ -75,7 +77,10 @@ def start_training(data, num_clients, max_rounds, target_accuracy,
             enable_dp=enable_dp,
             epsilon=epsilon,
             delta=delta,
-            committee_size=committee_size
+            committee_size=committee_size,
+            model_type=model_type,
+            privacy_mechanism=privacy_mechanism,
+            gradient_clip_norm=gradient_clip_norm
         )
         
         # Initialize hierarchical fog aggregation if enabled
@@ -727,13 +732,30 @@ def main():
             
         with col2:
             st.subheader("🔧 Algorithm Settings")
+            
+            # Model selection
+            model_type = st.selectbox("🤖 Machine Learning Model", [
+                "logistic_regression", 
+                "neural_network", 
+                "random_forest", 
+                "gradient_boosting", 
+                "svm", 
+                "ensemble_voting", 
+                "ensemble_stacking"
+            ], index=0)
+            
             aggregation_algorithm = st.selectbox("Aggregation Algorithm", ["FedAvg", "FedProx", "SecureAgg"])
+            
+            # Advanced Privacy Settings
             enable_dp = st.checkbox("🔒 Enable Privacy Protection", value=True)
             if enable_dp:
+                privacy_mechanism = st.selectbox("Privacy Mechanism", ["gaussian", "laplace", "exponential"])
                 epsilon = st.number_input("🛡️ Privacy Budget (ε)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
                 delta = st.number_input("🔐 Privacy Parameter (δ)", min_value=1e-6, max_value=1e-3, value=1e-5, format="%.1e")
+                gradient_clip_norm = st.number_input("✂️ Gradient Clipping Norm", min_value=0.1, max_value=5.0, value=1.0, step=0.1)
             else:
-                epsilon = delta = None
+                privacy_mechanism = "gaussian"
+                epsilon = delta = gradient_clip_norm = None
             committee_size = st.slider("👥 Security Committee Size", min_value=2, max_value=5, value=3)
             
             st.markdown("**🌐 Fog Computing Configuration**")
@@ -838,7 +860,8 @@ def main():
                 start_training(data, num_clients, max_rounds, target_accuracy, 
                               aggregation_algorithm, enable_dp, epsilon, delta, committee_size,
                               distribution_strategy, strategy_params, enable_fog, 
-                              num_fog_nodes, fog_aggregation_method)
+                              num_fog_nodes, fog_aggregation_method, model_type, 
+                              privacy_mechanism, gradient_clip_norm)
         
         with col2:
             if st.button("🔄 Reset System"):
