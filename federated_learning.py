@@ -202,54 +202,32 @@ class FederatedLearningManager:
                     'execution_time': round_time
                 }
                 
-                # Update session state for real-time monitoring (with safe initialization)
-                with self.lock:
-                    try:
-                        if not hasattr(st.session_state, 'training_metrics'):
-                            st.session_state.training_metrics = []
-                        st.session_state.training_metrics.append(metrics)
-                        
-                        if not hasattr(st.session_state, 'confusion_matrices'):
-                            st.session_state.confusion_matrices = []
-                        st.session_state.confusion_matrices.append(cm)
-                        
-                        if not hasattr(st.session_state, 'execution_times'):
-                            st.session_state.execution_times = []
-                        st.session_state.execution_times.append(round_time)
-                        
-                        if not hasattr(st.session_state, 'communication_times'):
-                            st.session_state.communication_times = []
-                        # Simulate communication time
-                        comm_time = np.random.normal(0.5, 0.1)
-                        st.session_state.communication_times.append(max(0.1, comm_time))
-                    except Exception as e:
-                        # If session state access fails, continue without updating
-                        print(f"Session state update failed: {e}")
-                
+                # Store metrics in training history (no session state access)
                 self.training_history.append(metrics)
+                
+                # Store confusion matrix
+                if not hasattr(self, 'confusion_matrices'):
+                    self.confusion_matrices = []
+                self.confusion_matrices.append(cm)
+                
+                # Store execution times
+                if not hasattr(self, 'execution_times'):
+                    self.execution_times = []
+                self.execution_times.append(round_time)
+                
+                # Store communication times
+                if not hasattr(self, 'communication_times'):
+                    self.communication_times = []
+                comm_time = np.random.normal(0.5, 0.1)
+                self.communication_times.append(max(0.1, comm_time))
                 
                 # Check for convergence and early stopping
                 if accuracy > self.best_accuracy:
                     self.best_accuracy = accuracy
-                    
-                # Update session state for best accuracy tracking
-                with self.lock:
-                    try:
-                        if not hasattr(st.session_state, 'best_accuracy'):
-                            st.session_state.best_accuracy = 0.0
-                        st.session_state.best_accuracy = self.best_accuracy
-                    except Exception as e:
-                        print(f"Best accuracy update failed: {e}")
                 
                 if accuracy >= self.target_accuracy:
                     print(f"🎯 Target accuracy {self.target_accuracy:.3f} reached at round {self.current_round}!")
-                    with self.lock:
-                        try:
-                            if not hasattr(st.session_state, 'early_stopped'):
-                                st.session_state.early_stopped = False
-                            st.session_state.early_stopped = True
-                        except Exception as e:
-                            print(f"Early stopped update failed: {e}")
+                    self.early_stopped = True
                     break
                 
                 # Simulate some delay for demonstration

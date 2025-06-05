@@ -105,16 +105,25 @@ def run_training_loop(fl_manager, data):
         # Train with monitoring
         results = fl_manager.train(data)
         
-        # Store results in session state
-        st.session_state.results = results
-        st.session_state.training_completed = True
-        st.session_state.training_started = False
-        
-        # Extract client and fog results for tables
-        extract_training_results(fl_manager)
+        # Store results in session state with safe access
+        try:
+            st.session_state.results = results
+            st.session_state.training_completed = True
+            st.session_state.training_started = False
+            
+            # Extract client and fog results for tables
+            extract_training_results(fl_manager)
+        except Exception as session_error:
+            print(f"Session state update failed: {session_error}")
+            # Store results in the fl_manager for later retrieval
+            fl_manager.final_results = results
+            fl_manager.training_completed = True
         
     except Exception as e:
-        st.session_state.training_started = False
+        try:
+            st.session_state.training_started = False
+        except:
+            pass
         print(f"Training failed: {str(e)}")
 
 def extract_training_results(fl_manager):
@@ -156,6 +165,24 @@ def show_training_progress():
     """Display real-time training progress"""
     st.header("📊 Live Training Progress")
     
+    # Update session state from fl_manager if available
+    if st.session_state.fl_manager:
+        # Sync data from fl_manager to session state
+        if hasattr(st.session_state.fl_manager, 'training_history'):
+            st.session_state.training_metrics = st.session_state.fl_manager.training_history
+        if hasattr(st.session_state.fl_manager, 'confusion_matrices'):
+            st.session_state.confusion_matrices = st.session_state.fl_manager.confusion_matrices
+        if hasattr(st.session_state.fl_manager, 'execution_times'):
+            st.session_state.execution_times = st.session_state.fl_manager.execution_times
+        if hasattr(st.session_state.fl_manager, 'communication_times'):
+            st.session_state.communication_times = st.session_state.fl_manager.communication_times
+        if hasattr(st.session_state.fl_manager, 'best_accuracy'):
+            st.session_state.best_accuracy = st.session_state.fl_manager.best_accuracy
+        if hasattr(st.session_state.fl_manager, 'early_stopped'):
+            st.session_state.early_stopped = st.session_state.fl_manager.early_stopped
+        if hasattr(st.session_state.fl_manager, 'training_completed'):
+            st.session_state.training_completed = st.session_state.fl_manager.training_completed
+    
     # Overall progress
     progress_col1, progress_col2, progress_col3 = st.columns(3)
     
@@ -163,33 +190,43 @@ def show_training_progress():
         if st.session_state.fl_manager:
             current_round = getattr(st.session_state.fl_manager, 'current_round', 0)
             max_rounds = st.session_state.fl_manager.max_rounds
-            progress = min(current_round / max_rounds, 1.0)
+            progress = min(current_round / max_rounds, 1.0) if max_rounds > 0 else 0
             st.metric("Training Round", f"{current_round}/{max_rounds}")
             st.progress(progress)
     
     with progress_col2:
-        current_accuracy = st.session_state.best_accuracy
+        current_accuracy = getattr(st.session_state, 'best_accuracy', 0.0)
         target_accuracy = st.session_state.fl_manager.target_accuracy if st.session_state.fl_manager else 0.85
         st.metric("Best Accuracy", f"{current_accuracy:.3f}")
         st.metric("Target", f"{target_accuracy:.3f}")
     
     with progress_col3:
-        if st.session_state.early_stopped:
+        early_stopped = getattr(st.session_state, 'early_stopped', False)
+        training_completed = getattr(st.session_state, 'training_completed', False)
+        
+        if early_stopped:
             st.success("🎯 Target Accuracy Reached!")
-        elif st.session_state.training_completed:
+        elif training_completed:
             st.info("✅ Training Completed")
         else:
             st.info("🔄 Training in Progress")
     
-    # Client status grid
-    if st.session_state.client_status:
+    # Field station status (simulate based on current round)
+    if st.session_state.fl_manager:
         st.subheader("🏢 Field Station Status")
         
-        cols = st.columns(min(5, len(st.session_state.client_status)))
-        for i, (client_id, status) in enumerate(st.session_state.client_status.items()):
+        num_clients = st.session_state.fl_manager.num_clients
+        cols = st.columns(min(5, num_clients))
+        
+        for i in range(num_clients):
             with cols[i % len(cols)]:
-                status_color = "🟢" if status == "completed" else "🟡" if status == "training" else "⚪"
-                st.metric(f"Station {client_id}", f"{status_color} {status.title()}")
+                if training_completed or early_stopped:
+                    status_color = "🟢"
+                    status = "Completed"
+                else:
+                    status_color = "🟡"
+                    status = "Training"
+                st.metric(f"Station {i+1}", f"{status_color} {status}")
 
 def show_training_charts():
     """Display training progress charts"""
@@ -405,12 +442,18 @@ def main():
     with tab2:
         st.header("📈 Live Training Monitoring")
         
+        # Auto-refresh for live monitoring
+        if st.session_state.training_started and not st.session_state.training_completed:
+            st.info("🔄 Training in progress - Auto-refreshing every 3 seconds")
+            time.sleep(3)
+            st.rerun()
+        
         # Training Progress
-        if st.session_state.training_started:
+        if st.session_state.training_started or st.session_state.training_completed:
             show_training_progress()
             
             # Show real-time charts
-            if len(st.session_state.training_metrics) > 0:
+            if hasattr(st.session_state, 'training_metrics') and len(st.session_state.training_metrics) > 0:
                 show_training_charts()
         else:
             st.info("🌱 Start training to see live monitoring data")
