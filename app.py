@@ -783,7 +783,8 @@ def main():
             if st.button("🚀 Start Federated Learning", disabled=st.session_state.training_started):
                 start_training(data, num_clients, max_rounds, target_accuracy, 
                               aggregation_algorithm, enable_dp, epsilon, delta, committee_size,
-                              distribution_strategy, strategy_params)
+                              distribution_strategy, strategy_params, enable_fog, 
+                              num_fog_nodes, fog_aggregation_method)
         
         with col2:
             if st.button("🔄 Reset System"):
@@ -855,10 +856,41 @@ def main():
                         # Train clients
                         client_updates = fl_manager._train_clients_parallel()
                         
-                        # Aggregate
-                        fl_manager.global_model = fl_manager.aggregator.aggregate(
-                            fl_manager.global_model, client_updates
-                        )
+                        # Hierarchical fog aggregation if enabled
+                        if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager:
+                            # Fog-level aggregation
+                            fog_updates, fog_metrics = fl_manager.fog_manager.fog_level_aggregation(
+                                client_updates, fl_manager.global_model
+                            )
+                            
+                            # Leader fog aggregation
+                            final_update = fl_manager.fog_manager.leader_fog_aggregation(
+                                fog_updates, fl_manager.global_model
+                            )
+                            
+                            if final_update:
+                                # Update global model with fog-aggregated parameters
+                                for param_name, param_value in final_update['parameters'].items():
+                                    if hasattr(fl_manager.global_model, param_name):
+                                        setattr(fl_manager.global_model, param_name, param_value)
+                            
+                            # Calculate hierarchical loss
+                            loss_info = fl_manager.fog_manager.calculate_hierarchical_loss(
+                                fl_manager.global_model, client_data, current_round
+                            )
+                            
+                            # Store fog metrics
+                            st.session_state.fog_results.append({
+                                'round': current_round,
+                                'fog_metrics': fog_metrics,
+                                'loss_info': loss_info,
+                                'aggregation_info': final_update.get('aggregation_info', {}) if final_update else {}
+                            })
+                        else:
+                            # Standard aggregation
+                            fl_manager.global_model = fl_manager.aggregator.aggregate(
+                                fl_manager.global_model, client_updates
+                            )
                         
                         # Evaluate
                         accuracy, loss, f1, cm = fl_manager._evaluate_global_model()
@@ -883,13 +915,32 @@ def main():
                         
                         # Update metrics display
                         with metrics_container.container():
-                            col1, col2, col3 = st.columns(3)
+                            col1, col2, col3, col4 = st.columns(4)
                             with col1:
                                 st.metric("Accuracy", f"{accuracy:.3f}")
                             with col2:
                                 st.metric("F1 Score", f"{f1:.3f}")
                             with col3:
+                                st.metric("Loss", f"{loss:.4f}")
+                            with col4:
                                 st.metric("Best Accuracy", f"{st.session_state.best_accuracy:.3f}")
+                            
+                            # Fog aggregation metrics
+                            if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager and st.session_state.fog_results:
+                                st.markdown("---")
+                                st.markdown("**🌐 Hierarchical Fog Metrics**")
+                                latest_fog = st.session_state.fog_results[-1]
+                                
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.metric("Global Loss", f"{latest_fog['loss_info']['global_loss']:.4f}")
+                                with col2:
+                                    fog_losses = latest_fog['loss_info']['fog_losses']
+                                    avg_fog_loss = np.mean([f['loss'] for f in fog_losses.values()]) if fog_losses else 0
+                                    st.metric("Avg Fog Loss", f"{avg_fog_loss:.4f}")
+                                with col3:
+                                    aggregation_info = latest_fog.get('aggregation_info', {})
+                                    st.metric("Fog Nodes Active", aggregation_info.get('total_fog_nodes', 0))
                         
                         # Update charts
                         with charts_container.container():
