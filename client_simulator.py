@@ -137,11 +137,24 @@ class ClientSimulator:
                 # Fallback: random parameters
                 parameters = np.random.normal(0, 0.1, 10)
             
+            # Evaluate local performance to create heterogeneous metrics
+            local_eval = self.evaluate()
+            local_accuracy = local_eval['test_accuracy'] if local_eval else 0.5
+            local_f1 = local_eval['f1_score'] if local_eval else 0.5
+            
+            # Add noise based on data quality to simulate realistic variance
+            data_quality = len(self.data['X_train']) / 1000.0  # Normalize by expected size
+            accuracy_noise = np.random.normal(0, 0.05 * (1 - data_quality))
+            local_accuracy = max(0.3, min(0.95, local_accuracy + accuracy_noise))
+            
             update = {
                 'client_id': self.client_id,
                 'parameters': parameters,
                 'num_samples': len(self.data['X_train']),
-                'model_type': self.model_type
+                'model_type': self.model_type,
+                'accuracy': local_accuracy,
+                'f1_score': local_f1,
+                'data_quality': data_quality
             }
             
             return update
@@ -152,11 +165,16 @@ class ClientSimulator:
     
     def _create_dummy_update(self):
         """Create a dummy update when training fails"""
+        # Create varied dummy performance based on client ID for visualization
+        base_accuracy = 0.4 + (self.client_id * 0.05) % 0.3
         return {
             'client_id': self.client_id,
             'parameters': np.random.normal(0, 0.01, 10),
             'num_samples': 0,
-            'model_type': self.model_type
+            'model_type': self.model_type,
+            'accuracy': base_accuracy,
+            'f1_score': base_accuracy * 0.9,
+            'data_quality': 0.1
         }
     
     def get_data_statistics(self):

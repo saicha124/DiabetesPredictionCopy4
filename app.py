@@ -903,13 +903,22 @@ def main():
                         
                         round_time = time.time() - start_time
                         
-                        # Store metrics
+                        # Extract individual client performance metrics
+                        client_accuracies = [update.get('accuracy', 0.5) for update in client_updates]
+                        client_f1_scores = [update.get('f1_score', 0.5) for update in client_updates]
+                        
+                        # Store comprehensive metrics with client-level tracking
                         metrics = {
                             'round': current_round,
                             'accuracy': accuracy,
                             'loss': loss,
                             'f1_score': f1,
-                            'execution_time': round_time
+                            'execution_time': round_time,
+                            'client_accuracies': client_accuracies,
+                            'client_f1_scores': client_f1_scores,
+                            'accuracy_variance': np.var(client_accuracies) if client_accuracies else 0,
+                            'min_client_accuracy': min(client_accuracies) if client_accuracies else 0,
+                            'max_client_accuracy': max(client_accuracies) if client_accuracies else 0
                         }
                         
                         st.session_state.training_metrics.append(metrics)
