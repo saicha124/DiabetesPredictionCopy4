@@ -256,24 +256,24 @@ def show_training_charts():
     # Create metrics dataframe
     metrics_df = pd.DataFrame(st.session_state.training_metrics)
     
-    # Main performance chart with multiple metrics
+    # Performance charts with individual client tracking
     col1, col2 = st.columns(2)
     
     with col1:
-        # Multi-metric performance chart
+        # Multi-metric performance chart with variance bands
         fig = make_subplots(
             rows=2, cols=1,
-            subplot_titles=('Model Performance', 'Training Loss'),
-            vertical_spacing=0.1
+            subplot_titles=('🌾 Crop Health Performance', '🏡 Individual Farm Variance'),
+            vertical_spacing=0.15
         )
         
-        # Performance metrics
+        # Global performance metrics
         if 'accuracy' in metrics_df.columns:
             fig.add_trace(go.Scatter(
                 x=list(range(1, len(metrics_df) + 1)),
                 y=metrics_df['accuracy'],
                 mode='lines+markers',
-                name='Accuracy',
+                name='Global Accuracy',
                 line=dict(color='#2E86AB', width=3),
                 marker=dict(size=8)
             ), row=1, col=1)
@@ -294,30 +294,84 @@ def show_training_charts():
             fig.add_hline(y=target, line_dash="dash", line_color="red", 
                          annotation_text=f"Target: {target:.3f}", row=1, col=1)
         
-        # Loss chart
-        if 'loss' in metrics_df.columns:
+        # Performance variance chart showing min/max farm performance
+        if 'min_client_accuracy' in metrics_df.columns and 'max_client_accuracy' in metrics_df.columns:
+            rounds = list(range(1, len(metrics_df) + 1))
             fig.add_trace(go.Scatter(
-                x=list(range(1, len(metrics_df) + 1)),
-                y=metrics_df['loss'],
-                mode='lines+markers',
-                name='Loss',
-                line=dict(color='#F18F01', width=3),
-                marker=dict(size=8)
+                x=rounds,
+                y=metrics_df['max_client_accuracy'],
+                mode='lines',
+                name='Best Farm',
+                line=dict(color='green', width=2),
+                fill=None
+            ), row=2, col=1)
+            
+            fig.add_trace(go.Scatter(
+                x=rounds,
+                y=metrics_df['min_client_accuracy'],
+                mode='lines',
+                name='Worst Farm',
+                line=dict(color='red', width=2),
+                fill='tonexty',
+                fillcolor='rgba(255,0,0,0.1)'
             ), row=2, col=1)
         
         fig.update_layout(
             height=600,
-            title_text="Training Performance Metrics",
+            title_text="Farm Network Performance Analytics",
             template="plotly_white",
             showlegend=True
         )
-        fig.update_xaxes(title_text="Training Round")
-        fig.update_yaxes(title_text="Score", row=1, col=1)
-        fig.update_yaxes(title_text="Loss", row=2, col=1)
+        fig.update_xaxes(title_text="Analysis Cycle")
+        fig.update_yaxes(title_text="Crop Health Score", row=1, col=1)
+        fig.update_yaxes(title_text="Performance Range", row=2, col=1)
         
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
+        # Individual client performance over time
+        if metrics_df.shape[0] > 0 and 'client_accuracies' in metrics_df.columns:
+            fig_clients = go.Figure()
+            
+            # Get client performance data
+            all_client_data = []
+            for idx, row in metrics_df.iterrows():
+                if row['client_accuracies'] and len(row['client_accuracies']) > 0:
+                    all_client_data.append(row['client_accuracies'])
+            
+            if all_client_data:
+                num_clients = len(all_client_data[0])
+                colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8']
+                
+                # Plot each client's performance trajectory
+                for client_id in range(num_clients):
+                    client_performance = []
+                    rounds = []
+                    for round_idx, round_data in enumerate(all_client_data):
+                        if client_id < len(round_data):
+                            client_performance.append(round_data[client_id])
+                            rounds.append(round_idx + 1)
+                    
+                    if client_performance:
+                        fig_clients.add_trace(go.Scatter(
+                            x=rounds,
+                            y=client_performance,
+                            mode='lines+markers',
+                            name=f'Farm {client_id + 1}',
+                            line=dict(color=colors[client_id % len(colors)], width=2),
+                            marker=dict(size=6)
+                        ))
+                
+                fig_clients.update_layout(
+                    title="🏡 Individual Farm Performance Tracking",
+                    xaxis_title="Analysis Cycle",
+                    yaxis_title="Crop Health Score",
+                    template="plotly_white",
+                    height=300,
+                    showlegend=True
+                )
+                st.plotly_chart(fig_clients, use_container_width=True)
+        
         # Execution time analysis
         if st.session_state.execution_times:
             fig_time = go.Figure()
@@ -326,7 +380,7 @@ def show_training_charts():
             fig_time.add_trace(go.Bar(
                 x=list(range(1, len(st.session_state.execution_times) + 1)),
                 y=st.session_state.execution_times,
-                name='Execution Time',
+                name='Analysis Time',
                 marker_color='#C73E1D',
                 text=[f'{t:.2f}s' for t in st.session_state.execution_times],
                 textposition='auto'
@@ -338,8 +392,8 @@ def show_training_charts():
                               annotation_text=f"Avg: {avg_time:.2f}s")
             
             fig_time.update_layout(
-                title="Training Time per Round",
-                xaxis_title="Training Round",
+                title="⏱️ Analysis Time per Cycle",
+                xaxis_title="Analysis Cycle",
                 yaxis_title="Time (seconds)",
                 template="plotly_white",
                 height=300
@@ -939,6 +993,16 @@ def main():
                                 st.metric("⚠️ Error Rate", f"{loss:.4f}")
                             with col4:
                                 st.metric("🏆 Best Performance", f"{st.session_state.best_accuracy:.3f}")
+                            
+                            # Individual farm performance display
+                            if client_accuracies:
+                                st.markdown("---")
+                                st.markdown("**🏡 Individual Farm Performance**")
+                                farm_cols = st.columns(min(5, len(client_accuracies)))
+                                for i, acc in enumerate(client_accuracies):
+                                    with farm_cols[i % len(farm_cols)]:
+                                        performance_color = "🟢" if acc > 0.7 else "🟡" if acc > 0.5 else "🔴"
+                                        st.metric(f"🏡 Farm {i+1}", f"{performance_color} {acc:.3f}")
                             
                             # Regional processing center metrics
                             if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager and st.session_state.fog_results:
