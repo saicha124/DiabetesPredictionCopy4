@@ -699,24 +699,24 @@ def main():
         preprocessor = DataPreprocessor()
         X, y = preprocessor.fit_transform(data)
         
-        st.success(f"✅ Field Data loaded: {len(data)} crop samples with {len(data.columns)} health indicators")
+        st.success(f"✅ Patient Data loaded: {len(data)} patient records with {len(data.columns)} health indicators")
         
-        # Display data overview in agronomic terms
+        # Display data overview in medical terms
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("🌱 Field Samples", len(data))
+            st.metric("👥 Patient Records", len(data))
         with col2:
             st.metric("📊 Health Indicators", len(data.columns) - 1)
         with col3:
             positive_ratio = (data['Outcome'] == 1).mean()
-            st.metric("🚨 Risk Cases", f"{positive_ratio:.1%}")
+            st.metric("🚨 Diabetes Cases", f"{positive_ratio:.1%}")
             
     except Exception as e:
         st.error(f"❌ Error loading field data: {str(e)}")
         return
     
     # Multi-tab interface
-    tab1, tab2, tab3, tab4 = st.tabs(["🎛️ Training Control", "📈 Live Monitoring", "📋 Results Analysis", "🔍 Risk Prediction"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🎛️ Training Control", "📈 Live Monitoring", "📊 Communication Network", "📋 Results Analysis", "🔍 Risk Prediction"])
     
     with tab1:
         st.header("🎛️ Federated Training Configuration")
@@ -726,14 +726,14 @@ def main():
         
         with col1:
             st.subheader("📊 Basic Settings")
-            num_clients = st.slider("🏢 Number of Field Stations", min_value=3, max_value=10, value=5)
-            max_rounds = st.slider("🔄 Maximum Training Cycles", min_value=5, max_value=50, value=20)
+            num_clients = st.slider("👥 Number of Patient Agents", min_value=3, max_value=10, value=5)
+            max_rounds = st.slider("🔄 Maximum Training Rounds", min_value=5, max_value=100, value=20)
             target_accuracy = st.slider("🎯 Target Accuracy (Auto-Stop)", min_value=0.7, max_value=0.95, value=0.85, step=0.05)
             
         with col2:
             st.subheader("🔧 Algorithm Settings")
             
-            # Model selection
+            # Model selection with hyperparameter exploration
             model_type = st.selectbox("🤖 Machine Learning Model", [
                 "logistic_regression", 
                 "neural_network", 
@@ -743,6 +743,15 @@ def main():
                 "ensemble_voting", 
                 "ensemble_stacking"
             ], index=0)
+            
+            # Neural Network Hyperparameters (when applicable)
+            if model_type == "neural_network":
+                st.markdown("**🧠 Neural Network Configuration**")
+                hidden_layers = st.selectbox("Hidden Layers", [1, 2, 3], index=1)
+                neurons_per_layer = st.selectbox("Neurons per Layer", [64, 128, 256, 512], index=1)
+                dropout_rate = st.slider("Dropout Rate", 0.0, 0.5, 0.2, 0.1)
+                learning_rate = st.selectbox("Learning Rate", [0.001, 0.01, 0.1], index=0)
+                momentum = st.slider("Momentum", 0.0, 0.9, 0.5, 0.1)
             
             aggregation_algorithm = st.selectbox("Aggregation Algorithm", ["FedAvg", "FedProx", "SecureAgg"])
             
@@ -868,13 +877,148 @@ def main():
                 reset_training()
                 st.rerun()
     
+    with tab3:
+        st.header("📊 Communication Network Architecture")
+        
+        if st.session_state.training_completed and hasattr(st.session_state, 'fl_manager'):
+            # Network topology visualization
+            st.subheader("🌐 Federated Learning Network Topology")
+            
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                # Create network diagram using plotly
+                import plotly.graph_objects as go
+                import plotly.express as px
+                import numpy as np
+                
+                # Generate network layout
+                num_agents = st.session_state.fl_manager.num_clients
+                fog_enabled = hasattr(st.session_state.fl_manager, 'fog_manager')
+                
+                # Node positions
+                nodes_x = []
+                nodes_y = []
+                node_text = []
+                node_colors = []
+                
+                # Global server (center)
+                nodes_x.append(0)
+                nodes_y.append(0)
+                node_text.append("Global Server")
+                node_colors.append("red")
+                
+                # Fog nodes (middle layer)
+                if fog_enabled and hasattr(st.session_state.fl_manager, 'fog_manager'):
+                    num_fog = st.session_state.fl_manager.fog_manager.num_fog_nodes
+                    for i in range(num_fog):
+                        angle = 2 * np.pi * i / num_fog
+                        nodes_x.append(2 * np.cos(angle))
+                        nodes_y.append(2 * np.sin(angle))
+                        node_text.append(f"Fog Node {i+1}")
+                        node_colors.append("orange")
+                
+                # Patient agents (outer layer)
+                for i in range(num_agents):
+                    if fog_enabled:
+                        # Distribute around fog nodes
+                        fog_idx = i % (num_fog if 'num_fog' in locals() else 1)
+                        base_angle = 2 * np.pi * fog_idx / (num_fog if 'num_fog' in locals() else 1)
+                        offset = (i // (num_fog if 'num_fog' in locals() else 1)) * 0.5
+                        angle = base_angle + offset
+                        radius = 4
+                    else:
+                        # Distribute around global server
+                        angle = 2 * np.pi * i / num_agents
+                        radius = 3
+                    
+                    nodes_x.append(radius * np.cos(angle))
+                    nodes_y.append(radius * np.sin(angle))
+                    node_text.append(f"Agent {i+1}")
+                    node_colors.append("lightblue")
+                
+                # Create edges
+                edge_x = []
+                edge_y = []
+                
+                # Connect agents to fog nodes or global server
+                for i in range(num_agents):
+                    agent_idx = len(node_text) - num_agents + i
+                    if fog_enabled and 'num_fog' in locals():
+                        fog_idx = 1 + (i % num_fog)  # Fog nodes start at index 1
+                        # Agent to fog
+                        edge_x.extend([nodes_x[agent_idx], nodes_x[fog_idx], None])
+                        edge_y.extend([nodes_y[agent_idx], nodes_y[fog_idx], None])
+                    else:
+                        # Agent to global server
+                        edge_x.extend([nodes_x[agent_idx], nodes_x[0], None])
+                        edge_y.extend([nodes_y[agent_idx], nodes_y[0], None])
+                
+                # Fog to global connections
+                if fog_enabled and 'num_fog' in locals():
+                    for i in range(1, num_fog + 1):
+                        edge_x.extend([nodes_x[i], nodes_x[0], None])
+                        edge_y.extend([nodes_y[i], nodes_y[0], None])
+                
+                # Create plotly figure
+                fig = go.Figure()
+                
+                # Add edges
+                fig.add_trace(go.Scatter(
+                    x=edge_x, y=edge_y,
+                    mode='lines',
+                    line=dict(width=2, color='gray'),
+                    hoverinfo='none',
+                    showlegend=False
+                ))
+                
+                # Add nodes
+                fig.add_trace(go.Scatter(
+                    x=nodes_x, y=nodes_y,
+                    mode='markers+text',
+                    marker=dict(size=20, color=node_colors),
+                    text=node_text,
+                    textposition="middle center",
+                    hoverinfo='text',
+                    showlegend=False
+                ))
+                
+                fig.update_layout(
+                    title="Hierarchical Federated Learning Network",
+                    showlegend=False,
+                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    height=500,
+                    plot_bgcolor='white'
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+            
+            with col2:
+                st.subheader("📊 Network Statistics")
+                st.metric("Total Agents", num_agents)
+                if fog_enabled and 'num_fog' in locals():
+                    st.metric("Fog Nodes", num_fog)
+                    st.metric("Agents per Fog", f"{num_agents//num_fog:.1f}")
+                st.metric("Communication Rounds", len(st.session_state.training_history))
+                
+                # Communication efficiency metrics
+                total_communications = num_agents * len(st.session_state.training_history)
+                if fog_enabled and 'num_fog' in locals():
+                    fog_communications = num_fog * len(st.session_state.training_history)
+                    st.metric("Total Communications", total_communications + fog_communications)
+                else:
+                    st.metric("Total Communications", total_communications)
+        else:
+            st.info("Start and complete a training session to view the communication network.")
+    
     with tab2:
-        st.header("🌾 Field Station Monitoring")
+        st.header("🏥 Patient Agent Monitoring")
         
         # Direct training execution
         if st.session_state.training_started and not st.session_state.training_completed:
             if hasattr(st.session_state, 'training_data') and st.session_state.fl_manager:
-                st.info("🌱 Coordinating crop analysis across field stations...")
+                st.info("🏥 Coordinating patient data analysis across medical agents...")
                 
                 # Create progress containers
                 progress_container = st.empty()
@@ -1101,16 +1245,162 @@ def main():
         else:
             st.info("🌱 Start training to see live monitoring data")
     
-    with tab3:
-        st.header("📋 Training Results Analysis")
-        
-        # Results
-        if st.session_state.training_completed and st.session_state.results:
-            show_results()
-        else:
-            st.info("🌾 Complete training to see detailed results analysis")
-    
     with tab4:
+        st.header("📋 Comprehensive Performance Analysis")
+        
+        if st.session_state.training_completed and hasattr(st.session_state, 'fl_manager'):
+            # Performance comparison section
+            st.subheader("🔍 Differential Privacy Trade-off Analysis")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Accuracy vs Privacy Trade-off
+                if hasattr(st.session_state.fl_manager, 'dp_manager') and st.session_state.fl_manager.dp_manager:
+                    privacy_params = st.session_state.fl_manager.dp_manager.get_privacy_parameters()
+                    
+                    # Simulate performance with different privacy levels
+                    epsilon_values = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+                    simulated_accuracies = []
+                    
+                    # Base accuracy without privacy
+                    base_accuracy = st.session_state.training_history[-1].get('accuracy', 0.85)
+                    
+                    for eps in epsilon_values:
+                        # Simulate privacy-accuracy trade-off
+                        privacy_noise = 1.0 / eps  # Higher epsilon = less noise
+                        accuracy_loss = privacy_noise * 0.05  # Simulated accuracy degradation
+                        simulated_accuracy = max(0.5, base_accuracy - accuracy_loss)
+                        simulated_accuracies.append(simulated_accuracy)
+                    
+                    # Create privacy trade-off chart
+                    import plotly.graph_objects as go
+                    
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=epsilon_values,
+                        y=simulated_accuracies,
+                        mode='lines+markers',
+                        name='Accuracy vs Privacy',
+                        line=dict(color='blue', width=3),
+                        marker=dict(size=8)
+                    ))
+                    
+                    # Highlight current setting
+                    current_eps = privacy_params.get('epsilon', 1.0)
+                    current_acc = base_accuracy - (1.0 / current_eps) * 0.05
+                    fig.add_trace(go.Scatter(
+                        x=[current_eps],
+                        y=[max(0.5, current_acc)],
+                        mode='markers',
+                        name='Current Setting',
+                        marker=dict(size=15, color='red', symbol='star')
+                    ))
+                    
+                    fig.update_layout(
+                        title="Privacy-Accuracy Trade-off Analysis",
+                        xaxis_title="Privacy Budget (ε)",
+                        yaxis_title="Model Accuracy",
+                        height=400
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Privacy metrics table
+                    st.subheader("🔒 Privacy Protection Metrics")
+                    privacy_df = pd.DataFrame({
+                        'Parameter': ['Epsilon (ε)', 'Delta (δ)', 'Noise Scale', 'Gradient Clipping'],
+                        'Value': [
+                            f"{privacy_params.get('epsilon', 'N/A'):.3f}",
+                            f"{privacy_params.get('delta', 'N/A'):.2e}" if privacy_params.get('delta') else 'N/A',
+                            f"{privacy_params.get('sensitivity', 'N/A'):.3f}" if privacy_params.get('sensitivity') else 'N/A',
+                            f"{st.session_state.fl_manager.gradient_clip_norm:.2f}" if hasattr(st.session_state.fl_manager, 'gradient_clip_norm') else 'N/A'
+                        ],
+                        'Description': [
+                            'Privacy budget - lower is more private',
+                            'Failure probability in privacy guarantee',
+                            'Noise magnitude added to gradients',
+                            'Maximum gradient norm before clipping'
+                        ]
+                    })
+                    st.dataframe(privacy_df, use_container_width=True)
+                
+            with col2:
+                # Agent performance evolution
+                st.subheader("👥 Agent Performance Evolution")
+                
+                if hasattr(st.session_state, 'client_results') and st.session_state.client_results:
+                    # Extract individual agent performance over rounds
+                    agent_performance = {}
+                    
+                    for round_data in st.session_state.training_history:
+                        round_num = round_data.get('round', 0)
+                        if 'client_metrics' in round_data:
+                            for client_id, metrics in round_data['client_metrics'].items():
+                                if client_id not in agent_performance:
+                                    agent_performance[client_id] = {'rounds': [], 'accuracy': [], 'loss': []}
+                                
+                                agent_performance[client_id]['rounds'].append(round_num)
+                                agent_performance[client_id]['accuracy'].append(metrics.get('accuracy', 0))
+                                agent_performance[client_id]['loss'].append(metrics.get('loss', 0))
+                    
+                    # Create agent evolution chart
+                    fig = go.Figure()
+                    
+                    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+                    
+                    for i, (client_id, data) in enumerate(agent_performance.items()):
+                        color = colors[i % len(colors)]
+                        fig.add_trace(go.Scatter(
+                            x=data['rounds'],
+                            y=data['accuracy'],
+                            mode='lines+markers',
+                            name=f'Agent {client_id}',
+                            line=dict(color=color, width=2),
+                            marker=dict(size=6)
+                        ))
+                    
+                    fig.update_layout(
+                        title="Individual Agent Learning Curves",
+                        xaxis_title="Training Round",
+                        yaxis_title="Local Accuracy",
+                        height=400,
+                        legend=dict(
+                            orientation="v",
+                            yanchor="top",
+                            y=1,
+                            xanchor="left",
+                            x=1.02
+                        )
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # Agent statistics summary
+                if hasattr(st.session_state, 'client_results') and st.session_state.client_results:
+                    st.subheader("📊 Agent Performance Summary")
+                    
+                    agent_stats = []
+                    for client_data in st.session_state.client_results:
+                        agent_stats.append({
+                            'Agent ID': f"Agent {client_data.get('client_id', 'Unknown')}",
+                            'Final Accuracy': f"{client_data.get('final_accuracy', 0):.3f}",
+                            'Data Samples': client_data.get('data_size', 0),
+                            'Avg Loss': f"{client_data.get('avg_loss', 0):.4f}",
+                            'Convergence Round': client_data.get('convergence_round', 'N/A')
+                        })
+                    
+                    agent_df = pd.DataFrame(agent_stats)
+                    st.dataframe(agent_df, use_container_width=True)
+            
+            # Training results section
+            st.subheader("📋 Training Results Analysis")
+            if st.session_state.training_completed and st.session_state.results:
+                show_results()
+        else:
+            st.info("Complete a training session to view comprehensive performance analysis.")
+    
+    with tab5:
         st.header("🏥 Patient Diabetes Risk Assessment")
         
         # Patient Database Management
