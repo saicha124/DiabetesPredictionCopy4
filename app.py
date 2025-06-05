@@ -1177,7 +1177,7 @@ def main():
                 
                 # Add specific information based on stage and training state
                 if stage_num == 1:  # Patient Enrollment
-                    if hasattr(st.session_state, 'fl_manager'):
+                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
                         st.success(f"✅ {st.session_state.fl_manager.num_clients} patient agents enrolled")
                     else:
                         st.info("🔄 Configure patient agents in Training Control tab")
@@ -1198,7 +1198,7 @@ def main():
                         st.info("🔄 Privacy parameters will be set during training")
                 
                 elif stage_num == 4:  # Model Initialization
-                    if hasattr(st.session_state, 'fl_manager'):
+                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
                         st.success(f"✅ Global model initialized with {st.session_state.fl_manager.model_type}")
                     else:
                         st.info("🔄 Global model will be initialized when training starts")
