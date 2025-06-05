@@ -792,12 +792,12 @@ def main():
                 st.rerun()
     
     with tab2:
-        st.header("📈 Live Training Monitoring")
+        st.header("🌾 Field Station Monitoring")
         
         # Direct training execution
         if st.session_state.training_started and not st.session_state.training_completed:
             if hasattr(st.session_state, 'training_data') and st.session_state.fl_manager:
-                st.info("🔄 Starting federated learning training...")
+                st.info("🌱 Coordinating crop analysis across field stations...")
                 
                 # Create progress containers
                 progress_container = st.empty()
@@ -835,35 +835,35 @@ def main():
                     # Setup clients with distributed data
                     fl_manager.setup_clients_with_data(client_data)
                     
-                    # Training loop
+                    # Analysis cycle loop
                     for round_num in range(fl_manager.max_rounds):
                         current_round = round_num + 1
                         
                         # Update progress
                         with progress_container.container():
-                            st.subheader(f"Round {current_round}/{fl_manager.max_rounds}")
+                            st.subheader(f"🌾 Crop Analysis Cycle {current_round}/{fl_manager.max_rounds}")
                             progress_bar = st.progress(current_round / fl_manager.max_rounds)
                             
                             # Field station status
                             cols = st.columns(fl_manager.num_clients)
                             for i in range(fl_manager.num_clients):
                                 with cols[i]:
-                                    st.metric(f"Station {i+1}", "🟡 Training")
+                                    st.metric(f"🏡 Farm {i+1}", "🌱 Analyzing")
                         
                         # Run training round
                         start_time = time.time()
                         
-                        # Train clients
+                        # Analyze crop samples at farms
                         client_updates = fl_manager._train_clients_parallel()
                         
-                        # Hierarchical fog aggregation if enabled
+                        # Regional processing centers (fog aggregation) if enabled
                         if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager:
-                            # Fog-level aggregation
+                            # Regional center aggregation
                             fog_updates, fog_metrics = fl_manager.fog_manager.fog_level_aggregation(
                                 client_updates, fl_manager.global_model
                             )
                             
-                            # Leader fog aggregation
+                            # Central agricultural hub aggregation
                             final_update = fl_manager.fog_manager.leader_fog_aggregation(
                                 fog_updates, fl_manager.global_model
                             )
@@ -919,63 +919,63 @@ def main():
                         st.session_state.best_accuracy = max(st.session_state.best_accuracy, accuracy)
                         st.session_state.current_round = current_round
                         
-                        # Update metrics display
+                        # Update crop health metrics display
                         with metrics_container.container():
                             col1, col2, col3, col4 = st.columns(4)
                             with col1:
-                                st.metric("Accuracy", f"{accuracy:.3f}")
+                                st.metric("🌾 Crop Health Score", f"{accuracy:.3f}")
                             with col2:
-                                st.metric("F1 Score", f"{f1:.3f}")
+                                st.metric("📊 Analysis Quality", f"{f1:.3f}")
                             with col3:
-                                st.metric("Loss", f"{loss:.4f}")
+                                st.metric("⚠️ Error Rate", f"{loss:.4f}")
                             with col4:
-                                st.metric("Best Accuracy", f"{st.session_state.best_accuracy:.3f}")
+                                st.metric("🏆 Best Performance", f"{st.session_state.best_accuracy:.3f}")
                             
-                            # Fog aggregation metrics
+                            # Regional processing center metrics
                             if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager and st.session_state.fog_results:
                                 st.markdown("---")
-                                st.markdown("**🌐 Hierarchical Fog Metrics**")
+                                st.markdown("**🏭 Regional Processing Centers Status**")
                                 latest_fog = st.session_state.fog_results[-1]
                                 
                                 col1, col2, col3 = st.columns(3)
                                 with col1:
-                                    st.metric("Global Loss", f"{latest_fog['loss_info']['global_loss']:.4f}")
+                                    st.metric("🌍 Overall Field Error", f"{latest_fog['loss_info']['global_loss']:.4f}")
                                 with col2:
                                     fog_losses = latest_fog['loss_info']['fog_losses']
                                     avg_fog_loss = np.mean([f['loss'] for f in fog_losses.values()]) if fog_losses else 0
-                                    st.metric("Avg Fog Loss", f"{avg_fog_loss:.4f}")
+                                    st.metric("🏭 Avg Regional Error", f"{avg_fog_loss:.4f}")
                                 with col3:
                                     aggregation_info = latest_fog.get('aggregation_info', {})
-                                    st.metric("Fog Nodes Active", aggregation_info.get('total_fog_nodes', 0))
+                                    st.metric("🏢 Active Centers", aggregation_info.get('total_fog_nodes', 0))
                         
                         # Update charts
                         with charts_container.container():
                             if len(st.session_state.training_metrics) > 1:
                                 show_training_charts()
                         
-                        # Check early stopping
+                        # Check if crop health target achieved
                         if accuracy >= fl_manager.target_accuracy:
-                            st.success(f"🎯 Target accuracy {fl_manager.target_accuracy:.3f} reached!")
+                            st.success(f"🎯 Target crop health score {fl_manager.target_accuracy:.3f} achieved!")
                             st.session_state.early_stopped = True
                             break
                         
-                        # Update station status to completed
+                        # Update farm status to completed
                         with progress_container.container():
-                            st.subheader(f"Round {current_round}/{fl_manager.max_rounds}")
+                            st.subheader(f"🌾 Crop Analysis Cycle {current_round}/{fl_manager.max_rounds}")
                             progress_bar = st.progress(current_round / fl_manager.max_rounds)
                             
                             cols = st.columns(fl_manager.num_clients)
                             for i in range(fl_manager.num_clients):
                                 with cols[i]:
-                                    st.metric(f"Station {i+1}", "🟢 Completed")
+                                    st.metric(f"🏡 Farm {i+1}", "✅ Analysis Complete")
                         
                         time.sleep(1)  # Brief pause between rounds
                     
-                    # Training completed
+                    # Field analysis completed
                     st.session_state.training_completed = True
                     st.session_state.training_started = False
                     
-                    # Final results
+                    # Final crop analysis results
                     final_accuracy = st.session_state.best_accuracy
                     st.session_state.results = {
                         'accuracy': final_accuracy,
@@ -985,18 +985,18 @@ def main():
                         'training_history': st.session_state.training_metrics
                     }
                     
-                    # Extract results for tables
+                    # Extract results for farm station reports
                     extract_training_results(fl_manager)
                     
-                    st.success("Training completed successfully!")
+                    st.success("🌾 Field analysis completed successfully! All farms have finished crop health assessment.")
                     
                 except Exception as e:
-                    st.error(f"Training failed: {str(e)}")
+                    st.error(f"Field analysis failed: {str(e)}")
                     st.session_state.training_started = False
             else:
-                st.warning("Please start training from the Training Control tab first.")
+                st.warning("Please start field analysis from the Training Control tab first.")
         
-        # Show completed training results
+        # Show completed field analysis results
         elif st.session_state.training_completed:
             st.success("✅ Training Completed")
             show_training_progress()
