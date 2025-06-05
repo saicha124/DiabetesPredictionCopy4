@@ -546,16 +546,28 @@ def show_results():
 
 def make_prediction(patient_data):
     """Make prediction for new patient data"""
-    if st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model'):
-        # Preprocess the data
-        preprocessor = DataPreprocessor()
-        processed_data = preprocessor.transform(patient_data)
+    if st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model') and st.session_state.fl_manager.global_model is not None:
+        try:
+            # Use the fitted preprocessor from the federated learning manager
+            if hasattr(st.session_state.fl_manager, 'preprocessor') and st.session_state.fl_manager.preprocessor.is_fitted:
+                processed_data = st.session_state.fl_manager.preprocessor.transform(patient_data)
+            else:
+                # Fallback: create temporary preprocessor and fit on available data
+                preprocessor = DataPreprocessor()
+                # Load the diabetes dataset to fit the preprocessor
+                data = pd.read_csv('diabetes.csv')
+                X, y = preprocessor.fit_transform(data)
+                processed_data = preprocessor.transform(patient_data)
+            
+            # Make prediction
+            prediction = st.session_state.fl_manager.global_model.predict(processed_data)[0]
+            probability = st.session_state.fl_manager.global_model.predict_proba(processed_data)[0][1]
+            
+            return prediction, probability
         
-        # Make prediction
-        prediction = st.session_state.fl_manager.global_model.predict(processed_data)[0]
-        probability = st.session_state.fl_manager.global_model.predict_proba(processed_data)[0][1]
-        
-        return prediction, probability
+        except Exception as e:
+            st.error(f"Prediction error: {str(e)}")
+            return 0, 0.0
     
     return 0, 0.0
 
