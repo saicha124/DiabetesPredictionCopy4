@@ -1199,15 +1199,15 @@ def main():
                             st.session_state.early_stopped = True
                             break
                         
-                        # Update farm status to completed
+                        # Update patient agent status to completed
                         with progress_container.container():
-                            st.subheader(f"🌾 Crop Analysis Cycle {current_round}/{fl_manager.max_rounds}")
+                            st.subheader(f"🏥 Patient Analysis Round {current_round}/{fl_manager.max_rounds}")
                             progress_bar = st.progress(current_round / fl_manager.max_rounds)
                             
                             cols = st.columns(fl_manager.num_clients)
                             for i in range(fl_manager.num_clients):
                                 with cols[i]:
-                                    st.metric(f"🏡 Farm {i+1}", "✅ Analysis Complete")
+                                    st.metric(f"👤 Agent {i+1}", "✅ Analysis Complete")
                         
                         time.sleep(1)  # Brief pause between rounds
                     
@@ -1228,15 +1228,15 @@ def main():
                     # Extract results for farm station reports
                     extract_training_results(fl_manager)
                     
-                    st.success("🌾 Field analysis completed successfully! All farms have finished crop health assessment.")
+                    st.success("🏥 Patient analysis completed successfully! All agents have finished diabetes risk assessment.")
                     
                 except Exception as e:
-                    st.error(f"Field analysis failed: {str(e)}")
+                    st.error(f"Patient analysis failed: {str(e)}")
                     st.session_state.training_started = False
             else:
-                st.warning("Please start field analysis from the Training Control tab first.")
+                st.warning("Please start patient analysis from the Training Control tab first.")
         
-        # Show completed field analysis results
+        # Show completed patient analysis results
         elif st.session_state.training_completed:
             st.success("✅ Training Completed")
             show_training_progress()
