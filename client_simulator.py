@@ -63,23 +63,40 @@ class ClientSimulator:
             y_test = self.data['y_test']
             
             if len(X_train) == 0:
-                # No training data available
+                return self._create_dummy_update()
+            
+            # Check if we have enough class diversity for logistic regression
+            unique_classes = np.unique(y_train)
+            if len(unique_classes) < 2:
+                print(f"Client {self.client_id}: Insufficient class diversity, using dummy update")
                 return self._create_dummy_update()
             
             # Train local model
             for epoch in range(local_epochs):
-                self.local_model.fit(X_train, y_train)
+                try:
+                    self.local_model.fit(X_train, y_train)
+                except ValueError as ve:
+                    if "class" in str(ve).lower():
+                        print(f"Client {self.client_id}: Class-related training error: {ve}")
+                        return self._create_dummy_update()
+                    else:
+                        raise ve
             
             # Evaluate local model
-            if len(X_test) > 0:
-                train_predictions = self.local_model.predict(X_train)
-                test_predictions = self.local_model.predict(X_test)
-                
-                train_accuracy = accuracy_score(y_train, train_predictions)
-                test_accuracy = accuracy_score(y_test, test_predictions)
-                f1 = f1_score(y_test, test_predictions, average='weighted')
-            else:
-                train_accuracy = test_accuracy = f1 = 0.0
+            train_accuracy = test_accuracy = f1 = 0.0
+            try:
+                if len(X_test) > 0 and len(np.unique(y_test)) > 0:
+                    train_predictions = self.local_model.predict(X_train)
+                    test_predictions = self.local_model.predict(X_test)
+                    
+                    train_accuracy = accuracy_score(y_train, train_predictions)
+                    test_accuracy = accuracy_score(y_test, test_predictions)
+                    if len(np.unique(y_test)) > 1:
+                        f1 = f1_score(y_test, test_predictions, average='weighted')
+                    else:
+                        f1 = 0.0
+            except Exception as eval_error:
+                print(f"Client {self.client_id} evaluation error: {eval_error}")
             
             # Create parameter update
             update = self._create_parameter_update()
@@ -92,7 +109,8 @@ class ClientSimulator:
                 'test_accuracy': test_accuracy,
                 'f1_score': f1,
                 'training_time': training_time,
-                'samples': len(X_train)
+                'samples': len(X_train),
+                'classes': len(unique_classes)
             }
             
             self.training_history.append(metrics)

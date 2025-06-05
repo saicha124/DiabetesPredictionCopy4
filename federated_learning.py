@@ -83,42 +83,75 @@ class FederatedLearningManager:
             self.global_model.fit(sample_X, sample_y)
     
     def _partition_data(self, X, y):
-        """Partition data among clients (non-IID distribution)"""
+        """Partition data among clients ensuring balanced classes"""
         client_data = []
         n_samples = len(X)
         
-        # Create different partition sizes to simulate real-world scenario
-        partition_sizes = np.random.dirichlet([1] * self.num_clients) * n_samples
-        partition_sizes = partition_sizes.astype(int)
+        # Get class distribution
+        unique_classes, class_counts = np.unique(y, return_counts=True)
+        min_samples_per_client = max(10, n_samples // (self.num_clients * 2))
         
-        # Ensure we use all data
-        partition_sizes[-1] = n_samples - sum(partition_sizes[:-1])
+        # Create stratified partitions to ensure each client has both classes
+        indices_by_class = {}
+        for cls in unique_classes:
+            indices_by_class[cls] = np.where(y == cls)[0]
+            np.random.shuffle(indices_by_class[cls])
         
-        start_idx = 0
-        for i, size in enumerate(partition_sizes):
-            end_idx = start_idx + size
-            if end_idx > n_samples:
-                end_idx = n_samples
+        # Distribute samples to clients ensuring class balance
+        for i in range(self.num_clients):
+            client_indices = []
             
-            client_X = X[start_idx:end_idx]
-            client_y = y[start_idx:end_idx]
+            # Add samples from each class to this client
+            for cls in unique_classes:
+                class_indices = indices_by_class[cls]
+                samples_per_client = len(class_indices) // self.num_clients
+                start_idx = i * samples_per_client
+                end_idx = start_idx + samples_per_client
+                
+                # For the last client, take remaining samples
+                if i == self.num_clients - 1:
+                    end_idx = len(class_indices)
+                
+                client_indices.extend(class_indices[start_idx:end_idx])
             
-            # Split into train/test for each client
-            if len(client_X) > 1 and len(np.unique(client_y)) > 1:
-                X_train, X_test, y_train, y_test = train_test_split(
-                    client_X, client_y, test_size=0.2, random_state=42, stratify=client_y
-                )
+            # Ensure minimum samples per client
+            if len(client_indices) < min_samples_per_client:
+                # Add more samples if needed
+                remaining_indices = []
+                for cls in unique_classes:
+                    remaining = set(indices_by_class[cls]) - set(client_indices)
+                    remaining_indices.extend(list(remaining)[:5])  # Add up to 5 more per class
+                client_indices.extend(remaining_indices[:min_samples_per_client - len(client_indices)])
+            
+            # Get data for this client
+            client_indices = np.array(client_indices)
+            np.random.shuffle(client_indices)
+            
+            client_X = X[client_indices]
+            client_y = y[client_indices]
+            
+            # Split into train/test ensuring both sets have both classes if possible
+            if len(client_X) >= 4 and len(np.unique(client_y)) > 1:
+                try:
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        client_X, client_y, test_size=0.3, random_state=42 + i, stratify=client_y
+                    )
+                except ValueError:
+                    # Fallback to simple split if stratification fails
+                    split_idx = len(client_X) * 7 // 10
+                    X_train, X_test = client_X[:split_idx], client_X[split_idx:]
+                    y_train, y_test = client_y[:split_idx], client_y[split_idx:]
             else:
-                # If not enough samples or only one class, use simple split
-                split_idx = max(1, len(client_X) // 2)
+                # Simple split for small datasets
+                split_idx = max(1, len(client_X) * 7 // 10)
                 X_train, X_test = client_X[:split_idx], client_X[split_idx:]
                 y_train, y_test = client_y[:split_idx], client_y[split_idx:]
-                
-                # Ensure minimum data for training
-                if len(X_train) == 0:
-                    X_train, y_train = client_X, client_y
-                if len(X_test) == 0:
-                    X_test, y_test = X_train, y_train
+            
+            # Ensure we have data for both train and test
+            if len(X_train) == 0:
+                X_train, y_train = client_X[:1], client_y[:1]
+            if len(X_test) == 0:
+                X_test, y_test = client_X[-1:], client_y[-1:]
             
             client_data.append({
                 'X_train': X_train,
@@ -126,10 +159,6 @@ class FederatedLearningManager:
                 'y_train': y_train,
                 'y_test': y_test
             })
-            
-            start_idx = end_idx
-            if start_idx >= n_samples:
-                break
         
         return client_data
     
