@@ -825,23 +825,23 @@ def main():
                 "svm", 
                 "ensemble_voting", 
                 "ensemble_stacking"
-            ], index=0)
+            ], index=0, key="config_model_type")
             
             # Neural Network Hyperparameters (when applicable)
             if model_type == "neural_network":
                 st.markdown("**🧠 Neural Network Configuration**")
-                hidden_layers = st.selectbox("Hidden Layers", [1, 2, 3], index=1)
-                neurons_per_layer = st.selectbox("Neurons per Layer", [64, 128, 256, 512], index=1)
-                dropout_rate = st.slider("Dropout Rate", 0.0, 0.5, 0.2, 0.1)
-                learning_rate = st.selectbox("Learning Rate", [0.001, 0.01, 0.1], index=0)
-                momentum = st.slider("Momentum", 0.0, 0.9, 0.5, 0.1)
+                hidden_layers = st.selectbox("Hidden Layers", [1, 2, 3], index=1, key="config_hidden_layers")
+                neurons_per_layer = st.selectbox("Neurons per Layer", [64, 128, 256, 512], index=1, key="config_neurons")
+                dropout_rate = st.slider("Dropout Rate", 0.0, 0.5, 0.2, 0.1, key="config_dropout")
+                learning_rate = st.selectbox("Learning Rate", [0.001, 0.01, 0.1], index=0, key="config_learning_rate")
+                momentum = st.slider("Momentum", 0.0, 0.9, 0.5, 0.1, key="config_momentum")
             
-            aggregation_algorithm = st.selectbox("Aggregation Algorithm", ["FedAvg", "FedProx", "SecureAgg"])
+            aggregation_algorithm = st.selectbox("Aggregation Algorithm", ["FedAvg", "FedProx", "SecureAgg"], key="config_aggregation")
             
             # Advanced Privacy Settings
             enable_dp = st.checkbox("🔒 Enable Privacy Protection", value=True)
             if enable_dp:
-                privacy_mechanism = st.selectbox("Privacy Mechanism", ["gaussian", "laplace", "exponential"])
+                privacy_mechanism = st.selectbox("Privacy Mechanism", ["gaussian", "laplace", "exponential"], key="config_privacy_mechanism")
                 epsilon = st.number_input("🛡️ Privacy Budget (ε)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
                 delta = st.number_input("🔐 Privacy Parameter (δ)", min_value=1e-6, max_value=1e-3, value=1e-5, format="%.1e")
                 gradient_clip_norm = st.number_input("✂️ Gradient Clipping Norm", min_value=0.1, max_value=5.0, value=1.0, step=0.1)
@@ -857,7 +857,7 @@ def main():
             if enable_fog:
                 num_fog_nodes = st.slider("Number of Fog Nodes", min_value=2, max_value=5, value=3)
                 fog_aggregation_method = st.selectbox("Fog Aggregation Strategy", 
-                                                    ["Mixed Methods", "All FedAvg", "All WeightedAvg", "All Median"])
+                                                    ["Mixed Methods", "All FedAvg", "All WeightedAvg", "All Median"], key="config_fog_aggregation")
             else:
                 num_fog_nodes = 0
                 fog_aggregation_method = "None"
@@ -867,7 +867,8 @@ def main():
             distribution_strategy = st.selectbox(
                 "Distribution Pattern",
                 ["IID", "Non-IID (Dirichlet)", "Pathological Non-IID", "Quantity Skew", "Geographic"],
-                index=0
+                index=0,
+                key="config_distribution"
             )
             
             # Strategy-specific parameters
