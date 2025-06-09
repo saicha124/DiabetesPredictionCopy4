@@ -372,9 +372,9 @@ def show_training_charts():
                         ))
                 
                 fig_clients.update_layout(
-                    title="🏡 Individual Farm Performance Tracking",
+                    title="🏥 Individual Medical Station Performance Tracking",
                     xaxis_title="Analysis Cycle",
-                    yaxis_title="Crop Health Score",
+                    yaxis_title="Model Accuracy",
                     template="plotly_white",
                     height=300,
                     showlegend=True
@@ -795,7 +795,7 @@ def main():
             st.metric("🚨 Diabetes Cases", f"{positive_ratio:.1%}")
             
     except Exception as e:
-        st.error(f"❌ Error loading field data: {str(e)}")
+        st.error(f"❌ Error loading medical data: {str(e)}")
         return
     
     # Multi-tab interface
@@ -1296,25 +1296,27 @@ def main():
                         st.info("🔄 Global model will be initialized when training starts")
                 
                 elif stage_num == 5:  # Local Training
-                    if st.session_state.training_metrics:
-                        current_round = len(st.session_state.training_metrics)
-                        st.success(f"✅ Local training in progress - Round {current_round}")
+                    if st.session_state.training_started:
                         if st.session_state.training_metrics:
+                            current_round = len(st.session_state.training_metrics)
+                            st.success(f"✅ Local training in progress - Round {current_round}")
                             latest_metrics = st.session_state.training_metrics[-1]
                             st.write(f"📈 Current accuracy: {latest_metrics.get('accuracy', 0):.3f}")
+                        else:
+                            st.success("✅ Local training initiated")
                     else:
                         st.info("🔄 Local training will begin once setup is complete")
                 
                 elif stage_num == 6:  # Fog Aggregation
-                    if st.session_state.fog_results:
-                        st.success(f"✅ Fog aggregation active - {len(st.session_state.fog_results)} rounds completed")
-                    elif hasattr(st.session_state, 'fl_manager') and hasattr(st.session_state.fl_manager, 'fog_manager'):
-                        st.info("🔄 Fog nodes ready for aggregation")
+                    if st.session_state.training_metrics and len(st.session_state.training_metrics) >= 1:
+                        st.success(f"✅ Fog aggregation active - processing regional medical data")
+                        if st.session_state.fog_results:
+                            st.write(f"📊 Fog rounds completed: {len(st.session_state.fog_results)}")
                     else:
                         st.info("🔄 Fog aggregation will activate during training")
                 
                 elif stage_num == 7:  # Global Aggregation
-                    if st.session_state.training_metrics:
+                    if st.session_state.training_metrics and len(st.session_state.training_metrics) >= 3:
                         st.success(f"✅ Global aggregation in progress")
                         convergence_trend = []
                         for i, metrics in enumerate(st.session_state.training_metrics[-3:]):
@@ -1323,7 +1325,7 @@ def main():
                             trend = "improving" if convergence_trend[-1] > convergence_trend[0] else "stabilizing"
                             st.write(f"📊 Model performance: {trend}")
                     else:
-                        st.info("🔄 Global aggregation begins after local training")
+                        st.info("🔄 Global aggregation begins after fog processing")
                 
                 elif stage_num == 8:  # Model Convergence
                     if st.session_state.training_completed:
@@ -1548,11 +1550,11 @@ def main():
                         
                         time.sleep(1)  # Brief pause between rounds
                     
-                    # Field analysis completed
+                    # Medical analysis completed
                     st.session_state.training_completed = True
                     st.session_state.training_started = False
                     
-                    # Final crop analysis results
+                    # Final medical analysis results
                     final_accuracy = st.session_state.best_accuracy
                     st.session_state.results = {
                         'accuracy': final_accuracy,
@@ -1562,7 +1564,7 @@ def main():
                         'training_history': st.session_state.training_metrics
                     }
                     
-                    # Extract results for farm station reports
+                    # Extract results for medical station reports
                     extract_training_results(fl_manager)
                     
                     st.success("🏥 Patient analysis completed successfully! All agents have finished diabetes risk assessment.")
