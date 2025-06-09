@@ -1527,16 +1527,16 @@ def main():
                                 col1, col2, col3 = st.columns(3)
                                 
                                 with col1:
-                                    metric_type = st.selectbox("Display Metric", ["accuracy", "loss", "f1_score", "training_time"], index=0)
-                                    color_scheme = st.selectbox("Color Scheme", ["RdYlGn", "Viridis", "Plasma", "Blues", "Reds"], index=0)
+                                    metric_type = st.selectbox("Display Metric", ["accuracy", "loss", "f1_score", "training_time"], index=0, key="heatmap_metric")
+                                    color_scheme = st.selectbox("Color Scheme", ["RdYlGn", "Viridis", "Plasma", "Blues", "Reds"], index=0, key="heatmap_colors")
                                 
                                 with col2:
-                                    show_values = st.checkbox("Show Values on Heat Map", value=False)
-                                    normalize_data = st.checkbox("Normalize Data", value=False)
+                                    show_values = st.checkbox("Show Values on Heat Map", value=False, key="heatmap_values")
+                                    normalize_data = st.checkbox("Normalize Data", value=False, key="heatmap_normalize")
                                 
                                 with col3:
-                                    min_rounds = st.number_input("Min Rounds to Display", min_value=1, max_value=50, value=1)
-                                    max_stations = st.number_input("Max Stations to Display", min_value=3, max_value=20, value=10)
+                                    min_rounds = st.number_input("Min Rounds to Display", min_value=1, max_value=50, value=1, key="heatmap_min_rounds")
+                                    max_stations = st.number_input("Max Stations to Display", min_value=3, max_value=20, value=10, key="heatmap_max_stations")
                             
                             if hasattr(st.session_state, 'training_history') and st.session_state.training_history:
                                 # Extract performance data for heat map
