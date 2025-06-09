@@ -1121,13 +1121,20 @@ def main():
         
         # Determine current stage based on training state
         current_stage = 1
-        if st.session_state.training_completed or (hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped):
+        if st.session_state.training_completed or (hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped) or not st.session_state.training_started and st.session_state.training_metrics:
             current_stage = 9  # Deployment Ready - training finished
         elif st.session_state.training_started:
             if st.session_state.training_metrics:
                 rounds = len(st.session_state.training_metrics)
                 if rounds >= 5:
-                    current_stage = 8  # Model Convergence
+                    # Check if training is actually completed but flag not set
+                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
+                        if st.session_state.fl_manager.current_round >= st.session_state.fl_manager.max_rounds:
+                            current_stage = 9  # Deployment Ready - max rounds reached
+                        else:
+                            current_stage = 8  # Model Convergence
+                    else:
+                        current_stage = 8  # Model Convergence
                 elif rounds >= 3:
                     current_stage = 7  # Global Aggregation  
                 elif rounds >= 1:
@@ -1566,9 +1573,13 @@ def main():
                         
                         time.sleep(1)  # Brief pause between rounds
                     
-                    # Medical analysis completed
+                    # Medical analysis completed - ensure all completion flags are set
                     st.session_state.training_completed = True
                     st.session_state.training_started = False
+                    
+                    # Force stage progression to final stage
+                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
+                        st.session_state.fl_manager.training_completed = True
                     
                     # Final medical analysis results
                     final_accuracy = st.session_state.best_accuracy
