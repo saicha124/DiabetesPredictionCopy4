@@ -1854,6 +1854,48 @@ def main():
                 show_results()
         else:
             st.info("Complete a training session to view comprehensive performance analysis.")
+            
+            # Preview of available analysis
+            st.subheader("📊 Available Analysis After Training")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                **🔒 Privacy Analysis**
+                - Differential privacy trade-offs
+                - Epsilon vs accuracy comparison
+                - Privacy budget consumption
+                - Security vulnerability assessment
+                """)
+                
+                st.markdown("""
+                **📈 Performance Metrics**
+                - Model accuracy progression
+                - Convergence analysis
+                - Client contribution analysis
+                - Communication efficiency
+                """)
+            
+            with col2:
+                st.markdown("""
+                **🏥 Medical Facility Analysis**
+                - Individual station performance
+                - Data distribution quality
+                - Regional performance patterns
+                - Fog node efficiency
+                """)
+                
+                st.markdown("""
+                **📋 Scalability Studies**
+                - Client count vs accuracy
+                - Fog node optimization
+                - Training time analysis
+                - Resource utilization
+                """)
+            
+            st.markdown("---")
+            st.markdown("💡 **Start training in the Training Control tab to generate these analyses.**")
     
     with tab6:
         st.header("🏥 Patient Diabetes Risk Assessment")
