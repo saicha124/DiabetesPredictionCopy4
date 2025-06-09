@@ -2196,7 +2196,13 @@ def main():
                 factors = analyze_risk_factors(quick_data.iloc[0])
                 
                 for factor, info in factors.items():
-                    status = "🔴 High" if info['risk'] == 'high' else "🟡 Moderate" if info['risk'] == 'moderate' else "🟢 Normal"
+                    risk_level = info['risk_level']
+                    if risk_level >= 0.15:
+                        status = "🔴 High"
+                    elif risk_level >= 0.05:
+                        status = "🟡 Moderate"
+                    else:
+                        status = "🟢 Normal"
                     st.write(f"**{factor}:** {status} - {info['description']}")
                 
                 # Recommendations
