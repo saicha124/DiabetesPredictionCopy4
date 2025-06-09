@@ -163,7 +163,7 @@ def extract_training_results(fl_manager):
         if hasattr(client, 'training_history') and client.training_history:
             latest_metrics = client.training_history[-1]
             client_results.append({
-                'Station ID': f'Field-{i+1}',
+                'Station ID': f'Station-{i+1}',
                 'Samples': latest_metrics.get('samples', 0),
                 'Accuracy': f"{latest_metrics.get('test_accuracy', 0):.3f}",
                 'F1 Score': f"{latest_metrics.get('f1_score', 0):.3f}",
@@ -534,7 +534,7 @@ def show_results():
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("🏢 Field Station Results")
+        st.subheader("🏥 Medical Station Results")
         if st.session_state.client_results:
             client_df = pd.DataFrame(st.session_state.client_results)
             st.dataframe(client_df, use_container_width=True)
@@ -1513,10 +1513,237 @@ def main():
                                     aggregation_info = latest_fog.get('aggregation_info', {})
                                     st.metric("🏢 Active Centers", aggregation_info.get('total_fog_nodes', 0))
                         
-                        # Update charts
+                        # Update charts and heat map
                         with charts_container.container():
                             if len(st.session_state.training_metrics) > 1:
                                 show_training_charts()
+                                
+                            # Dynamic Client Performance Heat Map
+                            st.markdown("---")
+                            st.subheader("🌡️ Dynamic Medical Station Performance Heat Map")
+                            
+                            # Heat map configuration panel
+                            with st.expander("🔧 Heat Map Configuration", expanded=False):
+                                col1, col2, col3 = st.columns(3)
+                                
+                                with col1:
+                                    metric_type = st.selectbox("Display Metric", ["accuracy", "loss", "f1_score", "training_time"], index=0)
+                                    color_scheme = st.selectbox("Color Scheme", ["RdYlGn", "Viridis", "Plasma", "Blues", "Reds"], index=0)
+                                
+                                with col2:
+                                    show_values = st.checkbox("Show Values on Heat Map", value=False)
+                                    normalize_data = st.checkbox("Normalize Data", value=False)
+                                
+                                with col3:
+                                    min_rounds = st.number_input("Min Rounds to Display", min_value=1, max_value=50, value=1)
+                                    max_stations = st.number_input("Max Stations to Display", min_value=3, max_value=20, value=10)
+                            
+                            if hasattr(st.session_state, 'training_history') and st.session_state.training_history:
+                                # Extract performance data for heat map
+                                heat_map_data = []
+                                station_ids = []
+                                rounds_data = []
+                                
+                                for round_idx, round_data in enumerate(st.session_state.training_history):
+                                    if 'client_metrics' in round_data:
+                                        round_num = round_data.get('round', round_idx + 1)
+                                        rounds_data.append(round_num)
+                                        
+                                        # Get all station performance for this round
+                                        round_performances = []
+                                        client_metrics = round_data['client_metrics']
+                                        
+                                        # Ensure consistent station ordering
+                                        if not station_ids:
+                                            station_ids = sorted(client_metrics.keys())
+                                        
+                                        for station_id in station_ids:
+                                            if station_id in client_metrics:
+                                                metric_value = client_metrics[station_id].get(metric_type, 0)
+                                                round_performances.append(metric_value)
+                                            else:
+                                                round_performances.append(0)  # Missing data
+                                        
+                                        heat_map_data.append(round_performances)
+                                
+                                if heat_map_data and station_ids:
+                                    # Create heat map with configuration
+                                    import numpy as np
+                                    heat_map_array = np.array(heat_map_data).T  # Transpose for proper orientation
+                                    
+                                    # Apply filtering
+                                    if len(rounds_data) >= min_rounds:
+                                        start_idx = max(0, len(rounds_data) - min_rounds) if min_rounds < len(rounds_data) else 0
+                                        heat_map_array = heat_map_array[:, start_idx:]
+                                        filtered_rounds = rounds_data[start_idx:]
+                                    else:
+                                        filtered_rounds = rounds_data
+                                    
+                                    # Limit stations displayed
+                                    if len(station_ids) > max_stations:
+                                        heat_map_array = heat_map_array[:max_stations, :]
+                                        displayed_stations = station_ids[:max_stations]
+                                    else:
+                                        displayed_stations = station_ids
+                                    
+                                    # Apply normalization if requested
+                                    if normalize_data and heat_map_array.size > 0:
+                                        if metric_type in ['loss']:
+                                            # For loss metrics, lower is better, so invert normalization
+                                            max_val = np.max(heat_map_array)
+                                            min_val = np.min(heat_map_array)
+                                            if max_val > min_val:
+                                                heat_map_array = 1 - (heat_map_array - min_val) / (max_val - min_val)
+                                        else:
+                                            # Standard min-max normalization
+                                            max_val = np.max(heat_map_array)
+                                            min_val = np.min(heat_map_array)
+                                            if max_val > min_val:
+                                                heat_map_array = (heat_map_array - min_val) / (max_val - min_val)
+                                    
+                                    # Determine color scale bounds
+                                    if metric_type == 'accuracy':
+                                        zmin, zmax = 0, 1
+                                    elif metric_type == 'loss':
+                                        zmin, zmax = 0, np.max(heat_map_array) if heat_map_array.size > 0 else 1
+                                    elif metric_type == 'f1_score':
+                                        zmin, zmax = 0, 1
+                                    elif metric_type == 'training_time':
+                                        zmin, zmax = 0, np.max(heat_map_array) if heat_map_array.size > 0 else 10
+                                    else:
+                                        zmin, zmax = np.min(heat_map_array), np.max(heat_map_array)
+                                    
+                                    # Create heat map trace
+                                    heatmap_trace = go.Heatmap(
+                                        z=heat_map_array,
+                                        x=[f"Round {r}" for r in filtered_rounds],
+                                        y=[f"Station {s}" for s in displayed_stations],
+                                        colorscale=color_scheme,
+                                        zmin=zmin,
+                                        zmax=zmax,
+                                        colorbar=dict(
+                                            title=metric_type.replace('_', ' ').title(),
+                                            titleside="right"
+                                        ),
+                                        hovertemplate=f'<b>%{{y}}</b><br>%{{x}}<br>{metric_type.replace("_", " ").title()}: %{{z:.3f}}<extra></extra>',
+                                        showscale=True
+                                    )
+                                    
+                                    # Add text annotations if requested
+                                    if show_values and heat_map_array.size > 0:
+                                        text_array = np.round(heat_map_array, 3).astype(str)
+                                        heatmap_trace.update(text=text_array, texttemplate="%{text}", textfont={"size": 10})
+                                    
+                                    fig_heatmap = go.Figure(data=heatmap_trace)
+                                    
+                                    fig_heatmap.update_layout(
+                                        title=f"Medical Station {metric_type.replace('_', ' ').title()} Over Training Rounds",
+                                        xaxis_title="Training Rounds",
+                                        yaxis_title="Medical Stations",
+                                        height=450,
+                                        font=dict(size=12)
+                                    )
+                                    
+                                    st.plotly_chart(fig_heatmap, use_container_width=True)
+                                    
+                                    # Heat map analytics
+                                    if heat_map_array.size > 0:
+                                        st.markdown("### 📊 Heat Map Analytics")
+                                        
+                                        analytics_col1, analytics_col2, analytics_col3, analytics_col4 = st.columns(4)
+                                        
+                                        with analytics_col1:
+                                            current_avg = np.mean(heat_map_array[:, -1]) if heat_map_array.shape[1] > 0 else 0
+                                            st.metric("Current Round Avg", f"{current_avg:.3f}")
+                                        
+                                        with analytics_col2:
+                                            overall_std = np.std(heat_map_array)
+                                            st.metric("Overall Variance", f"{overall_std:.3f}")
+                                        
+                                        with analytics_col3:
+                                            best_overall = np.max(heat_map_array)
+                                            worst_overall = np.min(heat_map_array)
+                                            st.metric("Best Performance", f"{best_overall:.3f}")
+                                            st.metric("Worst Performance", f"{worst_overall:.3f}")
+                                        
+                                        with analytics_col4:
+                                            # Performance consistency (coefficient of variation)
+                                            if current_avg > 0:
+                                                consistency = (np.std(heat_map_array[:, -1]) / current_avg) * 100 if heat_map_array.shape[1] > 0 else 0
+                                                st.metric("Consistency Score", f"{100-consistency:.1f}%")
+                                            else:
+                                                st.metric("Consistency Score", "N/A")
+                                    
+                                    # Performance insights
+                                    col1, col2, col3 = st.columns(3)
+                                    
+                                    with col1:
+                                        # Best performing station
+                                        latest_round_data = heat_map_array[:, -1] if heat_map_array.shape[1] > 0 else []
+                                        if len(latest_round_data) > 0:
+                                            best_station_idx = np.argmax(latest_round_data)
+                                            best_performance = latest_round_data[best_station_idx]
+                                            st.metric(
+                                                "🏆 Top Performer", 
+                                                f"Station {station_ids[best_station_idx]}", 
+                                                f"{best_performance:.3f}"
+                                            )
+                                    
+                                    with col2:
+                                        # Performance variance
+                                        if len(latest_round_data) > 0:
+                                            performance_std = np.std(latest_round_data)
+                                            performance_mean = np.mean(latest_round_data)
+                                            st.metric(
+                                                "📊 Performance Spread", 
+                                                f"σ = {performance_std:.3f}",
+                                                f"μ = {performance_mean:.3f}"
+                                            )
+                                    
+                                    with col3:
+                                        # Improvement trend
+                                        if heat_map_array.shape[1] >= 2:
+                                            first_round_avg = np.mean(heat_map_array[:, 0])
+                                            last_round_avg = np.mean(heat_map_array[:, -1])
+                                            improvement = last_round_avg - first_round_avg
+                                            trend_icon = "📈" if improvement > 0 else "📉" if improvement < 0 else "➡️"
+                                            st.metric(
+                                                f"{trend_icon} Overall Trend", 
+                                                f"{improvement:+.3f}",
+                                                f"From {first_round_avg:.3f}"
+                                            )
+                                
+                                # Real-time station status grid
+                                st.markdown("---")
+                                st.subheader("🔄 Real-Time Station Status")
+                                
+                                if station_ids and len(st.session_state.training_history) > 0:
+                                    latest_metrics = st.session_state.training_history[-1].get('client_metrics', {})
+                                    
+                                    # Create status grid
+                                    cols_per_row = 5
+                                    for i in range(0, len(station_ids), cols_per_row):
+                                        cols = st.columns(cols_per_row)
+                                        for j, station_id in enumerate(station_ids[i:i+cols_per_row]):
+                                            with cols[j]:
+                                                if station_id in latest_metrics:
+                                                    accuracy = latest_metrics[station_id].get('accuracy', 0)
+                                                    status_color = "🟢" if accuracy > 0.8 else "🟡" if accuracy > 0.6 else "🔴"
+                                                    training_time = latest_metrics[station_id].get('training_time', 0)
+                                                    
+                                                    st.markdown(f"""
+                                                    **{status_color} Station {station_id}**
+                                                    - Accuracy: {accuracy:.3f}
+                                                    - Time: {training_time:.2f}s
+                                                    - Status: {'Active' if accuracy > 0 else 'Inactive'}
+                                                    """)
+                                                else:
+                                                    st.markdown(f"""
+                                                    **⚪ Station {station_id}**
+                                                    - Status: Waiting
+                                                    """)
+                            else:
+                                st.info("Heat map will display once training begins and station metrics are available.")
                         
                         # Check if crop health target achieved
                         if accuracy >= fl_manager.target_accuracy:
