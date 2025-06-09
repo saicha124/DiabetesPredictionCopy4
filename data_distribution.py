@@ -396,15 +396,15 @@ def visualize_data_distribution(client_data: List[Dict[str, np.ndarray]], strate
     
     fig_sizes = go.Figure()
     fig_sizes.add_trace(go.Bar(
-        x=[f"Station {i+1}" for i in range(len(client_sizes))],
+        x=[f"Station-{i+1}" for i in range(len(client_sizes))],
         y=client_sizes,
         marker_color='lightblue',
         text=client_sizes,
         textposition='auto'
     ))
     fig_sizes.update_layout(
-        title="Data Distribution Across Field Stations",
-        xaxis_title="Field Station",
+        title="Data Distribution Across Medical Stations",
+        xaxis_title="Medical Station",
         yaxis_title="Number of Samples",
         template="plotly_white"
     )
@@ -425,7 +425,7 @@ def visualize_data_distribution(client_data: List[Dict[str, np.ndarray]], strate
     fig_heatmap = go.Figure(data=go.Heatmap(
         z=heatmap_data,
         x=[f"Class {cls}" for cls in all_classes],
-        y=[f"Station {i+1}" for i in range(len(class_distributions))],
+        y=[f"Station-{i+1}" for i in range(len(class_distributions))],
         colorscale='Viridis',
         text=heatmap_data,
         texttemplate="%{text}",
@@ -434,7 +434,7 @@ def visualize_data_distribution(client_data: List[Dict[str, np.ndarray]], strate
     fig_heatmap.update_layout(
         title="Class Distribution Heatmap",
         xaxis_title="Classes",
-        yaxis_title="Field Stations",
+        yaxis_title="Medical Stations",
         template="plotly_white"
     )
     
