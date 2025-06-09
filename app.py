@@ -1867,17 +1867,17 @@ def main():
         if not st.session_state.patient_database:
             sample_patients = [
                 {
-                    'name': 'John Smith', 'id': 'P001', 'Pregnancies': 0, 'Glucose': 140,
+                    'station': 'Station Alpha', 'id': 'P001', 'Pregnancies': 0, 'Glucose': 140,
                     'BloodPressure': 85, 'SkinThickness': 25, 'Insulin': 180, 'BMI': 28.5,
                     'DiabetesPedigreeFunction': 0.65, 'Age': 45, 'timestamp': pd.Timestamp.now()
                 },
                 {
-                    'name': 'Maria Garcia', 'id': 'P002', 'Pregnancies': 2, 'Glucose': 110,
+                    'station': 'Station Beta', 'id': 'P002', 'Pregnancies': 2, 'Glucose': 110,
                     'BloodPressure': 70, 'SkinThickness': 20, 'Insulin': 90, 'BMI': 23.2,
                     'DiabetesPedigreeFunction': 0.35, 'Age': 32, 'timestamp': pd.Timestamp.now()
                 },
                 {
-                    'name': 'Robert Johnson', 'id': 'P003', 'Pregnancies': 0, 'Glucose': 165,
+                    'station': 'Station Gamma', 'id': 'P003', 'Pregnancies': 0, 'Glucose': 165,
                     'BloodPressure': 95, 'SkinThickness': 30, 'Insulin': 250, 'BMI': 32.1,
                     'DiabetesPedigreeFunction': 0.85, 'Age': 58, 'timestamp': pd.Timestamp.now()
                 }
@@ -1890,7 +1890,7 @@ def main():
             
             with col1:
                 st.markdown("**Personal Information**")
-                patient_name = st.text_input("Patient Name")
+                patient_station = st.text_input("Station Name")
                 patient_id = st.text_input("Patient ID")
                 pregnancies = st.number_input("Number of Pregnancies", min_value=0, max_value=20, value=1)
                 age = st.number_input("Age (years)", min_value=18, max_value=120, value=30)
@@ -1905,9 +1905,9 @@ def main():
                 diabetes_pedigree = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0, value=0.5, step=0.01)
             
             if st.button("💾 Add Patient to Database"):
-                if patient_name and patient_id:
+                if patient_station and patient_id:
                     patient_data = {
-                        'name': patient_name,
+                        'station': patient_station,
                         'id': patient_id,
                         'Pregnancies': pregnancies,
                         'Glucose': glucose,
@@ -1926,9 +1926,9 @@ def main():
                         st.warning(f"Patient ID {patient_id} already exists. Please use a unique ID.")
                     else:
                         st.session_state.patient_database.append(patient_data)
-                        st.success(f"Patient {patient_name} added successfully!")
+                        st.success(f"Patient from {patient_station} added successfully!")
                 else:
-                    st.error("Please provide both patient name and ID.")
+                    st.error("Please provide both station name and patient ID.")
         
         # Quick Risk Assessment Tool
         st.subheader("⚡ Quick Risk Assessment")
@@ -2000,14 +2000,14 @@ def main():
             
             # Create DataFrame for display
             patients_df = pd.DataFrame(st.session_state.patient_database)
-            display_df = patients_df[['name', 'id', 'Age', 'Glucose', 'BMI', 'timestamp']].copy()
+            display_df = patients_df[['station', 'id', 'Age', 'Glucose', 'BMI', 'timestamp']].copy()
             display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M')
             
             # Add selection column
             selected_patients = st.multiselect(
                 "Select patients for batch risk assessment:",
                 options=patients_df.index.tolist(),
-                format_func=lambda x: f"{patients_df.iloc[x]['name']} (ID: {patients_df.iloc[x]['id']})"
+                format_func=lambda x: f"{patients_df.iloc[x]['station']} (ID: {patients_df.iloc[x]['id']})"
             )
             
             st.dataframe(display_df, use_container_width=True)
@@ -2050,7 +2050,7 @@ def main():
                             recommendation = "Maintain healthy lifestyle habits"
                         
                         results.append({
-                            'Patient': patient['name'],
+                            'Station': patient['station'],
                             'ID': patient['id'],
                             'Risk Level': f"{risk_color} {risk_category}",
                             'Probability': f"{probability:.1%}",
