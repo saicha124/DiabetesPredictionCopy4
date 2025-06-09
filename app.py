@@ -809,7 +809,7 @@ def main():
         
         with col1:
             st.subheader("📊 Basic Settings")
-            num_clients = st.slider("👥 Number of Patient Agents", min_value=3, max_value=10, value=5)
+            num_clients = st.slider("🏥 Number of Medical Stations", min_value=3, max_value=10, value=5)
             max_rounds = st.slider("🔄 Maximum Training Rounds", min_value=5, max_value=100, value=20)
             target_accuracy = st.slider("🎯 Target Accuracy (Auto-Stop)", min_value=0.7, max_value=0.95, value=0.85, step=0.05)
             
@@ -1235,7 +1235,7 @@ def main():
             st.metric("Journey Progress", f"{progress_percentage:.0f}%")
             
             if st.session_state.training_started:
-                st.metric("Active Agents", st.session_state.fl_manager.num_clients if hasattr(st.session_state, 'fl_manager') else 0)
+                st.metric("Active Medical Stations", st.session_state.fl_manager.num_clients if hasattr(st.session_state, 'fl_manager') else 0)
             
             if st.session_state.training_metrics:
                 st.metric("Completed Rounds", len(st.session_state.training_metrics))
@@ -1334,12 +1334,12 @@ def main():
                         st.info("🔄 Complete training to reach deployment readiness")
     
     with tab2:
-        st.header("🏥 Patient Agent Monitoring")
+        st.header("🏥 Medical Station Monitoring")
         
         # Direct training execution
         if st.session_state.training_started and not st.session_state.training_completed:
             if hasattr(st.session_state, 'training_data') and st.session_state.fl_manager:
-                st.info("🏥 Coordinating patient data analysis across medical agents...")
+                st.info("🏥 Coordinating patient data analysis across medical stations...")
                 
                 # Create progress containers
                 progress_container = st.empty()
@@ -1482,25 +1482,25 @@ def main():
                             with col4:
                                 st.metric("🏆 Best Performance", f"{st.session_state.best_accuracy:.3f}")
                             
-                            # Individual farm performance display
+                            # Individual medical station performance display
                             if client_accuracies:
                                 st.markdown("---")
-                                st.markdown("**🏡 Individual Farm Performance**")
-                                farm_cols = st.columns(min(5, len(client_accuracies)))
+                                st.markdown("**🏥 Individual Medical Station Performance**")
+                                station_cols = st.columns(min(5, len(client_accuracies)))
                                 for i, acc in enumerate(client_accuracies):
-                                    with farm_cols[i % len(farm_cols)]:
+                                    with station_cols[i % len(station_cols)]:
                                         performance_color = "🟢" if acc > 0.7 else "🟡" if acc > 0.5 else "🔴"
-                                        st.metric(f"🏡 Farm {i+1}", f"{performance_color} {acc:.3f}")
+                                        st.metric(f"🏥 Station {i+1}", f"{performance_color} {acc:.3f}")
                             
-                            # Regional processing center metrics
+                            # Regional medical center metrics
                             if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager and st.session_state.fog_results:
                                 st.markdown("---")
-                                st.markdown("**🏭 Regional Processing Centers Status**")
+                                st.markdown("**🏥 Regional Medical Centers Status**")
                                 latest_fog = st.session_state.fog_results[-1]
                                 
                                 col1, col2, col3 = st.columns(3)
                                 with col1:
-                                    st.metric("🌍 Overall Field Error", f"{latest_fog['loss_info']['global_loss']:.4f}")
+                                    st.metric("🌍 Overall System Error", f"{latest_fog['loss_info']['global_loss']:.4f}")
                                 with col2:
                                     fog_losses = latest_fog['loss_info']['fog_losses']
                                     if fog_losses:
@@ -1508,7 +1508,7 @@ def main():
                                         avg_fog_loss = sum(loss_values) / len(loss_values)
                                     else:
                                         avg_fog_loss = 0
-                                    st.metric("🏭 Avg Regional Error", f"{avg_fog_loss:.4f}")
+                                    st.metric("🏥 Avg Regional Error", f"{avg_fog_loss:.4f}")
                                 with col3:
                                     aggregation_info = latest_fog.get('aggregation_info', {})
                                     st.metric("🏢 Active Centers", aggregation_info.get('total_fog_nodes', 0))
