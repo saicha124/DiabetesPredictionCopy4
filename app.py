@@ -1518,21 +1518,51 @@ def main():
                         st.markdown("---")
                         st.subheader("🌡️ Dynamic Medical Station Performance Heat Map")
                         
-                        # Heat map configuration panel
+                        # Heat map configuration panel with session state management
+                        if 'heatmap_config' not in st.session_state:
+                            st.session_state.heatmap_config = {
+                                'metric_type': 'accuracy',
+                                'color_scheme': 'RdYlGn',
+                                'show_values': False,
+                                'normalize_data': False,
+                                'min_rounds': 1,
+                                'max_stations': 10
+                            }
+                        
                         with st.expander("🔧 Heat Map Configuration", expanded=False):
                             col1, col2, col3 = st.columns(3)
                             
                             with col1:
-                                metric_type = st.selectbox("Display Metric", ["accuracy", "loss", "f1_score", "training_time"], index=0, key="live_heatmap_metric")
-                                color_scheme = st.selectbox("Color Scheme", ["RdYlGn", "Viridis", "Plasma", "Blues", "Reds"], index=0, key="live_heatmap_colors")
+                                metric_type = st.selectbox("Display Metric", ["accuracy", "loss", "f1_score", "training_time"], 
+                                                         index=["accuracy", "loss", "f1_score", "training_time"].index(st.session_state.heatmap_config['metric_type']),
+                                                         key=f"live_heatmap_metric_{hash('metric_type')}")
+                                color_scheme = st.selectbox("Color Scheme", ["RdYlGn", "Viridis", "Plasma", "Blues", "Reds"], 
+                                                          index=["RdYlGn", "Viridis", "Plasma", "Blues", "Reds"].index(st.session_state.heatmap_config['color_scheme']),
+                                                          key=f"live_heatmap_colors_{hash('color_scheme')}")
                             
                             with col2:
-                                show_values = st.checkbox("Show Values on Heat Map", value=False, key="live_heatmap_values")
-                                normalize_data = st.checkbox("Normalize Data", value=False, key="live_heatmap_normalize")
+                                show_values = st.checkbox("Show Values on Heat Map", value=st.session_state.heatmap_config['show_values'],
+                                                        key=f"live_heatmap_values_{hash('show_values')}")
+                                normalize_data = st.checkbox("Normalize Data", value=st.session_state.heatmap_config['normalize_data'],
+                                                           key=f"live_heatmap_normalize_{hash('normalize_data')}")
                             
                             with col3:
-                                min_rounds = st.number_input("Min Rounds to Display", min_value=1, max_value=50, value=1, key="live_heatmap_min_rounds")
-                                max_stations = st.number_input("Max Stations to Display", min_value=3, max_value=20, value=10, key="live_heatmap_max_stations")
+                                min_rounds = st.number_input("Min Rounds to Display", min_value=1, max_value=50, 
+                                                           value=st.session_state.heatmap_config['min_rounds'],
+                                                           key=f"live_heatmap_min_rounds_{hash('min_rounds')}")
+                                max_stations = st.number_input("Max Stations to Display", min_value=3, max_value=20, 
+                                                             value=st.session_state.heatmap_config['max_stations'],
+                                                             key=f"live_heatmap_max_stations_{hash('max_stations')}")
+                            
+                            # Update session state with new values
+                            st.session_state.heatmap_config.update({
+                                'metric_type': metric_type,
+                                'color_scheme': color_scheme,
+                                'show_values': show_values,
+                                'normalize_data': normalize_data,
+                                'min_rounds': min_rounds,
+                                'max_stations': max_stations
+                            })
                         
                         # Update charts and heat map
                         with charts_container.container():
@@ -1560,7 +1590,7 @@ def main():
                                         
                                         for station_id in station_ids:
                                             if station_id in client_metrics:
-                                                metric_value = client_metrics[station_id].get(metric_type, 0)
+                                                metric_value = client_metrics[station_id].get(st.session_state.heatmap_config['metric_type'], 0)
                                                 round_performances.append(metric_value)
                                             else:
                                                 round_performances.append(0)  # Missing data
@@ -1573,6 +1603,13 @@ def main():
                                     heat_map_array = np.array(heat_map_data).T  # Transpose for proper orientation
                                     
                                     # Apply filtering
+                                    min_rounds = st.session_state.heatmap_config['min_rounds']
+                                    max_stations = st.session_state.heatmap_config['max_stations']
+                                    normalize_data = st.session_state.heatmap_config['normalize_data']
+                                    metric_type = st.session_state.heatmap_config['metric_type']
+                                    color_scheme = st.session_state.heatmap_config['color_scheme']
+                                    show_values = st.session_state.heatmap_config['show_values']
+                                    
                                     if len(rounds_data) >= min_rounds:
                                         start_idx = max(0, len(rounds_data) - min_rounds) if min_rounds < len(rounds_data) else 0
                                         heat_map_array = heat_map_array[:, start_idx:]
