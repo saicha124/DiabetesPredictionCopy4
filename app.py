@@ -2405,12 +2405,12 @@ def main():
                 sim_num_clients = st.slider("Number of Clients", 2, 50, 10)
                 sim_client_dropout = st.slider("Client Dropout Rate (%)", 0, 50, 10)
                 sim_data_heterogeneity = st.selectbox("Data Heterogeneity", 
-                                                    ["Low (IID)", "Medium (Non-IID)", "High (Pathological)"])
+                                                    ["Low (IID)", "Medium (Non-IID)", "High (Pathological)"], key="sim_data_heterogeneity")
                 
             with col2:
                 st.markdown("**Network Conditions**")
                 sim_communication_delay = st.slider("Communication Delay (ms)", 0, 1000, 100)
-                sim_bandwidth_limit = st.selectbox("Bandwidth", ["High", "Medium", "Low"])
+                sim_bandwidth_limit = st.selectbox("Bandwidth", ["High", "Medium", "Low"], key="sim_bandwidth")
                 sim_network_reliability = st.slider("Network Reliability (%)", 50, 100, 90)
                 
             with col3:
