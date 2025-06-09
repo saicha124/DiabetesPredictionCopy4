@@ -228,7 +228,7 @@ def main():
 
     # Progressive training execution with real-time updates
     if st.session_state.training_started and not st.session_state.training_completed:
-        if hasattr(st.session_state, 'training_data') and not hasattr(st.session_state, 'training_in_progress'):
+        if hasattr(st.session_state, 'training_data'):
             st.session_state.training_in_progress = True
             
             # Initialize training state if not exists
@@ -261,12 +261,12 @@ def main():
                     st.session_state.processed_data = client_data
                     st.session_state.global_model_accuracy = 0.5  # Initialize
                 
-                # Progressive training - execute one round at a time
+                # Execute rounds immediately after data preprocessing
                 client_data = st.session_state.processed_data
                 
-                # Execute one round at a time
-                if st.session_state.current_training_round < max_rounds:
-                    current_round = st.session_state.current_training_round + 1
+                # Execute all rounds in sequence
+                for round_num in range(st.session_state.current_training_round, max_rounds):
+                    current_round = round_num + 1
                     
                     # Simulate hierarchical training for this round
                     round_metrics = []
@@ -359,15 +359,11 @@ def main():
                     st.session_state.best_accuracy = max(st.session_state.best_accuracy, global_accuracy)
                     st.session_state.global_model_accuracy = global_accuracy
                     st.session_state.current_training_round = current_round
-                    
-                    # Continue to next round automatically
-                    st.rerun()
                 
-                else:
-                    # Training completed - all rounds executed
-                    st.session_state.training_completed = True
-                    st.session_state.training_started = False
-                    st.session_state.training_in_progress = False
+                # Training completed - all rounds executed
+                st.session_state.training_completed = True
+                st.session_state.training_started = False
+                st.session_state.training_in_progress = False
                 
                 # Store final results with security metrics
                 final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
