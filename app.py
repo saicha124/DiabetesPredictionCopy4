@@ -251,7 +251,7 @@ def main():
                 client_data = st.session_state.processed_data
                 
                 # Execute next round only - continue training until max rounds or convergence
-                if st.session_state.current_training_round < max_rounds and st.session_state.best_accuracy < 0.88:
+                if st.session_state.current_training_round < max_rounds and st.session_state.best_accuracy < 0.90:
                     current_round = st.session_state.current_training_round + 1
                     # Simulate hierarchical training for this round
                     round_metrics = []
@@ -345,9 +345,17 @@ def main():
                     st.session_state.current_training_round = current_round
                     st.session_state.global_model_accuracy = global_accuracy
                     
-                    # Auto-advance to next round with delay
-                    time.sleep(1.0)  # 1 second delay to show progress
-                    st.rerun()
+                    # Check if we should continue training
+                    if current_round < max_rounds and st.session_state.best_accuracy < 0.90:
+                        # Auto-advance to next round with delay
+                        time.sleep(1.0)  # 1 second delay to show progress
+                        st.rerun()
+                    else:
+                        # Mark training as completed
+                        st.session_state.training_completed = True
+                        st.session_state.training_started = False
+                        st.session_state.training_in_progress = False
+                        st.rerun()
                 
                 else:
                     # Training completed
