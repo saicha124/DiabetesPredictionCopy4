@@ -679,38 +679,38 @@ def analyze_risk_factors(patient_data):
     # Glucose analysis
     glucose = patient_data['Glucose']
     if glucose < 100:
-        factors['Glucose Level'] = {'risk': 'low', 'description': f'{glucose} mg/dL - Normal fasting glucose'}
+        factors['Glucose Level'] = {'risk_level': 0.0, 'description': f'{glucose} mg/dL - Normal fasting glucose'}
     elif glucose < 126:
-        factors['Glucose Level'] = {'risk': 'moderate', 'description': f'{glucose} mg/dL - Prediabetes range'}
+        factors['Glucose Level'] = {'risk_level': 0.1, 'description': f'{glucose} mg/dL - Prediabetes range'}
     else:
-        factors['Glucose Level'] = {'risk': 'high', 'description': f'{glucose} mg/dL - Diabetes range'}
+        factors['Glucose Level'] = {'risk_level': 0.2, 'description': f'{glucose} mg/dL - Diabetes range'}
     
     # BMI analysis
     bmi = patient_data['BMI']
     if bmi < 25:
-        factors['BMI'] = {'risk': 'low', 'description': f'{bmi:.1f} - Normal weight'}
+        factors['BMI'] = {'risk_level': 0.0, 'description': f'{bmi:.1f} - Normal weight'}
     elif bmi < 30:
-        factors['BMI'] = {'risk': 'moderate', 'description': f'{bmi:.1f} - Overweight'}
+        factors['BMI'] = {'risk_level': 0.08, 'description': f'{bmi:.1f} - Overweight'}
     else:
-        factors['BMI'] = {'risk': 'high', 'description': f'{bmi:.1f} - Obese'}
+        factors['BMI'] = {'risk_level': 0.15, 'description': f'{bmi:.1f} - Obese'}
     
     # Age analysis
     age = patient_data['Age']
     if age < 35:
-        factors['Age'] = {'risk': 'low', 'description': f'{age} years - Low risk age group'}
+        factors['Age'] = {'risk_level': 0.0, 'description': f'{age} years - Low risk age group'}
     elif age < 50:
-        factors['Age'] = {'risk': 'moderate', 'description': f'{age} years - Moderate risk age group'}
+        factors['Age'] = {'risk_level': 0.05, 'description': f'{age} years - Moderate risk age group'}
     else:
-        factors['Age'] = {'risk': 'high', 'description': f'{age} years - High risk age group'}
+        factors['Age'] = {'risk_level': 0.12, 'description': f'{age} years - High risk age group'}
     
     # Blood pressure analysis
     bp = patient_data['BloodPressure']
     if bp < 80:
-        factors['Blood Pressure'] = {'risk': 'low', 'description': f'{bp} mmHg - Normal'}
+        factors['Blood Pressure'] = {'risk_level': 0.0, 'description': f'{bp} mmHg - Normal'}
     elif bp < 90:
-        factors['Blood Pressure'] = {'risk': 'moderate', 'description': f'{bp} mmHg - Elevated'}
+        factors['Blood Pressure'] = {'risk_level': 0.06, 'description': f'{bp} mmHg - Elevated'}
     else:
-        factors['Blood Pressure'] = {'risk': 'high', 'description': f'{bp} mmHg - High'}
+        factors['Blood Pressure'] = {'risk_level': 0.14, 'description': f'{bp} mmHg - High'}
     
     return factors
 
