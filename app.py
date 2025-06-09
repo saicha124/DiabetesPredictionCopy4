@@ -1121,31 +1121,40 @@ def main():
         
         # Determine current stage based on training state
         current_stage = 1
-        if st.session_state.training_completed or (hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped) or not st.session_state.training_started and st.session_state.training_metrics:
+        
+        # Check training completion first
+        if st.session_state.training_completed or (hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped):
             current_stage = 9  # Deployment Ready - training finished
-        elif st.session_state.training_started:
-            if st.session_state.training_metrics:
-                rounds = len(st.session_state.training_metrics)
-                if rounds >= 5:
-                    # Check if training is actually completed but flag not set
-                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
-                        if st.session_state.fl_manager.current_round >= st.session_state.fl_manager.max_rounds:
-                            current_stage = 9  # Deployment Ready - max rounds reached
-                        else:
-                            current_stage = 8  # Model Convergence
-                    else:
-                        current_stage = 8  # Model Convergence
-                elif rounds >= 3:
+        elif st.session_state.training_started and st.session_state.training_metrics:
+            rounds = len(st.session_state.training_metrics)
+            # Check if training should be considered complete
+            if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
+                max_rounds = st.session_state.fl_manager.max_rounds
+                if rounds >= max_rounds:
+                    current_stage = 9  # Deployment Ready - all rounds completed
+                elif rounds >= max(5, max_rounds * 0.7):  # 70% of rounds or minimum 5
+                    current_stage = 8  # Model Convergence
+                elif rounds >= max(3, max_rounds * 0.3):  # 30% of rounds or minimum 3
                     current_stage = 7  # Global Aggregation  
                 elif rounds >= 1:
                     current_stage = 6  # Fog Aggregation
                 else:
                     current_stage = 5  # Local Training
             else:
-                current_stage = 5  # Local Training when started
-        elif hasattr(st.session_state, 'fl_manager'):
+                # Fallback progression based on round count
+                if rounds >= 5:
+                    current_stage = 8  # Model Convergence
+                elif rounds >= 3:
+                    current_stage = 7  # Global Aggregation  
+                elif rounds >= 1:
+                    current_stage = 6  # Fog Aggregation
+                else:
+                    current_stage = 5  # Local Training
+        elif st.session_state.training_started:
+            current_stage = 5  # Local Training when started but no metrics yet
+        elif hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
             current_stage = 4  # Model Initialization
-        elif hasattr(st.session_state, 'distribution_strategy'):
+        elif st.session_state.get('distribution_strategy'):
             current_stage = 3  # Privacy Setup
         elif st.session_state.get('data_loaded', False):
             current_stage = 2  # Data Distribution
