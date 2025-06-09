@@ -395,8 +395,30 @@ def visualize_data_distribution(client_data: List[Dict[str, np.ndarray]], strate
     client_sizes = strategy_stats['client_sizes']
     
     fig_sizes = go.Figure()
+    # Create meaningful medical facility names
+    facility_names = [
+        "City General Hospital",
+        "Regional Medical Center", 
+        "Community Health Clinic",
+        "University Hospital",
+        "Rural Health Center",
+        "Specialty Care Institute",
+        "Emergency Care Facility",
+        "Primary Care Network",
+        "Diagnostic Center",
+        "Wellness Clinic"
+    ]
+    
+    # Use facility names up to the number of clients, then fall back to numbered format
+    station_labels = []
+    for i in range(len(client_sizes)):
+        if i < len(facility_names):
+            station_labels.append(facility_names[i])
+        else:
+            station_labels.append(f"Medical Facility {i+1}")
+    
     fig_sizes.add_trace(go.Bar(
-        x=[f"Station-{i+1}" for i in range(len(client_sizes))],
+        x=station_labels,
         y=client_sizes,
         marker_color='lightblue',
         text=client_sizes,
@@ -425,7 +447,7 @@ def visualize_data_distribution(client_data: List[Dict[str, np.ndarray]], strate
     fig_heatmap = go.Figure(data=go.Heatmap(
         z=heatmap_data,
         x=[f"Class {cls}" for cls in all_classes],
-        y=[f"Station-{i+1}" for i in range(len(class_distributions))],
+        y=station_labels,
         colorscale='Viridis',
         text=heatmap_data,
         texttemplate="%{text}",
