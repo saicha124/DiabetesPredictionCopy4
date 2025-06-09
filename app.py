@@ -772,8 +772,8 @@ def reset_training():
 def main():
     init_session_state()
     
-    st.title("🌾 Agronomic Display - Hierarchical Federated Learning")
-    st.markdown("**Advanced Crop Health Analytics & Prediction System**")
+    st.title("🏥 Medical Analytics - Hierarchical Federated Learning")
+    st.markdown("**Advanced Diabetes Prediction & Healthcare Analytics System**")
     st.markdown("---")
     
     # Data loading and preprocessing
@@ -1118,13 +1118,23 @@ def main():
         # Determine current stage based on training state
         current_stage = 1
         if st.session_state.training_started:
-            current_stage = 2
-            if hasattr(st.session_state, 'fl_manager'):
-                current_stage = 4
+            current_stage = 5  # Local Training when started
             if st.session_state.training_metrics:
-                current_stage = 5 + len(st.session_state.training_metrics) // 3
+                rounds = len(st.session_state.training_metrics)
+                if rounds >= 1:
+                    current_stage = 6  # Fog Aggregation
+                if rounds >= 3:
+                    current_stage = 7  # Global Aggregation  
+                if rounds >= 5:
+                    current_stage = 8  # Model Convergence
                 if st.session_state.training_completed:
-                    current_stage = 9
+                    current_stage = 9  # Deployment Ready
+        elif hasattr(st.session_state, 'fl_manager'):
+            current_stage = 4  # Model Initialization
+        elif hasattr(st.session_state, 'distribution_strategy'):
+            current_stage = 3  # Privacy Setup
+        elif st.session_state.get('data_loaded', False):
+            current_stage = 2  # Data Distribution
         
         # Create journey map visualization
         col1, col2 = st.columns([3, 1])
@@ -1384,29 +1394,29 @@ def main():
                         
                         # Update progress
                         with progress_container.container():
-                            st.subheader(f"🌾 Crop Analysis Cycle {current_round}/{fl_manager.max_rounds}")
+                            st.subheader(f"🏥 Medical Analysis Round {current_round}/{fl_manager.max_rounds}")
                             progress_bar = st.progress(current_round / fl_manager.max_rounds)
                             
-                            # Field station status
+                            # Medical station status
                             cols = st.columns(fl_manager.num_clients)
                             for i in range(fl_manager.num_clients):
                                 with cols[i]:
-                                    st.metric(f"🏡 Farm {i+1}", "🌱 Analyzing")
+                                    st.metric(f"🏥 Station {i+1}", "📊 Analyzing")
                         
                         # Run training round
                         start_time = time.time()
                         
-                        # Analyze crop samples at farms
+                        # Analyze patient data at medical stations
                         client_updates = fl_manager._train_clients_parallel()
                         
-                        # Regional processing centers (fog aggregation) if enabled
+                        # Regional medical centers (fog aggregation) if enabled
                         if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager:
                             # Regional center aggregation
                             fog_updates, fog_metrics = fl_manager.fog_manager.fog_level_aggregation(
                                 client_updates, fl_manager.global_model
                             )
                             
-                            # Central agricultural hub aggregation
+                            # Central medical hub aggregation
                             final_update = fl_manager.fog_manager.leader_fog_aggregation(
                                 fog_updates, fl_manager.global_model
                             )
@@ -1471,11 +1481,11 @@ def main():
                         st.session_state.best_accuracy = max(st.session_state.best_accuracy, accuracy)
                         st.session_state.current_round = current_round
                         
-                        # Update crop health metrics display
+                        # Update medical analysis metrics display
                         with metrics_container.container():
                             col1, col2, col3, col4 = st.columns(4)
                             with col1:
-                                st.metric("🌾 Crop Health Score", f"{accuracy:.3f}")
+                                st.metric("🏥 Model Accuracy", f"{accuracy:.3f}")
                             with col2:
                                 st.metric("📊 Analysis Quality", f"{f1:.3f}")
                             with col3:
