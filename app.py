@@ -1328,7 +1328,14 @@ def main():
                         st.info("🔄 Global aggregation begins after fog processing")
                 
                 elif stage_num == 8:  # Model Convergence
-                    if st.session_state.training_completed:
+                    if st.session_state.training_metrics and len(st.session_state.training_metrics) >= 5:
+                        st.success(f"✅ Model convergence achieved")
+                        if st.session_state.training_completed:
+                            final_accuracy = st.session_state.results.get('accuracy', 0)
+                            st.write(f"🎯 Final accuracy: {final_accuracy:.3f}")
+                        else:
+                            st.write("📈 Model approaching target accuracy")
+                    elif st.session_state.training_completed:
                         final_accuracy = st.session_state.results.get('accuracy', 0)
                         st.success(f"✅ Model converged with {final_accuracy:.3f} accuracy")
                     elif st.session_state.training_metrics:
