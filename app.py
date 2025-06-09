@@ -815,7 +815,7 @@ def main():
             st.subheader("📊 Basic Settings")
             num_clients = st.slider("🏥 Number of Medical Stations", min_value=3, max_value=10, value=5)
             max_rounds = st.slider("🔄 Maximum Training Rounds", min_value=5, max_value=100, value=20)
-            st.info("🎯 Auto-Stop: Training will automatically stop when model converges or reaches high accuracy (85%+)")
+            st.info("🎯 Auto-Complete: Training will run through all rounds to find the best achievable accuracy")
             
         with col2:
             st.subheader("🔧 Algorithm Settings")
@@ -1551,23 +1551,8 @@ def main():
                             if len(st.session_state.training_metrics) > 1:
                                 show_training_charts()
                         
-                        # Automatic convergence detection instead of fixed target
-                        # Check for convergence: accuracy improvement < 1% for 3 consecutive rounds
-                        if len(st.session_state.training_metrics) >= 3:
-                            recent_accuracies = [m['accuracy'] for m in st.session_state.training_metrics[-3:]]
-                            accuracy_improvements = [recent_accuracies[i+1] - recent_accuracies[i] for i in range(len(recent_accuracies)-1)]
-                            
-                            # If improvement is less than 1% for last 2 rounds, consider converged
-                            if all(improvement < 0.01 for improvement in accuracy_improvements):
-                                st.success(f"🎯 Model converged at accuracy {accuracy:.3f}! Training completed.")
-                                st.session_state.early_stopped = True
-                                break
-                        
-                        # Also check if we've reached a high accuracy threshold (85%+)
-                        if accuracy >= 0.85:
-                            st.success(f"🎯 High accuracy {accuracy:.3f} achieved! Training completed.")
-                            st.session_state.early_stopped = True
-                            break
+                        # Continue training through all rounds to find best accuracy
+                        # No early stopping - let training complete all rounds
                         
                         # Update patient agent status to completed
                         with progress_container.container():
@@ -1598,7 +1583,7 @@ def main():
                     # Extract results for medical station reports
                     extract_training_results(fl_manager)
                     
-                    st.success("🏥 Patient analysis completed successfully! All agents have finished diabetes risk assessment.")
+                    st.success(f"🏥 Patient analysis completed successfully! Best accuracy achieved: {final_accuracy:.3f} from {current_round} rounds.")
                     
                 except Exception as e:
                     st.error(f"Patient analysis failed: {str(e)}")
