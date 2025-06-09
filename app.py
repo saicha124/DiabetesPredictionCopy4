@@ -250,9 +250,11 @@ def main():
                 # Progressive training - execute one round at a time
                 client_data = st.session_state.processed_data
                 
-                # Execute next round only
-                if st.session_state.current_training_round < max_rounds:
+                # Execute all remaining rounds
+                while st.session_state.current_training_round < max_rounds:
                     current_round = st.session_state.current_training_round + 1
+                    st.session_state.current_training_round = current_round
+                    
                     # Simulate hierarchical training for this round
                     round_metrics = []
                     client_round_metrics = {}
@@ -342,30 +344,33 @@ def main():
                     st.session_state.training_metrics.append(round_summary)
                     st.session_state.round_client_metrics[current_round] = client_round_metrics
                     st.session_state.best_accuracy = max(st.session_state.best_accuracy, global_accuracy)
-                    st.session_state.current_training_round = current_round
                     st.session_state.global_model_accuracy = global_accuracy
                     
-                    # Auto-advance to next round with delay
-                    time.sleep(1.0)  # 1 second delay to show progress
-                    st.rerun()
+                    # Add small delay to show progress
+                    time.sleep(0.5)
                 
-                else:
-                    # Training completed
-                    st.session_state.training_completed = True
-                    st.session_state.training_started = False
-                    st.session_state.training_in_progress = False
-                    
-                    # Store final results
-                    final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
-                    st.session_state.results = {
-                        'accuracy': st.session_state.best_accuracy,
-                        'f1_score': final_metrics.get('f1_score', st.session_state.best_accuracy * 0.95),
-                        'rounds_completed': len(st.session_state.training_metrics),
-                        'converged': st.session_state.best_accuracy >= 0.85,
-                        'training_history': st.session_state.training_metrics,
-                        'protocol_type': f'Hierarchical with Polynomial Division ({model_type.upper()})',
-                        'client_details': st.session_state.round_client_metrics
+                # Training completed - all rounds executed
+                st.session_state.training_completed = True
+                st.session_state.training_started = False
+                st.session_state.training_in_progress = False
+                
+                # Store final results with security metrics
+                final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
+                st.session_state.results = {
+                    'accuracy': st.session_state.best_accuracy,
+                    'f1_score': final_metrics.get('f1_score', st.session_state.best_accuracy * 0.95),
+                    'rounds_completed': len(st.session_state.training_metrics),
+                    'converged': st.session_state.best_accuracy >= 0.85,
+                    'training_history': st.session_state.training_metrics,
+                    'protocol_type': f'Hierarchical FL with Committee Security + DP ({model_type.upper()})',
+                    'client_details': st.session_state.round_client_metrics,
+                    'security_features': {
+                        'committee_validation': True,
+                        'differential_privacy': True,
+                        'reputation_system': True,
+                        'polynomial_division': True
                     }
+                }
                 
             except Exception as e:
                 st.session_state.training_started = False
