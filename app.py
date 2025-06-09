@@ -247,11 +247,12 @@ def main():
                     st.session_state.processed_data = client_data
                     st.session_state.global_model_accuracy = 0.5  # Initialize
                 
-                # Complete all training rounds at once
+                # Progressive training - execute one round at a time
                 client_data = st.session_state.processed_data
                 
-                # Generate all rounds of training
-                for current_round in range(st.session_state.current_training_round + 1, max_rounds + 1):
+                # Execute next round only
+                if st.session_state.current_training_round < max_rounds:
+                    current_round = st.session_state.current_training_round + 1
                     # Simulate hierarchical training for this round
                     round_metrics = []
                     client_round_metrics = {}
@@ -326,23 +327,28 @@ def main():
                     st.session_state.best_accuracy = max(st.session_state.best_accuracy, global_accuracy)
                     st.session_state.current_training_round = current_round
                     st.session_state.global_model_accuracy = global_accuracy
+                    
+                    # Auto-advance to next round with delay
+                    time.sleep(1.0)  # 1 second delay to show progress
+                    st.rerun()
                 
-                # Training completed - set completion flags
-                st.session_state.training_completed = True
-                st.session_state.training_started = False
-                st.session_state.training_in_progress = False
-                
-                # Store final results
-                final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
-                st.session_state.results = {
-                    'accuracy': st.session_state.best_accuracy,
-                    'f1_score': final_metrics.get('f1_score', st.session_state.best_accuracy * 0.95),
-                    'rounds_completed': len(st.session_state.training_metrics),
-                    'converged': st.session_state.best_accuracy >= 0.85,
-                    'training_history': st.session_state.training_metrics,
-                    'protocol_type': f'Hierarchical with Polynomial Division ({model_type.upper()})',
-                    'client_details': st.session_state.round_client_metrics
-                }
+                else:
+                    # Training completed
+                    st.session_state.training_completed = True
+                    st.session_state.training_started = False
+                    st.session_state.training_in_progress = False
+                    
+                    # Store final results
+                    final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
+                    st.session_state.results = {
+                        'accuracy': st.session_state.best_accuracy,
+                        'f1_score': final_metrics.get('f1_score', st.session_state.best_accuracy * 0.95),
+                        'rounds_completed': len(st.session_state.training_metrics),
+                        'converged': st.session_state.best_accuracy >= 0.85,
+                        'training_history': st.session_state.training_metrics,
+                        'protocol_type': f'Hierarchical with Polynomial Division ({model_type.upper()})',
+                        'client_details': st.session_state.round_client_metrics
+                    }
                 
             except Exception as e:
                 st.session_state.training_started = False
@@ -377,16 +383,24 @@ def main():
                     }
                 st.rerun()
             
-            # Progress display
+            # Enhanced Progress display
             progress = current_round / max_rounds if max_rounds > 0 else 0
-            st.progress(progress)
+            st.progress(progress, text=f"Training Progress: Round {current_round}/{max_rounds}")
             
-            col1, col2 = st.columns([2, 1])
+            # Training status with detailed progress
+            col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
-                st.write(f"**Round {current_round}/{max_rounds} completed** - Model: {model_type.replace('_', ' ').title()}")
+                st.write(f"**🔄 Round {current_round}/{max_rounds}** - Model: {model_type.replace('_', ' ').title()}")
             with col2:
                 if current_round > 0:
                     st.metric("Current Global Accuracy", f"{st.session_state.get('global_model_accuracy', 0):.3f}")
+            with col3:
+                num_clients = st.session_state.get('num_clients', 5)
+                st.metric("Active Medical Stations", f"{num_clients}")
+            
+            # Show current round training details
+            if current_round > 0:
+                st.info(f"🏥 Training {num_clients} medical stations with {model_type.replace('_', ' ').title()} model...")
             
             # Real-time metrics
             if st.session_state.training_metrics and len(st.session_state.training_metrics) > 0:
