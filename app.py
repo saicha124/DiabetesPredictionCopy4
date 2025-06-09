@@ -1381,327 +1381,193 @@ def main():
                     else:
                         st.info("🔄 Complete training to reach deployment readiness")
     
+    # Background training execution (runs regardless of active tab)
+    if st.session_state.training_started and not st.session_state.training_completed:
+        if hasattr(st.session_state, 'training_data') and st.session_state.fl_manager and not hasattr(st.session_state, 'training_in_progress'):
+            st.session_state.training_in_progress = True
+            
+            # Execute training in background
+            try:
+                fl_manager = st.session_state.fl_manager
+                data = st.session_state.training_data
+                
+                # Apply custom data distribution
+                distribution_strategy = getattr(st.session_state, 'distribution_strategy', 'IID')
+                strategy_params = getattr(st.session_state, 'strategy_params', {})
+                
+                # Create distribution strategy
+                strategy = get_distribution_strategy(
+                    distribution_strategy, 
+                    fl_manager.num_clients, 
+                    random_state=42,
+                    **strategy_params
+                )
+                
+                # Preprocess data
+                preprocessor = DataPreprocessor()
+                X, y = preprocessor.fit_transform(data)
+                
+                # Apply distribution
+                client_data = strategy.distribute_data(X, y)
+                distribution_stats = strategy.get_distribution_stats(client_data)
+                
+                # Store distribution stats
+                st.session_state.distribution_stats = distribution_stats
+                
+                # Setup clients with distributed data
+                fl_manager.setup_clients_with_data(client_data)
+                
+                # Run all training rounds
+                for round_num in range(fl_manager.max_rounds):
+                    current_round = round_num + 1
+                    
+                    # Run training round
+                    start_time = time.time()
+                    
+                    # Analyze patient data at medical stations
+                    client_updates = fl_manager._train_clients_parallel()
+                    
+                    # Regional medical centers (fog aggregation) if enabled
+                    if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager:
+                        # Regional center aggregation
+                        fog_updates, fog_metrics = fl_manager.fog_manager.fog_level_aggregation(
+                            client_updates, fl_manager.global_model
+                        )
+                        
+                        # Central medical hub aggregation
+                        final_update = fl_manager.fog_manager.leader_fog_aggregation(
+                            fog_updates, fl_manager.global_model
+                        )
+                        
+                        if final_update:
+                            # Update global model with fog-aggregated parameters
+                            if isinstance(final_update['parameters'], dict):
+                                for param_name, param_value in final_update['parameters'].items():
+                                    if hasattr(fl_manager.global_model, param_name):
+                                        setattr(fl_manager.global_model, param_name, param_value)
+                            else:
+                                # Handle array-based parameters - use standard aggregation
+                                fl_manager.global_model = fl_manager.aggregator.aggregate(
+                                    fl_manager.global_model, client_updates
+                                )
+                        
+                        # Calculate hierarchical loss
+                        loss_info = fl_manager.fog_manager.calculate_hierarchical_loss(
+                            fl_manager.global_model, client_data, current_round
+                        )
+                        
+                        # Store fog metrics
+                        st.session_state.fog_results.append({
+                            'round': current_round,
+                            'fog_metrics': fog_metrics,
+                            'loss_info': loss_info,
+                            'aggregation_info': final_update.get('aggregation_info', {}) if final_update else {}
+                        })
+                    else:
+                        # Standard aggregation
+                        fl_manager.global_model = fl_manager.aggregator.aggregate(
+                            fl_manager.global_model, client_updates
+                        )
+                    
+                    # Evaluate
+                    accuracy, loss, f1, cm = fl_manager._evaluate_global_model()
+                    
+                    round_time = time.time() - start_time
+                    
+                    # Extract individual client performance metrics
+                    client_accuracies = [update.get('accuracy', 0.5) for update in client_updates]
+                    client_f1_scores = [update.get('f1_score', 0.5) for update in client_updates]
+                    
+                    # Store comprehensive metrics with client-level tracking
+                    metrics = {
+                        'round': current_round,
+                        'accuracy': accuracy,
+                        'loss': loss,
+                        'f1_score': f1,
+                        'execution_time': round_time,
+                        'client_accuracies': client_accuracies,
+                        'client_f1_scores': client_f1_scores,
+                        'accuracy_variance': sum((x - sum(client_accuracies)/len(client_accuracies))**2 for x in client_accuracies)/len(client_accuracies) if client_accuracies else 0,
+                        'min_client_accuracy': min(client_accuracies) if client_accuracies else 0,
+                        'max_client_accuracy': max(client_accuracies) if client_accuracies else 0
+                    }
+                    
+                    st.session_state.training_metrics.append(metrics)
+                    st.session_state.execution_times.append(round_time)
+                    st.session_state.confusion_matrices.append(cm)
+                    st.session_state.communication_times.append(0.5)
+                    st.session_state.best_accuracy = max(st.session_state.best_accuracy, accuracy)
+                    st.session_state.current_round = current_round
+                
+                # Training completed - set all completion flags
+                st.session_state.training_completed = True
+                st.session_state.training_started = False
+                st.session_state.training_in_progress = False
+                
+                # Store final results
+                final_accuracy = st.session_state.best_accuracy
+                st.session_state.results = {
+                    'accuracy': final_accuracy,
+                    'f1_score': f1,
+                    'rounds_completed': current_round,
+                    'early_stopped': False,
+                    'training_history': st.session_state.training_metrics
+                }
+                
+                # Extract results for medical station reports
+                extract_training_results(fl_manager)
+                
+            except Exception as e:
+                st.session_state.training_started = False
+                st.session_state.training_in_progress = False
+                st.error(f"Training failed: {str(e)}")
+
     with tab2:
         st.header("🏥 Medical Station Monitoring")
         
-        # Direct training execution
-        if st.session_state.training_started and not st.session_state.training_completed:
-            if hasattr(st.session_state, 'training_data') and st.session_state.fl_manager:
-                st.info("🏥 Coordinating patient data analysis across medical stations...")
+        # Show training progress and results
+        if st.session_state.training_started and hasattr(st.session_state, 'training_in_progress'):
+            st.info("🏥 Training is running in background...")
+            if st.session_state.training_metrics:
+                current_round = len(st.session_state.training_metrics)
+                max_rounds = st.session_state.fl_manager.max_rounds if st.session_state.fl_manager else 10
                 
-                # Create progress containers
-                progress_container = st.empty()
-                metrics_container = st.empty()
-                charts_container = st.empty()
+                # Progress display
+                st.progress(current_round / max_rounds)
+                st.write(f"📊 Round {current_round}/{max_rounds} completed")
                 
-                # Run training with real-time updates
-                try:
-                    fl_manager = st.session_state.fl_manager
-                    data = st.session_state.training_data
-                    
-                    # Apply custom data distribution
-                    distribution_strategy = getattr(st.session_state, 'distribution_strategy', 'IID')
-                    strategy_params = getattr(st.session_state, 'strategy_params', {})
-                    
-                    # Create distribution strategy
-                    strategy = get_distribution_strategy(
-                        distribution_strategy, 
-                        fl_manager.num_clients, 
-                        random_state=42,
-                        **strategy_params
-                    )
-                    
-                    # Preprocess data
-                    preprocessor = DataPreprocessor()
-                    X, y = preprocessor.fit_transform(data)
-                    
-                    # Apply distribution
-                    client_data = strategy.distribute_data(X, y)
-                    distribution_stats = strategy.get_distribution_stats(client_data)
-                    
-                    # Store distribution stats
-                    st.session_state.distribution_stats = distribution_stats
-                    
-                    # Setup clients with distributed data
-                    fl_manager.setup_clients_with_data(client_data)
-                    
-                    # Analysis cycle loop
-                    for round_num in range(fl_manager.max_rounds):
-                        current_round = round_num + 1
-                        
-                        # Update progress
-                        with progress_container.container():
-                            st.subheader(f"🏥 Medical Analysis Round {current_round}/{fl_manager.max_rounds}")
-                            progress_bar = st.progress(current_round / fl_manager.max_rounds)
-                            
-                            # Medical station status
-                            cols = st.columns(fl_manager.num_clients)
-                            for i in range(fl_manager.num_clients):
-                                with cols[i]:
-                                    st.metric(f"🏥 Station {i+1}", "📊 Analyzing")
-                        
-                        # Run training round
-                        start_time = time.time()
-                        
-                        # Analyze patient data at medical stations
-                        client_updates = fl_manager._train_clients_parallel()
-                        
-                        # Regional medical centers (fog aggregation) if enabled
-                        if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager:
-                            # Regional center aggregation
-                            fog_updates, fog_metrics = fl_manager.fog_manager.fog_level_aggregation(
-                                client_updates, fl_manager.global_model
-                            )
-                            
-                            # Central medical hub aggregation
-                            final_update = fl_manager.fog_manager.leader_fog_aggregation(
-                                fog_updates, fl_manager.global_model
-                            )
-                            
-                            if final_update:
-                                # Update global model with fog-aggregated parameters
-                                if isinstance(final_update['parameters'], dict):
-                                    for param_name, param_value in final_update['parameters'].items():
-                                        if hasattr(fl_manager.global_model, param_name):
-                                            setattr(fl_manager.global_model, param_name, param_value)
-                                else:
-                                    # Handle array-based parameters - use standard aggregation
-                                    fl_manager.global_model = fl_manager.aggregator.aggregate(
-                                        fl_manager.global_model, client_updates
-                                    )
-                            
-                            # Calculate hierarchical loss
-                            loss_info = fl_manager.fog_manager.calculate_hierarchical_loss(
-                                fl_manager.global_model, client_data, current_round
-                            )
-                            
-                            # Store fog metrics
-                            st.session_state.fog_results.append({
-                                'round': current_round,
-                                'fog_metrics': fog_metrics,
-                                'loss_info': loss_info,
-                                'aggregation_info': final_update.get('aggregation_info', {}) if final_update else {}
-                            })
-                        else:
-                            # Standard aggregation
-                            fl_manager.global_model = fl_manager.aggregator.aggregate(
-                                fl_manager.global_model, client_updates
-                            )
-                        
-                        # Evaluate
-                        accuracy, loss, f1, cm = fl_manager._evaluate_global_model()
-                        
-                        round_time = time.time() - start_time
-                        
-                        # Extract individual client performance metrics
-                        client_accuracies = [update.get('accuracy', 0.5) for update in client_updates]
-                        client_f1_scores = [update.get('f1_score', 0.5) for update in client_updates]
-                        
-                        # Store comprehensive metrics with client-level tracking
-                        metrics = {
-                            'round': current_round,
-                            'accuracy': accuracy,
-                            'loss': loss,
-                            'f1_score': f1,
-                            'execution_time': round_time,
-                            'client_accuracies': client_accuracies,
-                            'client_f1_scores': client_f1_scores,
-                            'accuracy_variance': sum((x - sum(client_accuracies)/len(client_accuracies))**2 for x in client_accuracies)/len(client_accuracies) if client_accuracies else 0,
-                            'min_client_accuracy': min(client_accuracies) if client_accuracies else 0,
-                            'max_client_accuracy': max(client_accuracies) if client_accuracies else 0
-                        }
-                        
-                        st.session_state.training_metrics.append(metrics)
-                        st.session_state.execution_times.append(round_time)
-                        st.session_state.confusion_matrices.append(cm)
-                        st.session_state.communication_times.append(0.5)
-                        st.session_state.best_accuracy = max(st.session_state.best_accuracy, accuracy)
-                        st.session_state.current_round = current_round
-                        
-                        # Update medical analysis metrics display
-                        with metrics_container.container():
-                            col1, col2, col3, col4 = st.columns(4)
-                            with col1:
-                                st.metric("🏥 Model Accuracy", f"{accuracy:.3f}")
-                            with col2:
-                                st.metric("📊 Analysis Quality", f"{f1:.3f}")
-                            with col3:
-                                st.metric("⚠️ Error Rate", f"{loss:.4f}")
-                            with col4:
-                                st.metric("🏆 Best Performance", f"{st.session_state.best_accuracy:.3f}")
-                            
-                            # Individual medical station performance display
-                            if client_accuracies:
-                                st.markdown("---")
-                                st.markdown("**🏥 Individual Medical Station Performance**")
-                                station_cols = st.columns(min(5, len(client_accuracies)))
-                                for i, acc in enumerate(client_accuracies):
-                                    with station_cols[i % len(station_cols)]:
-                                        performance_color = "🟢" if acc > 0.7 else "🟡" if acc > 0.5 else "🔴"
-                                        st.metric(f"🏥 Station {i+1}", f"{performance_color} {acc:.3f}")
-                            
-                            # Regional medical center metrics
-                            if hasattr(fl_manager, 'fog_manager') and fl_manager.fog_manager and st.session_state.fog_results:
-                                st.markdown("---")
-                                st.markdown("**🏥 Regional Medical Centers Status**")
-                                latest_fog = st.session_state.fog_results[-1]
-                                
-                                col1, col2, col3 = st.columns(3)
-                                with col1:
-                                    st.metric("🌍 Overall System Error", f"{latest_fog['loss_info']['global_loss']:.4f}")
-                                with col2:
-                                    fog_losses = latest_fog['loss_info']['fog_losses']
-                                    if fog_losses:
-                                        loss_values = [f['loss'] for f in fog_losses.values()]
-                                        avg_fog_loss = sum(loss_values) / len(loss_values)
-                                    else:
-                                        avg_fog_loss = 0
-                                    st.metric("🏥 Avg Regional Error", f"{avg_fog_loss:.4f}")
-                                with col3:
-                                    aggregation_info = latest_fog.get('aggregation_info', {})
-                                    st.metric("🏢 Active Centers", aggregation_info.get('total_fog_nodes', 0))
-                        
-
-                        # Update charts
-                        with charts_container.container():
-                            if len(st.session_state.training_metrics) > 1:
-                                show_training_charts()
-                        
-                        # Continue training through all rounds to find best accuracy
-                        # No early stopping - let training complete all rounds
-                        
-                        # Update patient agent status to completed
-                        with progress_container.container():
-                            st.subheader(f"🏥 Patient Analysis Round {current_round}/{fl_manager.max_rounds}")
-                            progress_bar = st.progress(current_round / fl_manager.max_rounds)
-                            
-                            cols = st.columns(fl_manager.num_clients)
-                            for i in range(fl_manager.num_clients):
-                                with cols[i]:
-                                    st.metric(f"👤 Agent {i+1}", "✅ Analysis Complete")
-                        
-                        time.sleep(1)  # Brief pause between rounds
-                    
-                    # Medical analysis completed - ensure all completion flags are set
-                    st.session_state.training_completed = True
-                    st.session_state.training_started = False
-                    
-                    # Force stage progression to final stage
-                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
-                        st.session_state.fl_manager.training_completed = True
-                    
-                    # Final medical analysis results
-                    final_accuracy = st.session_state.best_accuracy
-                    st.session_state.results = {
-                        'accuracy': final_accuracy,
-                        'f1_score': f1,
-                        'rounds_completed': current_round,
-                        'early_stopped': st.session_state.early_stopped,
-                        'training_history': st.session_state.training_metrics
-                    }
-                    
-                    # Extract results for medical station reports
-                    extract_training_results(fl_manager)
-                    
-                    st.success(f"🏥 Patient analysis completed successfully! Best accuracy achieved: {final_accuracy:.3f} from {current_round} rounds.")
-                    
-                except Exception as e:
-                    st.error(f"Patient analysis failed: {str(e)}")
-                    st.session_state.training_started = False
-            else:
-                st.warning("Please start patient analysis from the Training Control tab first.")
+                # Show latest metrics
+                if st.session_state.training_metrics:
+                    latest_metrics = st.session_state.training_metrics[-1]
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("🏥 Model Accuracy", f"{latest_metrics.get('accuracy', 0):.3f}")
+                    with col2:
+                        st.metric("📊 Analysis Quality", f"{latest_metrics.get('f1_score', 0):.3f}")
+                    with col3:
+                        st.metric("⚠️ Error Rate", f"{latest_metrics.get('loss', 0):.4f}")
+                    with col4:
+                        st.metric("🏆 Best Performance", f"{st.session_state.best_accuracy:.3f}")
         
-        # Show completed patient analysis results
         elif st.session_state.training_completed:
-            st.success("✅ Training Completed")
+            st.success("✅ Training Completed Successfully!")
             show_training_progress()
             if len(st.session_state.training_metrics) > 0:
                 show_training_charts()
+        
+        elif st.session_state.training_started:
+            st.info("🏥 Preparing medical stations for patient data analysis...")
+        
         else:
-            st.info("🌱 Start training to see live monitoring data")
+            st.warning("Please start patient analysis from the Training Control tab first.")
     
     with tab4:
         st.header("📋 Comprehensive Performance Analysis")
         
-        if st.session_state.training_completed and hasattr(st.session_state, 'fl_manager'):
-            # Performance comparison section
-            st.subheader("🔍 Differential Privacy Trade-off Analysis")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                # Accuracy vs Privacy Trade-off
-                if hasattr(st.session_state.fl_manager, 'dp_manager') and st.session_state.fl_manager.dp_manager:
-                    privacy_params = st.session_state.fl_manager.dp_manager.get_privacy_parameters()
-                    
-                    # Simulate performance with different privacy levels
-                    epsilon_values = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
-                    simulated_accuracies = []
-                    
-                    # Base accuracy without privacy
-                    if st.session_state.training_history:
-                        base_accuracy = st.session_state.training_history[-1].get('accuracy', 0.85)
-                    else:
-                        base_accuracy = 0.85
-                    
-                    for eps in epsilon_values:
-                        # Simulate privacy-accuracy trade-off
-                        privacy_noise = 1.0 / eps  # Higher epsilon = less noise
-                        accuracy_loss = privacy_noise * 0.05  # Simulated accuracy degradation
-                        simulated_accuracy = max(0.5, base_accuracy - accuracy_loss)
-                        simulated_accuracies.append(simulated_accuracy)
-                    
-                    # Create privacy trade-off chart
-                    import plotly.graph_objects as go
-                    
-                    fig = go.Figure()
-                    fig.add_trace(go.Scatter(
-                        x=epsilon_values,
-                        y=simulated_accuracies,
-                        mode='lines+markers',
-                        name='Accuracy vs Privacy',
-                        line=dict(color='blue', width=3),
-                        marker=dict(size=8)
-                    ))
-                    
-                    # Highlight current setting
-                    current_eps = privacy_params.get('epsilon', 1.0)
-                    current_acc = base_accuracy - (1.0 / current_eps) * 0.05
-                    fig.add_trace(go.Scatter(
-                        x=[current_eps],
-                        y=[max(0.5, current_acc)],
-                        mode='markers',
-                        name='Current Setting',
-                        marker=dict(size=15, color='red', symbol='star')
-                    ))
-                    
-                    fig.update_layout(
-                        title="Privacy-Accuracy Trade-off Analysis",
-                        xaxis_title="Privacy Budget (ε)",
-                        yaxis_title="Model Accuracy",
-                        height=400
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Privacy metrics table
-                    st.subheader("🔒 Privacy Protection Metrics")
-                    privacy_df = pd.DataFrame({
-                        'Parameter': ['Epsilon (ε)', 'Delta (δ)', 'Noise Scale', 'Gradient Clipping'],
-                        'Value': [
-                            f"{privacy_params.get('epsilon', 'N/A'):.3f}",
-                            f"{privacy_params.get('delta', 'N/A'):.2e}" if privacy_params.get('delta') else 'N/A',
-                            f"{privacy_params.get('sensitivity', 'N/A'):.3f}" if privacy_params.get('sensitivity') else 'N/A',
-                            f"{st.session_state.fl_manager.gradient_clip_norm:.2f}" if hasattr(st.session_state.fl_manager, 'gradient_clip_norm') else 'N/A'
-                        ],
-                        'Description': [
-                            'Privacy budget - lower is more private',
-                            'Failure probability in privacy guarantee',
-                            'Noise magnitude added to gradients',
-                            'Maximum gradient norm before clipping'
-                        ]
-                    })
-                    st.dataframe(privacy_df, use_container_width=True)
+        if st.session_state.training_completed and st.session_state.training_metrics:
+            show_results()
+        else:
+            st.info("🌱 Complete training to see comprehensive analysis")
                 
             with col2:
                 # Agent performance evolution
