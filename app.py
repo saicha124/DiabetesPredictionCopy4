@@ -19,7 +19,7 @@ from utils import calculate_metrics, plot_confusion_matrix
 
 # Page configuration
 st.set_page_config(
-    page_title="Agronomic Federated Learning Dashboard",
+    page_title="Medical Analytics - Hierarchical Federated Learning",
     page_icon="🌾",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -238,9 +238,9 @@ def show_training_progress():
         else:
             st.info("🔄 Training in Progress")
     
-    # Field station status (simulate based on current round)
+    # Medical station status (simulate based on current round)
     if st.session_state.fl_manager:
-        st.subheader("🏢 Field Station Status")
+        st.subheader("🏥 Medical Station Status")
         
         num_clients = st.session_state.fl_manager.num_clients
         cols = st.columns(min(5, num_clients))
@@ -272,7 +272,7 @@ def show_training_charts():
         # Multi-metric performance chart with variance bands
         fig = make_subplots(
             rows=2, cols=1,
-            subplot_titles=('🌾 Crop Health Performance', '🏡 Individual Farm Variance'),
+            subplot_titles=('🏥 Medical Station Performance', '📊 Individual Station Variance'),
             vertical_spacing=0.15
         )
         
@@ -310,7 +310,7 @@ def show_training_charts():
                 x=rounds,
                 y=metrics_df['max_client_accuracy'],
                 mode='lines',
-                name='Best Farm',
+                name='Best Station',
                 line=dict(color='green', width=2),
                 fill=None
             ), row=2, col=1)
@@ -319,7 +319,7 @@ def show_training_charts():
                 x=rounds,
                 y=metrics_df['min_client_accuracy'],
                 mode='lines',
-                name='Worst Farm',
+                name='Worst Station',
                 line=dict(color='red', width=2),
                 fill='tonexty',
                 fillcolor='rgba(255,0,0,0.1)'
@@ -327,12 +327,12 @@ def show_training_charts():
         
         fig.update_layout(
             height=600,
-            title_text="Farm Network Performance Analytics",
+            title_text="Medical Station Network Performance Analytics",
             template="plotly_white",
             showlegend=True
         )
         fig.update_xaxes(title_text="Analysis Cycle")
-        fig.update_yaxes(title_text="Crop Health Score", row=1, col=1)
+        fig.update_yaxes(title_text="Model Accuracy", row=1, col=1)
         fig.update_yaxes(title_text="Performance Range", row=2, col=1)
         
         st.plotly_chart(fig, use_container_width=True)
@@ -366,7 +366,7 @@ def show_training_charts():
                             x=rounds,
                             y=client_performance,
                             mode='lines+markers',
-                            name=f'Farm {client_id + 1}',
+                            name=f'Station {client_id + 1}',
                             line=dict(color=colors[client_id % len(colors)], width=2),
                             marker=dict(size=6)
                         ))
