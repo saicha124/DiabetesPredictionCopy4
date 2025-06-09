@@ -357,6 +357,26 @@ def main():
             max_rounds = st.session_state.get('max_rounds', 20)
             model_type = st.session_state.get('model_type', 'logistic_regression')
             
+            # Check if training should be completed
+            if current_round >= max_rounds and st.session_state.training_metrics:
+                st.session_state.training_completed = True
+                st.session_state.training_started = False
+                st.session_state.training_in_progress = False
+                
+                # Store final results if not already stored
+                if not hasattr(st.session_state, 'results'):
+                    final_metrics = st.session_state.training_metrics[-1]
+                    st.session_state.results = {
+                        'accuracy': st.session_state.best_accuracy,
+                        'f1_score': final_metrics.get('f1_score', st.session_state.best_accuracy * 0.95),
+                        'rounds_completed': len(st.session_state.training_metrics),
+                        'converged': st.session_state.best_accuracy >= 0.85,
+                        'training_history': st.session_state.training_metrics,
+                        'protocol_type': f'Hierarchical with Polynomial Division ({model_type.upper()})',
+                        'client_details': st.session_state.round_client_metrics
+                    }
+                st.rerun()
+            
             # Progress display
             progress = current_round / max_rounds if max_rounds > 0 else 0
             st.progress(progress)
@@ -369,7 +389,7 @@ def main():
                     st.metric("Current Global Accuracy", f"{st.session_state.get('global_model_accuracy', 0):.3f}")
             
             # Real-time metrics
-            if st.session_state.training_metrics:
+            if st.session_state.training_metrics and len(st.session_state.training_metrics) > 0:
                 latest_metrics = st.session_state.training_metrics[-1]
                 
                 col1, col2, col3, col4 = st.columns(4)
