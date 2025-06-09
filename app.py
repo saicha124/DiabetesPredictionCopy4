@@ -205,12 +205,12 @@ def main():
                     st.success("Training stopped.")
             
             with col3:
-                if st.button("🔄 Reset", disabled=st.session_state.training_started):
+                if st.button("🔄 Reset All"):
                     for key in list(st.session_state.keys()):
                         if key not in ['data', 'data_loaded']:
                             del st.session_state[key]
                     init_session_state()
-                    st.success("System reset.")
+                    st.success("System reset. You can now start training with 28 rounds.")
 
     # Progressive training execution with real-time updates
     if st.session_state.training_started and not st.session_state.training_completed:
@@ -227,7 +227,7 @@ def main():
                 data = st.session_state.training_data
                 num_clients = st.session_state.get('num_clients', 5)
                 num_fog_nodes = st.session_state.get('num_fog_nodes', 3)
-                max_rounds = st.session_state.get('max_rounds', 20)
+                max_rounds = st.session_state.get('max_rounds', 28)  # Use the selected value
                 model_type = st.session_state.get('model_type', 'logistic_regression')
                 
                 # Preprocess data once
