@@ -202,7 +202,27 @@ def main():
                             st.session_state.fog_manager = fog_manager
                         
                         st.session_state.fl_manager = fl_manager
-                        st.session_state.training_data = st.session_state.data
+                        
+                        # Ensure data is available before starting training
+                        training_data = None
+                        if hasattr(st.session_state, 'data') and st.session_state.data is not None:
+                            training_data = st.session_state.data
+                        else:
+                            # Load diabetes dataset directly
+                            try:
+                                training_data = pd.read_csv('diabetes.csv')
+                                st.session_state.data = training_data
+                                st.session_state.data_loaded = True
+                                st.info(f"Auto-loaded diabetes dataset: {training_data.shape[0]} patients")
+                            except Exception as e:
+                                st.error(f"Failed to load diabetes dataset: {str(e)}")
+                                return
+                        
+                        if training_data is None or training_data.empty:
+                            st.error("No valid training data available")
+                            return
+                            
+                        st.session_state.training_data = training_data
                         st.session_state.training_started = True
                         st.session_state.training_completed = False
                         st.session_state.training_metrics = []
@@ -246,20 +266,44 @@ def main():
                 
                 # Preprocess data once
                 if not hasattr(st.session_state, 'processed_data'):
+                    st.info("Processing data for federated learning...")
+                    
+                    # Debug: Check data availability
+                    if data is None:
+                        raise ValueError("Training data is None")
+                    
                     preprocessor = DataPreprocessor()
                     X, y = preprocessor.fit_transform(data)
                     
-                    # Apply data distribution strategy
-                    strategy = get_distribution_strategy(
-                        st.session_state.get('distribution_strategy', 'IID'), 
-                        num_clients, 
-                        random_state=42,
-                        **st.session_state.get('strategy_params', {})
-                    )
+                    # Debug: Check preprocessed data
+                    if X is None or y is None:
+                        raise ValueError("Preprocessed data is None")
+                    if len(X) == 0 or len(y) == 0:
+                        raise ValueError("Preprocessed data is empty")
                     
-                    client_data = strategy.distribute_data(X, y)
-                    st.session_state.processed_data = client_data
-                    st.session_state.global_model_accuracy = 0.5  # Initialize
+                    st.info(f"Data preprocessed: {len(X)} samples, {X.shape[1]} features")
+                    
+                    # Apply data distribution strategy
+                    try:
+                        strategy = get_distribution_strategy(
+                            st.session_state.get('distribution_strategy', 'IID'), 
+                            num_clients, 
+                            random_state=42,
+                            **st.session_state.get('strategy_params', {})
+                        )
+                        
+                        client_data = strategy.distribute_data(X, y)
+                        
+                        if not client_data or len(client_data) == 0:
+                            raise ValueError("Data distribution strategy returned empty data")
+                        
+                        st.success(f"Data distributed to {len(client_data)} clients")
+                        st.session_state.processed_data = client_data
+                        st.session_state.global_model_accuracy = 0.5  # Initialize
+                        
+                    except Exception as e:
+                        st.error(f"Data distribution failed: {str(e)}")
+                        raise
                 
                 # Execute rounds immediately after data preprocessing
                 client_data = st.session_state.processed_data
