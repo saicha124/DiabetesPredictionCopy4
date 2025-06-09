@@ -1867,17 +1867,17 @@ def main():
         if not st.session_state.patient_database:
             sample_patients = [
                 {
-                    'station': 'Station Alpha', 'id': 'P001', 'Pregnancies': 0, 'Glucose': 140,
+                    'station': 'Downtown Medical Center', 'id': 'P001', 'Pregnancies': 0, 'Glucose': 140,
                     'BloodPressure': 85, 'SkinThickness': 25, 'Insulin': 180, 'BMI': 28.5,
                     'DiabetesPedigreeFunction': 0.65, 'Age': 45, 'timestamp': pd.Timestamp.now()
                 },
                 {
-                    'station': 'Station Beta', 'id': 'P002', 'Pregnancies': 2, 'Glucose': 110,
+                    'station': 'Community Health Clinic', 'id': 'P002', 'Pregnancies': 2, 'Glucose': 110,
                     'BloodPressure': 70, 'SkinThickness': 20, 'Insulin': 90, 'BMI': 23.2,
                     'DiabetesPedigreeFunction': 0.35, 'Age': 32, 'timestamp': pd.Timestamp.now()
                 },
                 {
-                    'station': 'Station Gamma', 'id': 'P003', 'Pregnancies': 0, 'Glucose': 165,
+                    'station': 'Regional Hospital', 'id': 'P003', 'Pregnancies': 0, 'Glucose': 165,
                     'BloodPressure': 95, 'SkinThickness': 30, 'Insulin': 250, 'BMI': 32.1,
                     'DiabetesPedigreeFunction': 0.85, 'Age': 58, 'timestamp': pd.Timestamp.now()
                 }
@@ -1889,8 +1889,8 @@ def main():
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("**Personal Information**")
-                patient_station = st.text_input("Station Name")
+                st.markdown("**Location & Patient Information**")
+                patient_station = st.text_input("Medical Station/Facility")
                 patient_id = st.text_input("Patient ID")
                 pregnancies = st.number_input("Number of Pregnancies", min_value=0, max_value=20, value=1)
                 age = st.number_input("Age (years)", min_value=18, max_value=120, value=30)
@@ -1928,7 +1928,7 @@ def main():
                         st.session_state.patient_database.append(patient_data)
                         st.success(f"Patient from {patient_station} added successfully!")
                 else:
-                    st.error("Please provide both station name and patient ID.")
+                    st.error("Please provide both medical facility name and patient ID.")
         
         # Quick Risk Assessment Tool
         st.subheader("⚡ Quick Risk Assessment")
@@ -2002,6 +2002,7 @@ def main():
             patients_df = pd.DataFrame(st.session_state.patient_database)
             display_df = patients_df[['station', 'id', 'Age', 'Glucose', 'BMI', 'timestamp']].copy()
             display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M')
+            display_df = display_df.rename(columns={'station': 'Medical Facility'})
             
             # Add selection column
             selected_patients = st.multiselect(
@@ -2050,8 +2051,8 @@ def main():
                             recommendation = "Maintain healthy lifestyle habits"
                         
                         results.append({
-                            'Station': patient['station'],
-                            'ID': patient['id'],
+                            'Medical Facility': patient['station'],
+                            'Patient ID': patient['id'],
                             'Risk Level': f"{risk_color} {risk_category}",
                             'Probability': f"{probability:.1%}",
                             'Recommendation': recommendation,
