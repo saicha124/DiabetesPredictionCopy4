@@ -2086,17 +2086,17 @@ def main():
             
             with col1:
                 st.markdown("**Basic Health Metrics**")
-                quick_glucose = st.number_input("Glucose Level", min_value=0, max_value=300, value=120, key="quick_glucose")
-                quick_bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0, step=0.1, key="quick_bmi")
-                quick_age = st.number_input("Age", min_value=18, max_value=120, value=30, key="quick_age")
-                quick_pregnancies = st.number_input("Pregnancies", min_value=0, max_value=20, value=1, key="quick_pregnancies")
+                quick_glucose = st.number_input("Glucose Level", min_value=0, max_value=300, value=120, key="quick_glucose_2")
+                quick_bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0, step=0.1, key="quick_bmi_2")
+                quick_age = st.number_input("Age", min_value=18, max_value=120, value=30, key="quick_age_2")
+                quick_pregnancies = st.number_input("Pregnancies", min_value=0, max_value=20, value=1, key="quick_pregnancies_2")
                 
             with col2:
                 st.markdown("**Additional Factors**")
-                quick_bp = st.number_input("Blood Pressure", min_value=0, max_value=200, value=80, key="quick_bp")
-                quick_insulin = st.number_input("Insulin", min_value=0, max_value=900, value=80, key="quick_insulin")
-                quick_skin = st.number_input("Skin Thickness", min_value=0, max_value=100, value=20, key="quick_skin")
-                quick_pedigree = st.number_input("Family History Factor", min_value=0.0, max_value=3.0, value=0.5, step=0.01, key="quick_pedigree")
+                quick_bp = st.number_input("Blood Pressure", min_value=0, max_value=200, value=80, key="quick_bp_2")
+                quick_insulin = st.number_input("Insulin", min_value=0, max_value=900, value=80, key="quick_insulin_2")
+                quick_skin = st.number_input("Skin Thickness", min_value=0, max_value=100, value=20, key="quick_skin_2")
+                quick_pedigree = st.number_input("Family History Factor", min_value=0.0, max_value=3.0, value=0.5, step=0.01, key="quick_pedigree_2")
             
             if st.button("🎯 Assess Risk Now"):
                 quick_data = pd.DataFrame({
