@@ -62,6 +62,10 @@ class FederatedLearningManager:
         self.best_accuracy = 0.0
         self.client_status = {}  # Track individual client training status
         
+        # Initialize convergence tracking attributes
+        self.convergence_reason = None  # Track why training stopped ('model_convergence' or 'max_rounds_reached')
+        self.early_stopped = False
+        
         # Thread safety
         self.lock = threading.Lock()
     
@@ -270,14 +274,34 @@ class FederatedLearningManager:
                 comm_time = np.random.normal(0.5, 0.1)
                 self.communication_times.append(max(0.1, comm_time))
                 
-                # Check for convergence and early stopping
+                # ============================================================================
+                # GLOBAL STOPPING CRITERIA - Two main conditions for stopping training:
+                # 1. Model convergence (when performance plateaus over consecutive rounds)
+                # 2. Maximum rounds reached (computational budget exhausted)
+                # ============================================================================
+                
+                # Update best accuracy achieved so far
                 if accuracy > self.best_accuracy:
                     self.best_accuracy = accuracy
                 
-                if accuracy >= self.target_accuracy:
-                    print(f"🎯 Target accuracy {self.target_accuracy:.3f} reached at round {self.current_round}!")
+                # STOPPING CRITERION 1: CONVERGENCE DETECTION
+                # Check if the global model has converged by analyzing performance trends
+                convergence_detected = self._check_global_convergence()
+                
+                if convergence_detected:
+                    print(f"🔄 Global model converged at round {self.current_round}! "
+                          f"Best accuracy: {self.best_accuracy:.3f}")
                     self.early_stopped = True
+                    self.convergence_reason = "model_convergence"
                     break
+                
+                # STOPPING CRITERION 2: MAXIMUM ROUNDS CHECK
+                # This will be handled by the main loop condition, but we track it here
+                if self.current_round >= self.max_rounds:
+                    print(f"📊 Maximum rounds ({self.max_rounds}) reached! "
+                          f"Final accuracy: {accuracy:.3f}")
+                    self.convergence_reason = "max_rounds_reached"
+                    # Loop will naturally break due to range condition
                 
                 # Simulate some delay for demonstration
                 time.sleep(1)
@@ -447,3 +471,90 @@ class FederatedLearningManager:
         cm = confusion_matrix(all_true_labels, all_predictions)
         
         return accuracy, loss, f1, cm
+    
+    def _check_global_convergence(self):
+        """
+        Check if the global model has converged based on performance trends.
+        
+        CONVERGENCE DETECTION ALGORITHM:
+        ================================
+        The global model is considered converged when:
+        1. We have sufficient training history (minimum 3 rounds)
+        2. Performance improvement has plateaued over consecutive rounds
+        3. Both accuracy and loss show minimal improvement
+        
+        CONVERGENCE CRITERIA:
+        ====================
+        - Accuracy improvement < 0.5% for last 3 consecutive rounds
+        - Loss improvement < 0.01 for last 3 consecutive rounds
+        - No significant oscillation in performance metrics
+        
+        Returns:
+            bool: True if convergence detected, False otherwise
+        """
+        
+        # STEP 1: Check if we have sufficient training history
+        # Need at least 3 rounds to detect convergence trends
+        min_rounds_for_convergence = 3
+        if len(self.training_history) < min_rounds_for_convergence:
+            return False
+        
+        # STEP 2: Extract recent performance metrics
+        # Get the last 3 rounds of training metrics for trend analysis
+        recent_rounds = self.training_history[-3:]
+        recent_accuracies = [round_data['accuracy'] for round_data in recent_rounds]
+        recent_losses = [round_data['loss'] for round_data in recent_rounds]
+        
+        # STEP 3: Calculate accuracy improvement trends
+        # Check if accuracy improvements are below convergence threshold
+        accuracy_improvements = []
+        for i in range(1, len(recent_accuracies)):
+            improvement = recent_accuracies[i] - recent_accuracies[i-1]
+            accuracy_improvements.append(improvement)
+        
+        # STEP 4: Calculate loss improvement trends  
+        # Check if loss reductions are below convergence threshold
+        loss_improvements = []
+        for i in range(1, len(recent_losses)):
+            improvement = recent_losses[i-1] - recent_losses[i]  # Loss should decrease
+            loss_improvements.append(improvement)
+        
+        # STEP 5: Define convergence thresholds
+        # These thresholds determine when improvements are considered negligible
+        accuracy_convergence_threshold = 0.005  # 0.5% accuracy improvement
+        loss_convergence_threshold = 0.01       # 0.01 loss improvement
+        
+        # STEP 6: Check accuracy convergence condition
+        # All recent accuracy improvements must be below threshold
+        accuracy_converged = all(
+            abs(improvement) < accuracy_convergence_threshold 
+            for improvement in accuracy_improvements
+        )
+        
+        # STEP 7: Check loss convergence condition
+        # All recent loss improvements must be below threshold
+        loss_converged = all(
+            improvement < loss_convergence_threshold 
+            for improvement in loss_improvements
+        )
+        
+        # STEP 8: Check for performance oscillation
+        # Detect if metrics are oscillating rather than converging
+        accuracy_variance = np.var(recent_accuracies)
+        oscillation_threshold = 0.001  # Low variance indicates stability
+        stable_performance = accuracy_variance < oscillation_threshold
+        
+        # STEP 9: Final convergence decision
+        # Model is converged if both accuracy and loss have plateaued with stable performance
+        convergence_detected = accuracy_converged and loss_converged and stable_performance
+        
+        # STEP 10: Log convergence analysis for debugging
+        if convergence_detected:
+            print(f"🔍 CONVERGENCE DETECTED:")
+            print(f"   - Recent accuracies: {[f'{acc:.4f}' for acc in recent_accuracies]}")
+            print(f"   - Recent losses: {[f'{loss:.4f}' for loss in recent_losses]}")
+            print(f"   - Accuracy improvements: {[f'{imp:.4f}' for imp in accuracy_improvements]}")
+            print(f"   - Loss improvements: {[f'{imp:.4f}' for imp in loss_improvements]}")
+            print(f"   - Performance variance: {accuracy_variance:.6f}")
+        
+        return convergence_detected
