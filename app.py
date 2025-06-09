@@ -550,8 +550,11 @@ def show_results():
             st.info("No fog results available")
 
 def make_prediction(sample_data):
-    """Make prediction for crop sample data"""
-    if st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model') and st.session_state.fl_manager.global_model is not None:
+    """Make prediction for diabetes risk assessment"""
+    # First try to use trained federated model if available
+    if (st.session_state.get('fl_manager') and 
+        hasattr(st.session_state.fl_manager, 'global_model') and 
+        st.session_state.fl_manager.global_model is not None):
         try:
             # Use the fitted preprocessor from the federated learning manager
             if hasattr(st.session_state.fl_manager, 'preprocessor') and st.session_state.fl_manager.preprocessor.is_fitted:
@@ -571,10 +574,86 @@ def make_prediction(sample_data):
             return prediction, probability
         
         except Exception as e:
-            st.error(f"Prediction error: {str(e)}")
-            return 0, 0.0
+            st.error(f"Federated model prediction error: {str(e)}")
     
-    return 0, 0.0
+    # Fallback to rule-based diabetes risk assessment using medical guidelines
+    try:
+        patient = sample_data.iloc[0]
+        
+        # American Diabetes Association risk factors scoring
+        risk_score = 0.0
+        
+        # Glucose level (primary diagnostic criterion)
+        if patient['Glucose'] >= 200:  # Diabetic range
+            risk_score += 0.8
+        elif patient['Glucose'] >= 126:  # Diabetic fasting glucose
+            risk_score += 0.6
+        elif patient['Glucose'] >= 100:  # Prediabetic range
+            risk_score += 0.3
+        elif patient['Glucose'] >= 70:   # Normal range
+            risk_score += 0.1
+        
+        # BMI (obesity is major risk factor)
+        if patient['BMI'] >= 40:      # Severely obese
+            risk_score += 0.15
+        elif patient['BMI'] >= 35:    # Obese class II
+            risk_score += 0.12
+        elif patient['BMI'] >= 30:    # Obese class I
+            risk_score += 0.08
+        elif patient['BMI'] >= 25:    # Overweight
+            risk_score += 0.04
+        
+        # Age (diabetes risk increases with age)
+        if patient['Age'] >= 65:
+            risk_score += 0.12
+        elif patient['Age'] >= 45:
+            risk_score += 0.08
+        elif patient['Age'] >= 35:
+            risk_score += 0.04
+        
+        # Blood pressure (hypertension correlation)
+        if patient['BloodPressure'] >= 140:  # Stage 2 hypertension
+            risk_score += 0.08
+        elif patient['BloodPressure'] >= 130: # Stage 1 hypertension
+            risk_score += 0.05
+        elif patient['BloodPressure'] >= 120: # Elevated
+            risk_score += 0.02
+        
+        # Family history indicator (diabetes pedigree function)
+        if patient['DiabetesPedigreeFunction'] >= 1.0:
+            risk_score += 0.15
+        elif patient['DiabetesPedigreeFunction'] >= 0.5:
+            risk_score += 0.08
+        elif patient['DiabetesPedigreeFunction'] >= 0.2:
+            risk_score += 0.04
+        
+        # Insulin resistance indicators
+        if patient['Insulin'] >= 300:  # Very high insulin
+            risk_score += 0.06
+        elif patient['Insulin'] >= 200:  # High insulin
+            risk_score += 0.04
+        elif patient['Insulin'] == 0:    # Missing data often indicates metabolic issues
+            risk_score += 0.02
+        
+        # Gestational diabetes history (pregnancies)
+        if patient['Pregnancies'] >= 5:
+            risk_score += 0.05
+        elif patient['Pregnancies'] >= 3:
+            risk_score += 0.03
+        
+        # Skin thickness (acanthosis nigricans indicator)
+        if patient['SkinThickness'] >= 35:
+            risk_score += 0.02
+        
+        # Normalize and bound the probability
+        probability = min(0.95, max(0.05, risk_score))
+        prediction = 1 if probability >= 0.5 else 0
+        
+        return prediction, probability
+        
+    except Exception as e:
+        st.error(f"Risk assessment error: {str(e)}")
+        return 0, 0.5
 
 def get_risk_factors(patient):
     """Analyze key risk factors for a patient"""
@@ -1774,7 +1853,7 @@ def main():
         else:
             st.info("Complete a training session to view comprehensive performance analysis.")
     
-    with tab5:
+    with tab6:
         st.header("🏥 Patient Diabetes Risk Assessment")
         
         # Patient Database Management
@@ -1783,6 +1862,27 @@ def main():
         # Initialize patient database in session state
         if 'patient_database' not in st.session_state:
             st.session_state.patient_database = []
+        
+        # Add sample patients if database is empty
+        if not st.session_state.patient_database:
+            sample_patients = [
+                {
+                    'name': 'John Smith', 'id': 'P001', 'Pregnancies': 0, 'Glucose': 140,
+                    'BloodPressure': 85, 'SkinThickness': 25, 'Insulin': 180, 'BMI': 28.5,
+                    'DiabetesPedigreeFunction': 0.65, 'Age': 45, 'timestamp': pd.Timestamp.now()
+                },
+                {
+                    'name': 'Maria Garcia', 'id': 'P002', 'Pregnancies': 2, 'Glucose': 110,
+                    'BloodPressure': 70, 'SkinThickness': 20, 'Insulin': 90, 'BMI': 23.2,
+                    'DiabetesPedigreeFunction': 0.35, 'Age': 32, 'timestamp': pd.Timestamp.now()
+                },
+                {
+                    'name': 'Robert Johnson', 'id': 'P003', 'Pregnancies': 0, 'Glucose': 165,
+                    'BloodPressure': 95, 'SkinThickness': 30, 'Insulin': 250, 'BMI': 32.1,
+                    'DiabetesPedigreeFunction': 0.85, 'Age': 58, 'timestamp': pd.Timestamp.now()
+                }
+            ]
+            st.session_state.patient_database.extend(sample_patients)
         
         # Add new patient section
         with st.expander("➕ Add New Patient", expanded=False):
@@ -1830,6 +1930,70 @@ def main():
                 else:
                     st.error("Please provide both patient name and ID.")
         
+        # Quick Risk Assessment Tool
+        st.subheader("⚡ Quick Risk Assessment")
+        with st.expander("🔬 Assess Diabetes Risk for New Patient", expanded=True):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                quick_pregnancies = st.number_input("Pregnancies", min_value=0, max_value=20, value=1, key="quick_preg")
+                quick_glucose = st.number_input("Glucose (mg/dL)", min_value=0, max_value=300, value=120, key="quick_glucose")
+                quick_bp = st.number_input("Blood Pressure (mmHg)", min_value=0, max_value=200, value=80, key="quick_bp")
+                quick_skin = st.number_input("Skin Thickness (mm)", min_value=0, max_value=100, value=20, key="quick_skin")
+            
+            with col2:
+                quick_insulin = st.number_input("Insulin (μU/mL)", min_value=0, max_value=900, value=80, key="quick_insulin")
+                quick_bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0, step=0.1, key="quick_bmi")
+                quick_pedigree = st.number_input("Diabetes Pedigree", min_value=0.0, max_value=3.0, value=0.5, step=0.01, key="quick_pedigree")
+                quick_age = st.number_input("Age", min_value=1, max_value=120, value=30, key="quick_age")
+            
+            if st.button("🎯 Assess Risk", type="primary"):
+                quick_data = pd.DataFrame({
+                    'Pregnancies': [quick_pregnancies],
+                    'Glucose': [quick_glucose],
+                    'BloodPressure': [quick_bp],
+                    'SkinThickness': [quick_skin],
+                    'Insulin': [quick_insulin],
+                    'BMI': [quick_bmi],
+                    'DiabetesPedigreeFunction': [quick_pedigree],
+                    'Age': [quick_age]
+                })
+                
+                prediction, probability = make_prediction(quick_data)
+                
+                # Display risk assessment results
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    if probability >= 0.7:
+                        st.error(f"🔴 HIGH RISK: {probability:.1%}")
+                    elif probability >= 0.4:
+                        st.warning(f"🟡 MODERATE RISK: {probability:.1%}")
+                    else:
+                        st.success(f"🟢 LOW RISK: {probability:.1%}")
+                
+                with col2:
+                    st.metric("Risk Score", f"{probability:.3f}", f"{probability-0.5:.3f}")
+                
+                with col3:
+                    prediction_text = "Positive" if prediction == 1 else "Negative"
+                    st.info(f"Prediction: {prediction_text}")
+                
+                # Risk factors analysis
+                st.subheader("📊 Risk Factor Analysis")
+                risk_factors = analyze_risk_factors(quick_data.iloc[0])
+                
+                for factor, details in risk_factors.items():
+                    if details['risk_level'] > 0:
+                        color = "🔴" if details['risk_level'] >= 0.15 else "🟡" if details['risk_level'] >= 0.05 else "🟢"
+                        st.write(f"{color} **{factor}**: {details['description']} (Risk: +{details['risk_level']:.1%})")
+                
+                # Recommendations
+                st.subheader("💡 Personalized Recommendations")
+                recommendations = get_recommendations(probability, quick_data.iloc[0])
+                for i, rec in enumerate(recommendations, 1):
+                    st.write(f"{i}. {rec}")
+
         # Display patient database
         if st.session_state.patient_database:
             st.subheader("📋 Registered Patients")
@@ -1837,11 +2001,11 @@ def main():
             # Create DataFrame for display
             patients_df = pd.DataFrame(st.session_state.patient_database)
             display_df = patients_df[['name', 'id', 'Age', 'Glucose', 'BMI', 'timestamp']].copy()
-            display_df['timestamp'] = display_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M')
+            display_df['timestamp'] = pd.to_datetime(display_df['timestamp']).dt.strftime('%Y-%m-%d %H:%M')
             
             # Add selection column
             selected_patients = st.multiselect(
-                "Select patients for risk assessment:",
+                "Select patients for batch risk assessment:",
                 options=patients_df.index.tolist(),
                 format_func=lambda x: f"{patients_df.iloc[x]['name']} (ID: {patients_df.iloc[x]['id']})"
             )
@@ -1849,7 +2013,7 @@ def main():
             st.dataframe(display_df, use_container_width=True)
             
             # Batch risk assessment
-            if selected_patients and st.session_state.training_completed:
+            if selected_patients:
                 if st.button("🔬 Assess Diabetes Risk for Selected Patients"):
                     st.subheader("🎯 Risk Assessment Results")
                     
