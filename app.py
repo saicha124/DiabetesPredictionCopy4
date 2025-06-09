@@ -720,7 +720,7 @@ def main():
         return
     
     # Multi-tab interface
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🎛️ Training Control", "📈 Live Monitoring", "🗺️ Learning Journey Map", "📊 Communication Network", "📋 Results Analysis", "🔍 Risk Prediction"])
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["🎛️ Training Control", "📈 Live Monitoring", "🗺️ Learning Journey Map", "📊 Communication Network", "📋 Results Analysis", "🔍 Risk Prediction", "🎮 Client Simulation"])
     
     with tab1:
         st.header("🎛️ Federated Training Configuration")
@@ -1997,6 +1997,286 @@ def main():
                     st.write(f"• {rec}")
         else:
             st.info("Complete federated learning training to enable diabetes risk assessment")
+
+    with tab7:
+        st.header("🎮 Interactive Client Simulation Dashboard")
+        
+        st.markdown("### Explore Model Performance Under Different Scenarios")
+        
+        # Simulation control panel
+        with st.expander("🔧 Simulation Configuration", expanded=True):
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown("**Client Configuration**")
+                sim_num_clients = st.slider("Number of Clients", 2, 50, 10)
+                sim_client_dropout = st.slider("Client Dropout Rate (%)", 0, 50, 10)
+                sim_data_heterogeneity = st.selectbox("Data Heterogeneity", 
+                                                    ["Low (IID)", "Medium (Non-IID)", "High (Pathological)"])
+                
+            with col2:
+                st.markdown("**Network Conditions**")
+                sim_communication_delay = st.slider("Communication Delay (ms)", 0, 1000, 100)
+                sim_bandwidth_limit = st.selectbox("Bandwidth", ["High", "Medium", "Low"])
+                sim_network_reliability = st.slider("Network Reliability (%)", 50, 100, 90)
+                
+            with col3:
+                st.markdown("**Privacy & Security**")
+                sim_privacy_budget = st.slider("Privacy Budget (ε)", 0.1, 10.0, 1.0, 0.1)
+                sim_malicious_clients = st.slider("Malicious Clients (%)", 0, 30, 5)
+                sim_noise_level = st.slider("Data Noise Level (%)", 0, 50, 10)
+        
+        # Real-time simulation controls
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("🚀 Run Simulation", type="primary"):
+                st.session_state.simulation_running = True
+                st.session_state.simulation_results = None
+        with col2:
+            if st.button("⏸️ Pause Simulation"):
+                st.session_state.simulation_running = False
+        with col3:
+            if st.button("🔄 Reset Simulation"):
+                st.session_state.simulation_running = False
+                st.session_state.simulation_results = None
+        
+        # Initialize simulation state
+        if 'simulation_running' not in st.session_state:
+            st.session_state.simulation_running = False
+        if 'simulation_results' not in st.session_state:
+            st.session_state.simulation_results = None
+        
+        # Run simulation if requested
+        if st.session_state.simulation_running:
+            st.info("🔄 Running interactive simulation...")
+            
+            # Simulate federated learning performance based on parameters
+            simulation_data = {
+                'rounds': [],
+                'accuracy': [],
+                'communication_cost': [],
+                'privacy_loss': [],
+                'client_participation': [],
+                'convergence_time': []
+            }
+            
+            # Base performance metrics
+            base_accuracy = 0.7
+            base_comm_cost = 100
+            
+            # Calculate performance modifiers based on simulation parameters
+            heterogeneity_factor = {"Low (IID)": 1.0, "Medium (Non-IID)": 0.95, "High (Pathological)": 0.85}[sim_data_heterogeneity]
+            bandwidth_factor = {"High": 1.0, "Medium": 0.8, "Low": 0.6}[sim_bandwidth_limit]
+            
+            for round_num in range(1, 21):  # 20 rounds simulation
+                # Accuracy progression with various factors
+                round_accuracy = base_accuracy + (round_num * 0.015) * heterogeneity_factor
+                round_accuracy *= (1 - sim_noise_level / 200)  # Noise impact
+                round_accuracy *= (1 - sim_malicious_clients / 300)  # Malicious client impact
+                round_accuracy *= (sim_network_reliability / 100)  # Network reliability impact
+                
+                # Communication cost calculation
+                comm_cost = base_comm_cost * sim_num_clients
+                comm_cost *= (1 + sim_communication_delay / 1000)
+                comm_cost /= bandwidth_factor
+                
+                # Privacy loss accumulation
+                privacy_loss = round_num * (1.0 / sim_privacy_budget)
+                
+                # Client participation (affected by dropout)
+                participation = max(50, 100 - sim_client_dropout - (round_num * 0.5))
+                
+                # Convergence time (affected by network conditions)
+                convergence_time = 5 + (sim_communication_delay / 100) + (sim_num_clients * 0.1)
+                
+                simulation_data['rounds'].append(round_num)
+                simulation_data['accuracy'].append(min(0.95, max(0.5, round_accuracy)))
+                simulation_data['communication_cost'].append(comm_cost)
+                simulation_data['privacy_loss'].append(min(10, privacy_loss))
+                simulation_data['client_participation'].append(participation)
+                simulation_data['convergence_time'].append(convergence_time)
+            
+            st.session_state.simulation_results = simulation_data
+            st.session_state.simulation_running = False
+            st.success("✅ Simulation completed!")
+        
+        # Display simulation results
+        if st.session_state.simulation_results:
+            st.markdown("### 📊 Simulation Results")
+            
+            results = st.session_state.simulation_results
+            
+            # Performance metrics overview
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                final_accuracy = results['accuracy'][-1]
+                st.metric("Final Accuracy", f"{final_accuracy:.3f}", 
+                         delta=f"{final_accuracy - results['accuracy'][0]:.3f}")
+            with col2:
+                avg_comm_cost = sum(results['communication_cost']) / len(results['communication_cost'])
+                st.metric("Avg Communication Cost", f"{avg_comm_cost:.0f} KB")
+            with col3:
+                total_privacy_loss = results['privacy_loss'][-1]
+                st.metric("Total Privacy Loss", f"{total_privacy_loss:.2f}")
+            with col4:
+                avg_participation = sum(results['client_participation']) / len(results['client_participation'])
+                st.metric("Avg Client Participation", f"{avg_participation:.1f}%")
+            
+            # Interactive performance charts
+            tab_acc, tab_comm, tab_priv, tab_part = st.tabs(["📈 Accuracy", "📡 Communication", "🔒 Privacy", "👥 Participation"])
+            
+            with tab_acc:
+                fig_acc = go.Figure()
+                fig_acc.add_trace(go.Scatter(
+                    x=results['rounds'],
+                    y=results['accuracy'],
+                    mode='lines+markers',
+                    name='Model Accuracy',
+                    line=dict(color='#2E86AB', width=3),
+                    marker=dict(size=8)
+                ))
+                
+                fig_acc.update_layout(
+                    title='Model Accuracy Over Training Rounds',
+                    xaxis_title='Training Round',
+                    yaxis_title='Accuracy',
+                    height=400,
+                    template='plotly_white'
+                )
+                st.plotly_chart(fig_acc, use_container_width=True)
+            
+            with tab_comm:
+                fig_comm = go.Figure()
+                fig_comm.add_trace(go.Bar(
+                    x=results['rounds'],
+                    y=results['communication_cost'],
+                    name='Communication Cost',
+                    marker_color='#C73E1D'
+                ))
+                
+                fig_comm.update_layout(
+                    title='Communication Cost Per Round',
+                    xaxis_title='Training Round',
+                    yaxis_title='Cost (KB)',
+                    height=400,
+                    template='plotly_white'
+                )
+                st.plotly_chart(fig_comm, use_container_width=True)
+            
+            with tab_priv:
+                fig_priv = go.Figure()
+                fig_priv.add_trace(go.Scatter(
+                    x=results['rounds'],
+                    y=results['privacy_loss'],
+                    mode='lines+markers',
+                    name='Cumulative Privacy Loss',
+                    line=dict(color='#A23B72', width=3),
+                    fill='tonexty',
+                    fillcolor='rgba(162, 59, 114, 0.1)'
+                ))
+                
+                fig_priv.update_layout(
+                    title='Privacy Budget Consumption',
+                    xaxis_title='Training Round',
+                    yaxis_title='Privacy Loss',
+                    height=400,
+                    template='plotly_white'
+                )
+                st.plotly_chart(fig_priv, use_container_width=True)
+            
+            with tab_part:
+                fig_part = go.Figure()
+                fig_part.add_trace(go.Scatter(
+                    x=results['rounds'],
+                    y=results['client_participation'],
+                    mode='lines+markers',
+                    name='Client Participation Rate',
+                    line=dict(color='#96CEB4', width=3),
+                    marker=dict(size=8)
+                ))
+                
+                fig_part.update_layout(
+                    title='Client Participation Over Time',
+                    xaxis_title='Training Round',
+                    yaxis_title='Participation Rate (%)',
+                    height=400,
+                    template='plotly_white'
+                )
+                st.plotly_chart(fig_part, use_container_width=True)
+            
+            # Scenario comparison
+            st.markdown("### 🔍 Scenario Analysis")
+            
+            with st.expander("📋 Performance Summary Table", expanded=False):
+                summary_data = []
+                for i in range(0, len(results['rounds']), 5):  # Every 5 rounds
+                    summary_data.append({
+                        'Round': results['rounds'][i],
+                        'Accuracy': f"{results['accuracy'][i]:.3f}",
+                        'Comm Cost (KB)': f"{results['communication_cost'][i]:.0f}",
+                        'Privacy Loss': f"{results['privacy_loss'][i]:.2f}",
+                        'Participation (%)': f"{results['client_participation'][i]:.1f}",
+                        'Convergence Time (s)': f"{results['convergence_time'][i]:.1f}"
+                    })
+                
+                summary_df = pd.DataFrame(summary_data)
+                st.dataframe(summary_df, use_container_width=True)
+            
+            # Parameter sensitivity analysis
+            st.markdown("### 🎯 Parameter Impact Analysis")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Create parameter impact visualization
+                parameters = ['Client Count', 'Dropout Rate', 'Communication Delay', 'Privacy Budget', 'Malicious Clients']
+                impact_scores = [
+                    sim_num_clients / 50 * 100,  # Normalized impact scores
+                    sim_client_dropout,
+                    sim_communication_delay / 10,
+                    (10 - sim_privacy_budget) / 10 * 100,
+                    sim_malicious_clients * 2
+                ]
+                
+                fig_impact = go.Figure(data=go.Bar(
+                    x=parameters,
+                    y=impact_scores,
+                    marker_color=['#2E86AB', '#C73E1D', '#A23B72', '#96CEB4', '#FFEAA7']
+                ))
+                
+                fig_impact.update_layout(
+                    title='Parameter Impact on Performance',
+                    xaxis_title='Parameters',
+                    yaxis_title='Impact Score',
+                    height=350
+                )
+                st.plotly_chart(fig_impact, use_container_width=True)
+            
+            with col2:
+                # Performance recommendations
+                st.markdown("**🎯 Optimization Recommendations**")
+                
+                recommendations = []
+                
+                if sim_client_dropout > 20:
+                    recommendations.append("🔄 Reduce client dropout rate for better stability")
+                if sim_communication_delay > 500:
+                    recommendations.append("📡 Improve network infrastructure to reduce delays")
+                if sim_privacy_budget < 1.0:
+                    recommendations.append("🔒 Consider increasing privacy budget for better accuracy")
+                if sim_malicious_clients > 15:
+                    recommendations.append("🛡️ Implement stronger security measures")
+                if sim_num_clients > 30:
+                    recommendations.append("⚖️ Consider optimizing for fewer, more reliable clients")
+                
+                if not recommendations:
+                    recommendations.append("✅ Current configuration appears well-balanced")
+                
+                for rec in recommendations:
+                    st.write(rec)
+        
+        else:
+            st.info("🎮 Configure simulation parameters above and click 'Run Simulation' to explore federated learning performance under different scenarios.")
 
 if __name__ == "__main__":
     main()
