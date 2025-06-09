@@ -207,6 +207,10 @@ def show_training_progress():
             st.session_state.best_accuracy = st.session_state.fl_manager.best_accuracy
         if hasattr(st.session_state.fl_manager, 'early_stopped'):
             st.session_state.early_stopped = st.session_state.fl_manager.early_stopped
+            # If early stopped, mark training as completed
+            if st.session_state.fl_manager.early_stopped:
+                st.session_state.training_completed = True
+                st.session_state.training_started = False
         if hasattr(st.session_state.fl_manager, 'training_completed'):
             st.session_state.training_completed = st.session_state.fl_manager.training_completed
     
@@ -1117,18 +1121,21 @@ def main():
         
         # Determine current stage based on training state
         current_stage = 1
-        if st.session_state.training_started:
+        if st.session_state.training_completed:
+            current_stage = 9  # Deployment Ready - training finished
+        elif st.session_state.training_started:
             current_stage = 5  # Local Training when started
             if st.session_state.training_metrics:
                 rounds = len(st.session_state.training_metrics)
-                if rounds >= 1:
-                    current_stage = 6  # Fog Aggregation
-                if rounds >= 3:
-                    current_stage = 7  # Global Aggregation  
-                if rounds >= 5:
+                # Check if early stopped due to target accuracy
+                if hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped:
+                    current_stage = 9  # Jump to deployment ready on early stop
+                elif rounds >= 5:
                     current_stage = 8  # Model Convergence
-                if st.session_state.training_completed:
-                    current_stage = 9  # Deployment Ready
+                elif rounds >= 3:
+                    current_stage = 7  # Global Aggregation  
+                elif rounds >= 1:
+                    current_stage = 6  # Fog Aggregation
         elif hasattr(st.session_state, 'fl_manager'):
             current_stage = 4  # Model Initialization
         elif hasattr(st.session_state, 'distribution_strategy'):
@@ -1349,7 +1356,12 @@ def main():
                 elif stage_num == 9:  # Deployment Ready
                     if st.session_state.training_completed:
                         st.success("✅ Model ready for clinical deployment!")
+                        if hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped:
+                            st.write("🎯 Target accuracy achieved - training completed early")
                         st.write("🏥 Can now be used for patient diabetes risk assessment")
+                    elif hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped:
+                        st.success("✅ Target accuracy reached - deployment ready!")
+                        st.write("🎯 Training stopped early due to convergence")
                     else:
                         st.info("🔄 Complete training to reach deployment readiness")
     
