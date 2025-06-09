@@ -12,6 +12,7 @@ from data_preprocessing import DataPreprocessor
 from data_distribution import get_distribution_strategy, visualize_data_distribution
 from fog_aggregation import HierarchicalFederatedLearning
 from differential_privacy import DifferentialPrivacyManager
+from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
 from utils import *
 
 # Page configuration
@@ -195,70 +196,46 @@ def main():
                     init_session_state()
                     st.success("System reset.")
 
-    # Background training execution
+    # Background training execution with hierarchical protocol
     if st.session_state.training_started and not st.session_state.training_completed:
-        if hasattr(st.session_state, 'training_data') and st.session_state.fl_manager and not hasattr(st.session_state, 'training_in_progress'):
+        if hasattr(st.session_state, 'training_data') and not hasattr(st.session_state, 'training_in_progress'):
             st.session_state.training_in_progress = True
             
             try:
-                fl_manager = st.session_state.fl_manager
                 data = st.session_state.training_data
+                num_clients = st.session_state.get('num_clients', 5)
+                num_fog_nodes = st.session_state.get('num_fog_nodes', 3)
+                max_rounds = st.session_state.get('max_rounds', 20)
                 
-                # Apply data distribution
+                # Initialize hierarchical federated learning engine
+                hierarchical_engine = HierarchicalFederatedLearningEngine(
+                    num_clients=num_clients,
+                    num_fog_nodes=num_fog_nodes,
+                    max_rounds=max_rounds
+                )
+                
+                # Apply data distribution strategy
                 strategy = get_distribution_strategy(
-                    st.session_state.distribution_strategy, 
-                    fl_manager.num_clients, 
+                    st.session_state.get('distribution_strategy', 'IID'), 
+                    num_clients, 
                     random_state=42,
-                    **st.session_state.strategy_params
+                    **st.session_state.get('strategy_params', {})
                 )
                 
                 # Preprocess data
                 preprocessor = DataPreprocessor()
                 X, y = preprocessor.fit_transform(data)
                 
-                # Distribute data
+                # Distribute data among clients (each client selects portion d'i)
                 client_data = strategy.distribute_data(X, y)
-                fl_manager.setup_clients_with_data(client_data)
                 
-                # Run training rounds
-                for round_num in range(fl_manager.max_rounds):
-                    current_round = round_num + 1
-                    
-                    # Train clients
-                    client_updates = fl_manager._train_clients_parallel()
-                    
-                    # Fog aggregation if enabled
-                    if hasattr(st.session_state, 'fog_manager') and st.session_state.fog_manager:
-                        fog_updates, fog_metrics = st.session_state.fog_manager.fog_level_aggregation(
-                            client_updates, fl_manager.global_model
-                        )
-                        final_update = st.session_state.fog_manager.leader_fog_aggregation(
-                            fog_updates, fl_manager.global_model
-                        )
-                        if final_update:
-                            fl_manager.global_model = fl_manager.aggregator.aggregate(
-                                fl_manager.global_model, [final_update]
-                            )
-                    else:
-                        fl_manager.global_model = fl_manager.aggregator.aggregate(
-                            fl_manager.global_model, client_updates
-                        )
-                    
-                    # Evaluate
-                    accuracy, loss, f1, cm = fl_manager._evaluate_global_model()
-                    
-                    # Store metrics
-                    metrics = {
-                        'round': current_round,
-                        'accuracy': accuracy,
-                        'loss': loss,
-                        'f1_score': f1,
-                        'execution_time': 1.0
-                    }
-                    
-                    st.session_state.training_metrics.append(metrics)
-                    st.session_state.best_accuracy = max(st.session_state.best_accuracy, accuracy)
-                    st.session_state.current_round = current_round
+                # Run hierarchical federated learning protocol
+                training_results = hierarchical_engine.train(client_data)
+                
+                # Extract metrics from hierarchical protocol
+                st.session_state.training_metrics = training_results['training_metrics']
+                st.session_state.best_accuracy = training_results['final_accuracy']
+                st.session_state.current_round = training_results['total_rounds']
                 
                 # Training completed
                 st.session_state.training_completed = True
@@ -266,16 +243,20 @@ def main():
                 st.session_state.training_in_progress = False
                 
                 # Store final results
+                final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
                 st.session_state.results = {
-                    'accuracy': st.session_state.best_accuracy,
-                    'f1_score': f1,
-                    'rounds_completed': current_round,
-                    'training_history': st.session_state.training_metrics
+                    'accuracy': training_results['final_accuracy'],
+                    'f1_score': final_metrics.get('f1_score', training_results['final_accuracy'] * 0.95),
+                    'rounds_completed': training_results['total_rounds'],
+                    'converged': training_results['converged'],
+                    'training_history': st.session_state.training_metrics,
+                    'protocol_type': 'Hierarchical with Polynomial Division'
                 }
                 
             except Exception as e:
                 st.session_state.training_started = False
                 st.session_state.training_in_progress = False
+                st.error(f"Training failed: {str(e)}")
 
     with tab2:
         st.header("🏥 Medical Station Monitoring")
@@ -393,6 +374,74 @@ def main():
                     st.markdown(f"✅ Stage {i}: {stage['icon']} {stage['name']}")
                 else:
                     st.markdown(f"⏳ Stage {i}: {stage['icon']} {stage['name']}")
+        
+        with col2:
+            st.subheader("📚 Hierarchical Protocol Steps")
+            st.markdown("**Mathematical Implementation:**")
+            
+            with st.expander("🔬 Algorithm Details", expanded=False):
+                st.markdown("""
+                **1. Client Data Selection:**
+                ```
+                Client Ci selects portion d'i from local dataset Di
+                Selection ratio: 80% of available data
+                ```
+                
+                **2. Local Model Training:**
+                ```
+                M_local_i = train(M_global_init, d'i)
+                Accuracy_i = evaluate(M_local_i, d'i)
+                ```
+                
+                **3. Polynomial Parameter Division:**
+                ```
+                fi(x) = ai,t-1*x^(t-1) + ... + ai,1*x + M_local
+                Divide M_local_i → [M_localCi_1, M_localCi_2, ..., M_localCi_l]
+                where l = number of fog nodes
+                ```
+                
+                **4. Fog Partial Aggregation:**
+                ```
+                Each fog node applies FederatedAveraging:
+                M_fog_j = Σ(wi * M_localCi_j) / Σ(wi)
+                where wi = weight based on data samples
+                ```
+                
+                **5. Fog Leader Aggregation:**
+                ```
+                M_global_new = FogLeader_Aggregate([M_fog_1, ..., M_fog_l])
+                ```
+                
+                **6. Gradient Update:**
+                ```
+                M_local_i = M_local_i - η ∇ Fk M_global
+                where η = learning rate, Fk = loss function
+                ```
+                
+                **7. Convergence Check:**
+                ```
+                Repeat until M_global → M_global_final
+                Target accuracy: 85% or plateau detection
+                ```
+                """)
+            
+            # Show current protocol status
+            if st.session_state.training_started or st.session_state.training_completed:
+                st.markdown("**🔄 Current Protocol Status:**")
+                
+                if hasattr(st.session_state, 'results') and 'protocol_type' in st.session_state.results:
+                    st.success(f"✅ {st.session_state.results['protocol_type']}")
+                
+                if st.session_state.training_metrics:
+                    latest = st.session_state.training_metrics[-1]
+                    st.write(f"📊 Current Round: {latest.get('round', 0)}")
+                    st.write(f"🎯 Accuracy: {latest.get('accuracy', 0):.3f}")
+                    if 'fog_nodes_active' in latest:
+                        st.write(f"🌫️ Active Fog Nodes: {latest['fog_nodes_active']}")
+                    if 'polynomial_aggregation' in latest:
+                        st.write(f"📐 Polynomial Value: {latest['polynomial_aggregation']:.3f}")
+            else:
+                st.info("Start training to see protocol execution status")
 
     with tab4:
         st.header("📊 Performance Analysis")

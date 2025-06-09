@@ -178,6 +178,10 @@ class ClientSimulator:
             local_accuracy = local_eval['test_accuracy'] if local_eval else 0.5
             local_f1 = local_eval['f1_score'] if local_eval else 0.5
             
+            # Calculate number of samples used for training
+            X_train = self.data['X_train']
+            num_samples = len(X_train) if hasattr(X_train, '__len__') else 100
+            
             # Add noise based on data quality to simulate realistic variance
             data_quality = len(self.data['X_train']) / 1000.0  # Normalize by expected size
             accuracy_noise = np.random.normal(0, 0.05 * (1 - data_quality))
@@ -186,7 +190,7 @@ class ClientSimulator:
             update = {
                 'client_id': self.client_id,
                 'parameters': parameters,
-                'num_samples': len(self.data['X_train']),
+                'num_samples': num_samples,
                 'model_type': self.model_type,
                 'accuracy': local_accuracy,
                 'f1_score': local_f1,
