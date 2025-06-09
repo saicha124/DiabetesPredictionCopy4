@@ -815,7 +815,7 @@ def main():
             st.subheader("📊 Basic Settings")
             num_clients = st.slider("🏥 Number of Medical Stations", min_value=3, max_value=10, value=5)
             max_rounds = st.slider("🔄 Maximum Training Rounds", min_value=5, max_value=100, value=20)
-            target_accuracy = st.slider("🎯 Target Accuracy (Auto-Stop)", min_value=0.7, max_value=0.95, value=0.85, step=0.05)
+            st.info("🎯 Auto-Stop: Training will automatically stop when model converges or reaches high accuracy (85%+)")
             
         with col2:
             st.subheader("🔧 Algorithm Settings")
@@ -957,7 +957,7 @@ def main():
         
         with col1:
             if st.button("🚀 Start Federated Learning", disabled=st.session_state.training_started):
-                start_training(data, num_clients, max_rounds, target_accuracy, 
+                start_training(data, num_clients, max_rounds, 0.85,  # Default target for compatibility
                               aggregation_algorithm, enable_dp, epsilon, delta, committee_size,
                               distribution_strategy, strategy_params, enable_fog, 
                               num_fog_nodes, fog_aggregation_method, model_type, 
@@ -1121,21 +1121,21 @@ def main():
         
         # Determine current stage based on training state
         current_stage = 1
-        if st.session_state.training_completed:
+        if st.session_state.training_completed or (hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped):
             current_stage = 9  # Deployment Ready - training finished
         elif st.session_state.training_started:
-            current_stage = 5  # Local Training when started
             if st.session_state.training_metrics:
                 rounds = len(st.session_state.training_metrics)
-                # Check if early stopped due to target accuracy
-                if hasattr(st.session_state, 'early_stopped') and st.session_state.early_stopped:
-                    current_stage = 9  # Jump to deployment ready on early stop
-                elif rounds >= 5:
+                if rounds >= 5:
                     current_stage = 8  # Model Convergence
                 elif rounds >= 3:
                     current_stage = 7  # Global Aggregation  
                 elif rounds >= 1:
                     current_stage = 6  # Fog Aggregation
+                else:
+                    current_stage = 5  # Local Training
+            else:
+                current_stage = 5  # Local Training when started
         elif hasattr(st.session_state, 'fl_manager'):
             current_stage = 4  # Model Initialization
         elif hasattr(st.session_state, 'distribution_strategy'):
@@ -1551,9 +1551,21 @@ def main():
                             if len(st.session_state.training_metrics) > 1:
                                 show_training_charts()
                         
-                        # Check if target accuracy achieved
-                        if accuracy >= fl_manager.target_accuracy:
-                            st.success(f"🎯 Target accuracy {fl_manager.target_accuracy:.3f} achieved!")
+                        # Automatic convergence detection instead of fixed target
+                        # Check for convergence: accuracy improvement < 1% for 3 consecutive rounds
+                        if len(st.session_state.training_metrics) >= 3:
+                            recent_accuracies = [m['accuracy'] for m in st.session_state.training_metrics[-3:]]
+                            accuracy_improvements = [recent_accuracies[i+1] - recent_accuracies[i] for i in range(len(recent_accuracies)-1)]
+                            
+                            # If improvement is less than 1% for last 2 rounds, consider converged
+                            if all(improvement < 0.01 for improvement in accuracy_improvements):
+                                st.success(f"🎯 Model converged at accuracy {accuracy:.3f}! Training completed.")
+                                st.session_state.early_stopped = True
+                                break
+                        
+                        # Also check if we've reached a high accuracy threshold (85%+)
+                        if accuracy >= 0.85:
+                            st.success(f"🎯 High accuracy {accuracy:.3f} achieved! Training completed.")
                             st.session_state.early_stopped = True
                             break
                         
