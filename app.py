@@ -48,6 +48,10 @@ def init_session_state():
         st.session_state.best_accuracy = 0.0
     if 'current_round' not in st.session_state:
         st.session_state.current_round = 0
+    if 'results' not in st.session_state:
+        st.session_state.results = {}
+    if 'current_training_round' not in st.session_state:
+        st.session_state.current_training_round = 0
 
 def main():
     init_session_state()
