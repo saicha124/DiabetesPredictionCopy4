@@ -156,9 +156,20 @@ class NonIIDDistribution(DataDistributionStrategy):
                     X_train, X_test = X_client[:split_idx], X_client[split_idx:]
                     y_train, y_test = y_client[:split_idx], y_client[split_idx:]
             else:
-                # Empty client - assign minimal data
-                X_train = X_test = np.array([]).reshape(0, X.shape[1])
-                y_train = y_test = np.array([])
+                # Empty client - assign minimal data from overall dataset
+                min_samples = max(2, len(X) // (self.num_clients * 10))  # Ensure minimum samples
+                if len(X) >= min_samples:
+                    indices = np.random.choice(len(X), min_samples, replace=False)
+                    X_client = X[indices]
+                    y_client = y[indices]
+                    
+                    split_idx = max(1, int(0.8 * len(X_client)))
+                    X_train, X_test = X_client[:split_idx], X_client[split_idx:]
+                    y_train, y_test = y_client[:split_idx], y_client[split_idx:]
+                else:
+                    # Fallback to ensure valid structure
+                    X_train = X_test = X[:1] if len(X) > 0 else np.zeros((1, X.shape[1]))
+                    y_train = y_test = y[:1] if len(y) > 0 else np.array([0])
             
             final_client_data.append({
                 'X_train': X_train,

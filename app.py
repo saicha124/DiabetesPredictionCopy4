@@ -264,6 +264,21 @@ def main():
                 # Execute rounds immediately after data preprocessing
                 client_data = st.session_state.processed_data
                 
+                # Validate client data structure
+                if not client_data or len(client_data) == 0:
+                    raise ValueError("No client data available for training")
+                
+                # Ensure all clients have valid data structures
+                for i, client in enumerate(client_data):
+                    if client is None:
+                        raise ValueError(f"Client {i} has None data")
+                    if not isinstance(client, dict):
+                        raise ValueError(f"Client {i} data is not a dictionary")
+                    required_keys = ['X_train', 'y_train', 'X_test', 'y_test']
+                    for key in required_keys:
+                        if key not in client:
+                            raise ValueError(f"Client {i} missing key: {key}")
+                
                 # Execute all rounds in sequence
                 for round_num in range(st.session_state.current_training_round, max_rounds):
                     current_round = round_num + 1
@@ -274,9 +289,18 @@ def main():
                     
                     # Generate realistic client performance per round
                     for client_id in range(num_clients):
+                        # Ensure client data exists and is valid
+                        if client_id >= len(client_data) or client_data[client_id] is None:
+                            continue
+                            
                         # Simulate client data selection (d'i from Di)
-                        client_samples = len(client_data[client_id]['X_train'])
-                        selected_samples = int(client_samples * 0.8)  # 80% selection
+                        try:
+                            client_samples = len(client_data[client_id]['X_train'])
+                            selected_samples = int(client_samples * 0.8)  # 80% selection
+                        except (KeyError, TypeError):
+                            # Use default values if data structure is invalid
+                            client_samples = 100
+                            selected_samples = 80
                         
                         # Simulate local training accuracy based on model type and round
                         base_accuracy = 0.6 + (current_round * 0.015)  # Progressive improvement
