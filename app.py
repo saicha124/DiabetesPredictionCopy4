@@ -264,10 +264,9 @@ def main():
                 # Progressive training - execute one round at a time
                 client_data = st.session_state.processed_data
                 
-                # Execute all remaining rounds
-                while st.session_state.current_training_round < max_rounds:
+                # Execute one round at a time
+                if st.session_state.current_training_round < max_rounds:
                     current_round = st.session_state.current_training_round + 1
-                    st.session_state.current_training_round = current_round
                     
                     # Simulate hierarchical training for this round
                     round_metrics = []
@@ -359,14 +358,16 @@ def main():
                     st.session_state.round_client_metrics[current_round] = client_round_metrics
                     st.session_state.best_accuracy = max(st.session_state.best_accuracy, global_accuracy)
                     st.session_state.global_model_accuracy = global_accuracy
+                    st.session_state.current_training_round = current_round
                     
-                    # Add small delay to show progress
-                    time.sleep(0.5)
+                    # Continue to next round automatically
+                    st.rerun()
                 
-                # Training completed - all rounds executed
-                st.session_state.training_completed = True
-                st.session_state.training_started = False
-                st.session_state.training_in_progress = False
+                else:
+                    # Training completed - all rounds executed
+                    st.session_state.training_completed = True
+                    st.session_state.training_started = False
+                    st.session_state.training_in_progress = False
                 
                 # Store final results with security metrics
                 final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
