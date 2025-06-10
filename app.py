@@ -1252,25 +1252,25 @@ def main():
                         col1, col2, col3 = st.columns([2, 2, 1])
                         
                         with col1:
-                            st.subheader("🎯 Risk Assessment")
+                            st.subheader(get_translation("risk_assessment"))
                             
                             # Risk level determination with clinical thresholds
                             if risk_score < 0.25:
-                                risk_level = "Low Risk"
+                                risk_level = translate_risk_level(risk_score)
                                 risk_color = "success"
-                                clinical_advice = "Continue healthy lifestyle"
+                                clinical_advice = translate_clinical_advice(risk_score)
                             elif risk_score < 0.50:
-                                risk_level = "Moderate Risk"
+                                risk_level = translate_risk_level(risk_score)
                                 risk_color = "warning"
-                                clinical_advice = "Monitor glucose levels regularly"
+                                clinical_advice = translate_clinical_advice(risk_score)
                             elif risk_score < 0.75:
-                                risk_level = "High Risk"
+                                risk_level = translate_risk_level(risk_score)
                                 risk_color = "error"
-                                clinical_advice = "Consult healthcare provider soon"
+                                clinical_advice = translate_clinical_advice(risk_score)
                             else:
-                                risk_level = "Very High Risk"
+                                risk_level = translate_risk_level(risk_score)
                                 risk_color = "error"
-                                clinical_advice = "Immediate medical attention recommended"
+                                clinical_advice = translate_clinical_advice(risk_score)
                             
                             # Risk display with confidence
                             if risk_color == "success":
@@ -1281,11 +1281,11 @@ def main():
                                 st.error(f"**{risk_level}**: {risk_score:.1%}")
                             
                             st.progress(risk_score)
-                            st.caption(f"Model confidence: {confidence:.1%}")
+                            st.caption(f"{get_translation('model_confidence')}: {confidence:.1%}")
                             
                         with col2:
-                            st.subheader("🏥 Clinical Guidance")
-                            st.info(f"**Recommendation**: {clinical_advice}")
+                            st.subheader(get_translation("clinical_guidance"))
+                            st.info(f"**{get_translation('recommendation')}**: {clinical_advice}")
                             
                             # Risk factors identification
                             risk_factors = []
@@ -1649,30 +1649,30 @@ def main():
             
             # Patient input form
             with st.form("patient_risk_assessment_form"):
-                st.markdown("### Patient Information")
+                st.markdown("### " + get_translation("patient_information"))
                 
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    pregnancies = st.number_input("Number of Pregnancies", min_value=0, max_value=20, value=1,
-                                                help="Number of times pregnant")
-                    glucose = st.number_input("Glucose Level (mg/dL)", min_value=0.0, max_value=300.0, value=120.0,
-                                            help="Plasma glucose concentration after 2 hours in oral glucose tolerance test")
-                    blood_pressure = st.number_input("Blood Pressure (mm Hg)", min_value=0.0, max_value=200.0, value=80.0,
-                                                    help="Diastolic blood pressure")
-                    skin_thickness = st.number_input("Skin Thickness (mm)", min_value=0.0, max_value=100.0, value=20.0,
-                                                    help="Triceps skin fold thickness")
+                    pregnancies = st.number_input(get_translation("pregnancies"), min_value=0, max_value=20, value=1,
+                                                help=get_translation("help_pregnancies"))
+                    glucose = st.number_input(get_translation("glucose_level"), min_value=0.0, max_value=300.0, value=120.0,
+                                            help=get_translation("help_glucose"))
+                    blood_pressure = st.number_input(get_translation("blood_pressure"), min_value=0.0, max_value=200.0, value=80.0,
+                                                    help=get_translation("help_blood_pressure"))
+                    skin_thickness = st.number_input(get_translation("skin_thickness"), min_value=0.0, max_value=100.0, value=20.0,
+                                                    help=get_translation("help_skin_thickness"))
                 
                 with col2:
-                    insulin = st.number_input("Insulin (μU/mL)", min_value=0.0, max_value=1000.0, value=80.0,
-                                            help="2-Hour serum insulin")
-                    bmi = st.number_input("BMI (kg/m²)", min_value=0.0, max_value=100.0, value=25.0,
-                                        help="Body mass index")
-                    dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=5.0, value=0.5,
-                                        help="Diabetes pedigree function (genetic influence)")
-                    age = st.number_input("Age (years)", min_value=0, max_value=120, value=30)
+                    insulin = st.number_input(get_translation("insulin"), min_value=0.0, max_value=1000.0, value=80.0,
+                                            help=get_translation("help_insulin"))
+                    bmi = st.number_input(get_translation("bmi"), min_value=0.0, max_value=100.0, value=25.0,
+                                        help=get_translation("help_bmi"))
+                    dpf = st.number_input(get_translation("diabetes_pedigree"), min_value=0.0, max_value=5.0, value=0.5,
+                                        help=get_translation("help_diabetes_pedigree"))
+                    age = st.number_input(get_translation("age"), min_value=0, max_value=120, value=30)
                 
-                submitted = st.form_submit_button("🔍 Analyze Patient Risk", use_container_width=True)
+                submitted = st.form_submit_button("🔍 " + get_translation("analyze_risk"), use_container_width=True)
                 
                 if submitted:
                     # Create patient data array for prediction
@@ -1682,7 +1682,7 @@ def main():
                     # Use the converged final global model for prediction
                     if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model'):
                         try:
-                            st.info("✅ Using converged global federated model from completed training")
+                            st.info("✅ " + get_translation("using_federated_model"))
                             global_model = st.session_state.fl_manager.global_model
                             
                             # Preprocess patient data using the same preprocessing pipeline
@@ -1712,7 +1712,7 @@ def main():
                             if hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
                                 final_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
                                 total_rounds = len(st.session_state.training_metrics)
-                                st.success(f"Model converged after {total_rounds} rounds with {final_accuracy:.3f} accuracy")
+                                st.success(get_translation("model_converged", rounds=total_rounds, accuracy=final_accuracy))
                             
                             # Make prediction using the actual converged federated model
                             if hasattr(global_model, 'predict_proba') and global_model.predict_proba is not None:
