@@ -84,8 +84,8 @@ def init_session_state():
 def main():
     init_session_state()
     
-    st.title("🏥 Hierarchical Federated Deep Learning for Diabetes Prediction")
-    st.markdown("### Advanced Privacy-Preserving Machine Learning Platform")
+    st.title(get_translation("page_title", st.session_state.language))
+    st.markdown("### " + get_translation("advanced_privacy_preserving_ml_platform", st.session_state.language))
 
     # Sidebar
     with st.sidebar:
@@ -134,7 +134,7 @@ def main():
         get_translation("tab_analytics", st.session_state.language),
         get_translation("tab_facility", st.session_state.language),
         get_translation("tab_risk", st.session_state.language),
-        "🌐 Visualisation Graphique"
+        get_translation("tab_graph_viz", st.session_state.language)
     ])
 
     with tab1:
