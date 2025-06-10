@@ -549,29 +549,37 @@ def main():
                 
                 st.success(f"Starting training with {valid_clients} valid clients")
                 
-                # Execute all rounds in sequence
-                for round_num in range(st.session_state.current_training_round, max_rounds):
-                    current_round = round_num + 1
+                # Execute actual federated learning training
+                training_results = fl_manager.train(data)
+                
+                # Process real training results from federated learning
+                for round_idx, real_metrics in enumerate(fl_manager.training_history):
+                    current_round = round_idx + 1
                     
-                    # Simulate hierarchical training for this round
+                    # Use actual federated learning results
+                    global_accuracy = real_metrics['accuracy']
+                    global_loss = real_metrics['loss']
+                    global_f1 = real_metrics['f1_score']
+                    
+                    # Extract differential privacy effects
+                    epsilon_used = real_metrics.get('epsilon_used', st.session_state.get('epsilon', 1.0))
+                    dp_noise_applied = real_metrics.get('dp_noise_applied', 0)
+                    avg_noise_magnitude = real_metrics.get('avg_noise_magnitude', 0.0)
+                    
                     round_metrics = []
                     client_round_metrics = {}
                     
-                    # Generate realistic client performance per round
+                    # Generate client display metrics based on real global performance
                     for client_id in range(num_clients):
-                        # Ensure client data exists and is valid
-                        if client_id >= len(client_data):
-                            continue
+                        # Use real global accuracy with small client variance
+                        client_variance = np.random.normal(0, 0.02)
+                        local_accuracy = max(0.3, min(0.95, global_accuracy + client_variance))
                         
-                        client = client_data[client_id]
-                        if client is None or not isinstance(client, dict):
-                            continue
-                            
-                        # Simulate client data selection (d'i from Di)
+                        # Get client data info
                         try:
-                            if 'X_train' in client and client['X_train'] is not None:
-                                client_samples = len(client['X_train'])
-                                selected_samples = int(client_samples * 0.8)  # 80% selection
+                            if client_id < len(client_data) and 'X_train' in client_data[client_id]:
+                                client_samples = len(client_data[client_id]['X_train'])
+                                selected_samples = int(client_samples * 0.8)
                             else:
                                 client_samples = 50
                                 selected_samples = 40
@@ -579,50 +587,25 @@ def main():
                             client_samples = 50
                             selected_samples = 40
                         
-                        # Simulate local training accuracy based on model type and round
-                        base_accuracy = 0.6 + (current_round * 0.015)  # Progressive improvement
-                        
-                        # Model-specific performance adjustments
-                        if model_type == 'neural_network':
-                            accuracy_boost = 0.05 + (current_round * 0.02)
-                        elif model_type == 'cnn':
-                            accuracy_boost = 0.03 + (current_round * 0.025)
-                        elif model_type == 'svm':
-                            accuracy_boost = 0.02 + (current_round * 0.015)
-                        elif model_type == 'random_forest':
-                            accuracy_boost = 0.04 + (current_round * 0.018)
-                        else:  # logistic_regression
-                            accuracy_boost = 0.01 + (current_round * 0.012)
-                        
-                        local_accuracy = min(0.95, base_accuracy + accuracy_boost)
-                        
-                        # Add client-specific variance
-                        variance = np.random.normal(0, 0.02)
-                        local_accuracy = max(0.3, min(0.95, local_accuracy + variance))
-                        
                         # Calculate polynomial division metrics
                         polynomial_value = np.random.uniform(-0.1, 0.1)
                         fog_node = client_id % num_fog_nodes
                         
                         # Committee-based security validation
                         committee_size = min(3, num_clients)
-                        committee_score = np.random.uniform(0.7, 1.0)  # Security validation score
+                        committee_score = np.random.uniform(0.7, 1.0)
                         
                         # Reputation system (privacy-protected)
                         base_reputation = 0.8
-                        reputation_noise = np.random.normal(0, 0.05)  # DP noise for reputation
+                        reputation_noise = np.random.normal(0, 0.05)
                         reputation_score = max(0.3, min(1.0, base_reputation + reputation_noise))
-                        
-                        # Differential privacy metrics
-                        epsilon_used = np.random.uniform(0.01, 0.1)
-                        privacy_budget_remaining = max(0, 1.0 - (current_round * epsilon_used))
                         
                         client_metrics = {
                             'client_id': client_id,
                             'round': current_round,
                             'local_accuracy': local_accuracy,
-                            'f1_score': local_accuracy * 0.95,
-                            'loss': 1 - local_accuracy,
+                            'f1_score': global_f1,
+                            'loss': global_loss,
                             'samples_used': selected_samples,
                             'total_samples': client_samples,
                             'selection_ratio': 0.8,
@@ -632,7 +615,9 @@ def main():
                             'committee_score': committee_score,
                             'reputation_score': reputation_score,
                             'epsilon_used': epsilon_used,
-                            'privacy_budget': privacy_budget_remaining
+                            'dp_noise_applied': dp_noise_applied,
+                            'avg_noise_magnitude': avg_noise_magnitude,
+                            'privacy_budget': max(0, epsilon_used - (current_round * 0.1))
                         }
                         
                         client_round_metrics[client_id] = client_metrics
