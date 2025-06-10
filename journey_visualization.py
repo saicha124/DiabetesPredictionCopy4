@@ -44,16 +44,36 @@ class InteractiveJourneyVisualizer:
     def initialize_journey(self, session_state):
         """Initialize the journey visualization based on current session state"""
         # Determine current stage based on session state
-        if not session_state.get('data_loaded', False):
-            self.current_stage = 0
-        elif not session_state.get('training_started', False):
-            self.current_stage = 1
-        elif session_state.get('training_in_progress', False):
-            self.current_stage = min(4 + session_state.get('current_training_round', 0) // 5, 6)
-        elif session_state.get('training_completed', False):
-            self.current_stage = 8
+        if session_state.get('training_completed', False) or (hasattr(session_state, 'results') and session_state.results):
+            self.current_stage = 8  # Results Analysis - final stage
+        elif session_state.get('training_in_progress', False) or (hasattr(session_state, 'training_metrics') and session_state.training_metrics):
+            # Check training progress
+            if hasattr(session_state, 'training_metrics') and session_state.training_metrics:
+                rounds = len(session_state.training_metrics)
+                max_rounds = session_state.get('max_rounds', 20)
+                
+                if rounds >= max_rounds:
+                    self.current_stage = 8  # Results Analysis
+                elif rounds >= max(8, int(max_rounds * 0.8)):
+                    self.current_stage = 7  # Model Evaluation
+                elif rounds >= max(5, int(max_rounds * 0.5)):
+                    self.current_stage = 6  # Global Convergence
+                elif rounds >= max(2, int(max_rounds * 0.2)):
+                    self.current_stage = 5  # Fog Aggregation
+                else:
+                    self.current_stage = 4  # Training Initiation
+            else:
+                self.current_stage = 4  # Training Initiation
+        elif session_state.get('training_started', False):
+            self.current_stage = 4  # Training Initiation
+        elif session_state.get('processed_data') is not None:
+            self.current_stage = 3  # Privacy Setup
+        elif session_state.get('data_loaded', False):
+            self.current_stage = 2  # Client Setup
+        elif session_state.get('training_data') is not None:
+            self.current_stage = 1  # Configuration
         else:
-            self.current_stage = 2
+            self.current_stage = 0  # Data Loading
             
         # Initialize progress for all stages
         for i, stage in enumerate(self.journey_stages):
@@ -76,10 +96,15 @@ class InteractiveJourneyVisualizer:
             if session_state.get('training_metrics'):
                 total_rounds = session_state.get('max_rounds', 20)
                 current_round = len(session_state.get('training_metrics', []))
-                return (current_round / total_rounds) * 100
+                return min(100, (current_round / total_rounds) * 100)
             return 0
-        else:
+        elif self.current_stage == 8:  # Results Analysis
+            # Check if training is truly completed
+            if session_state.get('training_completed', False) or (hasattr(session_state, 'results') and session_state.results):
+                return 100
             return 50
+        else:
+            return 100 if self.current_stage <= 8 else 50
     
     def create_journey_map(self):
         """Create the main interactive journey map"""

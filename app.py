@@ -840,6 +840,19 @@ def main():
         journey_viz = st.session_state.journey_visualizer
         journey_viz.initialize_journey(st.session_state)
         
+        # Debug information for journey status
+        with st.expander("🔧 Journey Status Debug", expanded=False):
+            st.write(f"Training completed: {st.session_state.get('training_completed', False)}")
+            st.write(f"Training started: {st.session_state.get('training_started', False)}")
+            st.write(f"Has results: {hasattr(st.session_state, 'results') and st.session_state.results is not None}")
+            st.write(f"Has training metrics: {hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics is not None}")
+            if hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
+                st.write(f"Training rounds completed: {len(st.session_state.training_metrics)}")
+            st.write(f"Current detected stage: {journey_viz.current_stage} ({journey_viz.journey_stages[journey_viz.current_stage]})")
+            st.write(f"FL Manager available: {hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager is not None}")
+            if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
+                st.write(f"Global model available: {hasattr(st.session_state.fl_manager, 'global_model') and st.session_state.fl_manager.global_model is not None}")
+        
         # Create journey progress summary
         journey_viz.create_progress_summary()
         
@@ -941,10 +954,17 @@ def main():
                         patient_features = np.array([[pregnancies, glucose, blood_pressure, skin_thickness, 
                                                     insulin, bmi, dpf, age]])
                         
-                        # Use actual trained federated model for prediction
+                        # Use the converged final global model for prediction
+                        st.info("✅ Using converged global federated model from completed training")
                         try:
-                            # Get the global model from federated learning manager
+                            # Get the converged global model from federated learning manager
                             global_model = st.session_state.fl_manager.global_model
+                            
+                            # Display model convergence information
+                            if hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
+                                final_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
+                                total_rounds = len(st.session_state.training_metrics)
+                                st.success(f"Model converged after {total_rounds} rounds with {final_accuracy:.3f} accuracy")
                             
                             # Make prediction using the trained model
                             if hasattr(global_model, 'predict_proba'):
