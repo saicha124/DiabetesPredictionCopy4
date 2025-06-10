@@ -439,7 +439,8 @@ def main():
                             facility_data = cohort['data']
                             
                             # Process authentic patient data for this facility
-                            facility_X, facility_y = preprocessor.transform(facility_data)
+                            facility_X = preprocessor.transform(facility_data)
+                            facility_y = facility_data[preprocessor.target_column].values
                             
                             # Create realistic train/test splits based on facility size
                             from sklearn.model_selection import train_test_split
