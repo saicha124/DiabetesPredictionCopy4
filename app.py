@@ -186,9 +186,15 @@ def main():
                     delta = st.select_slider("Failure Probability (δ)", 
                                            options=[1e-6, 1e-5, 1e-4, 1e-3], 
                                            value=1e-5, format_func=lambda x: f"{x:.0e}", key="delta_select")
+                    
+                    # Store in session state for federated learning manager to access
+                    st.session_state.epsilon = epsilon
+                    st.session_state.delta = delta
                 else:
                     epsilon = None
                     delta = None
+                    st.session_state.epsilon = None
+                    st.session_state.delta = None
                 
                 st.subheader("📊 Data Distribution")
                 distribution_strategy = st.selectbox("Distribution Strategy", 
@@ -762,15 +768,23 @@ def main():
                         privacy_strength = "Strong" if current_epsilon < 1.0 else "Moderate" if current_epsilon < 3.0 else "Weak"
                         st.metric("Privacy Strength", privacy_strength)
                     
-                    # Privacy budget consumption indicator
+                    # Show current privacy parameters being used
                     if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'dp_manager'):
                         dp_manager = st.session_state.fl_manager.dp_manager
-                        if hasattr(dp_manager, 'privacy_accountant'):
-                            remaining_eps, remaining_delta = dp_manager.privacy_accountant.get_remaining_budget()
-                            used_eps = dp_manager.privacy_accountant.total_epsilon - remaining_eps
-                            usage_percent = (used_eps / dp_manager.privacy_accountant.total_epsilon) * 100 if dp_manager.privacy_accountant.total_epsilon > 0 else 0
-                            
-                            st.progress(usage_percent / 100, text=f"Privacy Budget Used: {usage_percent:.1f}% (ε={used_eps:.3f}/{dp_manager.privacy_accountant.total_epsilon:.3f})")
+                        current_epsilon = dp_manager.epsilon
+                        current_delta = dp_manager.delta
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.info(f"Active ε: {current_epsilon:.2f}")
+                        with col2:
+                            st.info(f"Active δ: {current_delta:.0e}")
+                    
+                    # Show when parameters are being updated
+                    if hasattr(st.session_state, 'training_history') and st.session_state.training_history:
+                        latest_metrics = st.session_state.training_history[-1]
+                        if 'epsilon_used' in latest_metrics:
+                            st.success(f"DP Applied: ε={latest_metrics['epsilon_used']:.2f}, Noise Added: {latest_metrics.get('avg_noise_magnitude', 0):.4f}")
                 
                 # Secret sharing status
                 if hasattr(st.session_state, 'training_ss_enabled') and st.session_state.training_ss_enabled:
