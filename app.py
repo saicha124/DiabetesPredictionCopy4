@@ -314,11 +314,14 @@ def main():
             
             with col3:
                 if st.button("🔄 Reset All"):
+                    # Display confirmation message
+                    st.warning("Resetting all configuration parameters...")
+                    
                     # Store data temporarily
                     temp_data = st.session_state.get('data', None)
                     temp_data_loaded = st.session_state.get('data_loaded', False)
                     
-                    # Clear entire session state completely
+                    # Clear entire session state
                     for key in list(st.session_state.keys()):
                         del st.session_state[key]
                     
@@ -330,11 +333,15 @@ def main():
                     # Initialize fresh session state
                     init_session_state()
                     
-                    # Set a flag to indicate reset was requested
-                    st.session_state.reset_requested = True
-                    
-                    st.success("System reset. All configuration parameters restored to defaults.")
-                    st.rerun()
+                    # Use JavaScript to reload the page completely
+                    st.components.v1.html("""
+                    <script>
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1000);
+                    </script>
+                    <p>Reloading page to reset all parameters...</p>
+                    """, height=50)
 
     # Progressive training execution with real-time updates
     if st.session_state.training_started and not st.session_state.training_completed:
