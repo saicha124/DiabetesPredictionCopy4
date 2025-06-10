@@ -13,6 +13,7 @@ from data_distribution import get_distribution_strategy, visualize_data_distribu
 from fog_aggregation import HierarchicalFederatedLearning
 from differential_privacy import DifferentialPrivacyManager
 from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
+from client_visualization import ClientPerformanceVisualizer
 from utils import *
 
 # Page configuration
@@ -62,6 +63,8 @@ def init_session_state():
         st.session_state.processed_data = None
     if 'training_data' not in st.session_state:
         st.session_state.training_data = None
+    if 'client_visualizer' not in st.session_state:
+        st.session_state.client_visualizer = ClientPerformanceVisualizer()
 
 def main():
     init_session_state()
@@ -93,11 +96,12 @@ def main():
                 return
 
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "🎛️ Training Control", 
         "🏥 Live Monitoring", 
         "🗺️ Learning Journey Map",
         "📊 Performance Analysis",
+        "👥 Client Analytics",
         "🩺 Risk Assessment"
     ])
 
@@ -1470,6 +1474,112 @@ def main():
             
             st.markdown("---")
             st.write("**Start training in the Training Control tab to unlock all explainer features.**")
+
+    with tab5:
+        st.header("👥 Client Performance Analytics")
+        
+        if st.session_state.training_started and hasattr(st.session_state, 'client_visualizer'):
+            visualizer = st.session_state.client_visualizer
+            
+            # Create comprehensive client performance dashboard
+            visualizer.create_client_accuracy_dashboard()
+            
+            st.markdown("---")
+            
+            # Global performance summary
+            visualizer.create_global_performance_summary()
+            
+            st.markdown("---")
+            
+            # Performance insights
+            st.subheader("🔍 Performance Insights")
+            
+            if visualizer.client_metrics_history:
+                # Calculate insights
+                latest_round = max(visualizer.client_metrics_history.keys())
+                round_data = visualizer.client_metrics_history[latest_round]
+                
+                if round_data:
+                    accuracies = [data['accuracy'] for data in round_data.values()]
+                    avg_accuracy = np.mean(accuracies)
+                    std_accuracy = np.std(accuracies)
+                    
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric(
+                            "Average Client Accuracy", 
+                            f"{avg_accuracy:.3f}",
+                            f"±{std_accuracy:.3f}"
+                        )
+                    
+                    with col2:
+                        best_client = max(round_data.keys(), key=lambda k: round_data[k]['accuracy'])
+                        st.metric(
+                            "Best Performing Client", 
+                            f"Client {best_client}",
+                            f"{round_data[best_client]['accuracy']:.3f}"
+                        )
+                    
+                    with col3:
+                        performance_gap = max(accuracies) - min(accuracies)
+                        st.metric(
+                            "Performance Gap", 
+                            f"{performance_gap:.3f}",
+                            "Lower is better"
+                        )
+                    
+                    # Performance recommendations
+                    st.subheader("📋 Performance Recommendations")
+                    
+                    if performance_gap > 0.1:
+                        st.warning("⚠️ High performance variance detected between clients. Consider:")
+                        st.write("• Data quality assessment for underperforming clients")
+                        st.write("• Personalized learning rate adjustments")
+                        st.write("• Additional privacy protection for sensitive clients")
+                    
+                    if avg_accuracy > 0.8:
+                        st.success("✅ Excellent overall performance achieved!")
+                        st.write("• Model ready for clinical deployment consideration")
+                        st.write("• Performance monitoring protocols established")
+                    elif avg_accuracy > 0.7:
+                        st.info("📈 Good performance trajectory")
+                        st.write("• Continue training for optimal results")
+                        st.write("• Monitor convergence patterns")
+                    else:
+                        st.warning("🎯 Performance improvement opportunities")
+                        st.write("• Review data distribution strategies")
+                        st.write("• Consider advanced aggregation methods")
+                        st.write("• Evaluate privacy-utility trade-offs")
+            
+            else:
+                st.info("Client performance data will appear here during training")
+                
+                # Show sample visualization when no data available
+                if st.button("Preview Analytics with Sample Data"):
+                    from client_visualization import simulate_client_performance_data
+                    simulate_client_performance_data(visualizer, num_clients=5, num_rounds=8)
+                    st.rerun()
+        
+        else:
+            st.info("Start federated learning training to enable client performance analytics")
+            
+            # Show preview of client analytics capabilities
+            st.subheader("📊 Analytics Capabilities")
+            
+            capabilities = [
+                "🎯 **Real-time Client Performance Tracking**: Monitor accuracy, F1-score, and convergence for each medical facility",
+                "📈 **Accuracy Trends Visualization**: Track performance evolution across training rounds",
+                "🎨 **Confusion Matrix Analysis**: Detailed prediction accuracy breakdown per client",
+                "🔍 **Performance Comparison**: Radar charts comparing client capabilities",
+                "📊 **Statistical Analysis**: Distribution analysis of predictions and confidence scores",
+                "🌡️ **Performance Heatmaps**: Visual representation of client performance evolution",
+                "⚠️ **Anomaly Detection**: Identify underperforming or outlier clients",
+                "📋 **Actionable Insights**: Data-driven recommendations for performance optimization"
+            ]
+            
+            for capability in capabilities:
+                st.write(capability)
 
 if __name__ == "__main__":
     main()
