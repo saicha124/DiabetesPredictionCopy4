@@ -338,41 +338,8 @@ def main():
                 if not client_data or len(client_data) == 0:
                     raise ValueError("No client data available for training")
                 
-                # Validate and fix client data structures using global references
-                validated_client_data = []
-                X_ref = st.session_state.X_global
-                y_ref = st.session_state.y_global
-                
-                for i, client in enumerate(client_data):
-                    if client is None or not isinstance(client, dict):
-                        st.warning(f"Client {i} has invalid data structure, creating fallback")
-                        # Create minimal valid structure
-                        sample_size = max(5, len(X_ref) // (num_clients * 2))
-                        indices = np.random.choice(len(X_ref), min(sample_size, len(X_ref)), replace=False)
-                        client_X = X_ref[indices]
-                        client_y = y_ref[indices]
-                        
-                        split_idx = max(1, int(0.8 * len(client_X)))
-                        client = {
-                            'X_train': client_X[:split_idx],
-                            'y_train': client_y[:split_idx],
-                            'X_test': client_X[split_idx:],
-                            'y_test': client_y[split_idx:]
-                        }
-                    
-                    # Ensure all required keys exist with valid data
-                    required_keys = ['X_train', 'y_train', 'X_test', 'y_test']
-                    for key in required_keys:
-                        if key not in client or client[key] is None or len(client[key]) == 0:
-                            if 'train' in key:
-                                client[key] = X_ref[:1] if 'X' in key else y_ref[:1]
-                            else:
-                                client[key] = X_ref[-1:] if 'X' in key else y_ref[-1:]
-                    
-                    validated_client_data.append(client)
-                
-                client_data = validated_client_data
-                st.success(f"Validated {len(client_data)} clients with proper data structures")
+                # Use processed data directly - validation handled during distribution
+                st.info(f"Starting training with {len(client_data)} clients")
                 
                 # Execute all rounds in sequence
                 for round_num in range(st.session_state.current_training_round, max_rounds):
@@ -385,17 +352,24 @@ def main():
                     # Generate realistic client performance per round
                     for client_id in range(num_clients):
                         # Ensure client data exists and is valid
-                        if client_id >= len(client_data) or client_data[client_id] is None:
+                        if client_id >= len(client_data):
+                            continue
+                        
+                        client = client_data[client_id]
+                        if client is None or not isinstance(client, dict):
                             continue
                             
                         # Simulate client data selection (d'i from Di)
                         try:
-                            client_samples = len(client_data[client_id]['X_train'])
-                            selected_samples = int(client_samples * 0.8)  # 80% selection
-                        except (KeyError, TypeError):
-                            # Use default values if data structure is invalid
-                            client_samples = 100
-                            selected_samples = 80
+                            if 'X_train' in client and client['X_train'] is not None:
+                                client_samples = len(client['X_train'])
+                                selected_samples = int(client_samples * 0.8)  # 80% selection
+                            else:
+                                client_samples = 50
+                                selected_samples = 40
+                        except (KeyError, TypeError, AttributeError):
+                            client_samples = 50
+                            selected_samples = 40
                         
                         # Simulate local training accuracy based on model type and round
                         base_accuracy = 0.6 + (current_round * 0.015)  # Progressive improvement
