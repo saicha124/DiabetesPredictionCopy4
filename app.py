@@ -749,7 +749,7 @@ def main():
                             del st.session_state[key]
                     st.rerun()
             with col2:
-                st.info("Click 'New Session' to test different privacy budgets with fresh training")
+                st.info(get_translation("click_new_session", st.session_state.language))
         
         if st.session_state.training_started and hasattr(st.session_state, 'training_in_progress'):
             current_round = st.session_state.get('current_training_round', 0)
@@ -778,18 +778,18 @@ def main():
             
             # Enhanced Progress display
             progress = current_round / max_rounds if max_rounds > 0 else 0
-            st.progress(progress, text=f"Training Progress: Round {current_round}/{max_rounds}")
+            st.progress(progress, text=f"{get_translation('training_progress', st.session_state.language)}: {get_translation('round', st.session_state.language)} {current_round}/{max_rounds}")
             
             # Training status with detailed progress
             col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
-                st.write(f"**🔄 Round {current_round}/{max_rounds}** - Model: {model_type.replace('_', ' ').title()}")
+                st.write(f"**🔄 {get_translation('round', st.session_state.language)} {current_round}/{max_rounds}** - Model: {model_type.replace('_', ' ').title()}")
             with col2:
                 if current_round > 0:
-                    st.metric("Current Global Accuracy", f"{st.session_state.get('global_model_accuracy', 0):.3f}")
+                    st.metric(get_translation("global_accuracy", st.session_state.language), f"{st.session_state.get('global_model_accuracy', 0):.3f}")
             with col3:
                 num_clients = st.session_state.get('num_clients', 5)
-                st.metric("Active Medical Stations", f"{num_clients}")
+                st.metric(get_translation("active_medical_stations", st.session_state.language), f"{num_clients}")
             
             # Show current round training details
             if current_round > 0:
@@ -1132,7 +1132,7 @@ def main():
             tab_predict, tab_explain, tab_compare = st.tabs(["🔍 Risk Prediction", "📊 Feature Analysis", "📈 Population Comparison"])
             
             with tab_predict:
-                st.subheader("Individual Patient Risk Assessment")
+                st.subheader(get_translation("patient_information", st.session_state.language))
                 
                 # Patient input form with enhanced validation
                 with st.form("patient_assessment"):
@@ -1141,25 +1141,25 @@ def main():
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        pregnancies = st.number_input("Pregnancies", min_value=0, max_value=20, value=1, 
+                        pregnancies = st.number_input(get_translation("pregnancies", st.session_state.language), min_value=0, max_value=20, value=1, 
                                                     help="Number of times pregnant")
-                        glucose = st.number_input("Glucose Level (mg/dL)", min_value=0.0, max_value=300.0, value=120.0,
+                        glucose = st.number_input(get_translation("glucose", st.session_state.language), min_value=0.0, max_value=300.0, value=120.0,
                                                 help="Plasma glucose concentration after 2 hours in oral glucose tolerance test")
-                        blood_pressure = st.number_input("Blood Pressure (mm Hg)", min_value=0.0, max_value=200.0, value=80.0,
+                        blood_pressure = st.number_input(get_translation("blood_pressure", st.session_state.language), min_value=0.0, max_value=200.0, value=80.0,
                                                         help="Diastolic blood pressure")
-                        skin_thickness = st.number_input("Skin Thickness (mm)", min_value=0.0, max_value=100.0, value=20.0,
+                        skin_thickness = st.number_input(get_translation("skin_thickness", st.session_state.language), min_value=0.0, max_value=100.0, value=20.0,
                                                         help="Triceps skin fold thickness")
                     
                     with col2:
-                        insulin = st.number_input("Insulin (μU/mL)", min_value=0.0, max_value=1000.0, value=80.0,
+                        insulin = st.number_input(get_translation("insulin", st.session_state.language), min_value=0.0, max_value=1000.0, value=80.0,
                                                 help="2-Hour serum insulin")
-                        bmi = st.number_input("BMI (kg/m²)", min_value=0.0, max_value=100.0, value=25.0,
+                        bmi = st.number_input(get_translation("bmi", st.session_state.language), min_value=0.0, max_value=100.0, value=25.0,
                                             help="Body mass index")
-                        dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=5.0, value=0.5,
+                        dpf = st.number_input(get_translation("diabetes_pedigree", st.session_state.language), min_value=0.0, max_value=5.0, value=0.5,
                                             help="Diabetes pedigree function (genetic influence)")
-                        age = st.number_input("Age (years)", min_value=0, max_value=120, value=30)
+                        age = st.number_input(get_translation("age", st.session_state.language), min_value=0, max_value=120, value=30)
                     
-                    submitted = st.form_submit_button("🔍 Analyze Patient Risk", use_container_width=True)
+                    submitted = st.form_submit_button("🔍 " + get_translation("analyze_risk", st.session_state.language), use_container_width=True)
                     
                     if submitted:
                         # Create patient data array for prediction
