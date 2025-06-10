@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 import time
+import math
 from datetime import datetime, timedelta
 
 # Import custom modules
@@ -1892,6 +1893,7 @@ def main():
                     client_names = [f"Medical Facility {i+1}" for i in range(num_clients)]
                     
                     # Create circular layout
+                    import math
                     angles = [2 * math.pi * i / num_clients for i in range(num_clients)]
                     client_x = [2 * math.cos(angle) for angle in angles]
                     client_y = [2 * math.sin(angle) for angle in angles]
