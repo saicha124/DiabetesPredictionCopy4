@@ -505,6 +505,11 @@ def main():
                                 if len(client[key]) == 0:
                                     raise ValueError(f"Client {i} has empty {key}")
                         
+                        # Complete data processing with 100% progress
+                        data_progress.progress(1.0, text="100% - Data processing complete!")
+                        time.sleep(0.3)
+                        data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
+                        
                         st.success(f"Data distributed to {len(client_data)} clients")
                         st.session_state.processed_data = client_data
                         st.session_state.global_model_accuracy = 0.5
@@ -545,6 +550,11 @@ def main():
                                 'y_test': client_y[split_idx:]
                             })
                         
+                        # Complete emergency fallback with 100% progress
+                        data_progress.progress(1.0, text="100% - Emergency fallback complete!")
+                        time.sleep(0.3)
+                        data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
+                        
                         st.warning(f"Using emergency fallback: {len(client_data)} clients created")
                         st.session_state.processed_data = client_data
                         st.session_state.global_model_accuracy = 0.5
@@ -579,6 +589,11 @@ def main():
                                 'X_test': client_X,
                                 'y_test': client_y
                             })
+                        
+                        # Complete session state recovery with 100% progress
+                        data_progress.progress(1.0, text="100% - Data recovery complete!")
+                        time.sleep(0.3)
+                        data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
                         
                         st.session_state.processed_data = client_data
                     else:
