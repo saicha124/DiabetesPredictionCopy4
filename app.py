@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 import time
+import threading
 import math
 import json
 from datetime import datetime, timedelta
@@ -381,9 +382,14 @@ def main():
                 max_rounds = st.session_state.get('max_rounds', 28)  # Use the selected value
                 model_type = st.session_state.get('model_type', 'logistic_regression')
                 
-                # Preprocess data once
+                # Preprocess data once with progress bar
                 if not hasattr(st.session_state, 'processed_data') or st.session_state.processed_data is None:
-                    st.info("Processing data for federated learning...")
+                    # Data processing progress
+                    data_progress = st.progress(0)
+                    data_status = st.empty()
+                    
+                    data_status.info(f"🔄 {get_translation('preparing_data', st.session_state.language)}")
+                    data_progress.progress(20, text=get_translation('processing_patient_data', st.session_state.language))
                     
                     # Load authentic medical data from verified sources
                     if data is None or data.empty:
@@ -395,13 +401,15 @@ def main():
                             fetcher = RealMedicalDataFetcher()
                             demographics = fetcher.get_patient_demographics(data)
                             
+                            data_progress.progress(40, text="Validating medical data...")
                             st.success(f"Loaded authentic medical data: {demographics['total_patients']} real patients, "
                                      f"{demographics['prevalence_rate']:.1%} diabetes prevalence")
                         except Exception as e:
                             st.error(f"Failed to load authentic medical data: {e}")
                             return
                     
-                    # Preprocess data
+                    # Preprocess data with progress
+                    data_progress.progress(60, text="Preprocessing medical features...")
                     try:
                         from data_preprocessing import DataPreprocessor
                         preprocessor = DataPreprocessor()
