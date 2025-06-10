@@ -383,8 +383,16 @@ def main():
                             return
                     
                     # Preprocess data
-                    preprocessor = DataPreprocessor()
-                    X, y = preprocessor.fit_transform(data)
+                    try:
+                        from data_preprocessing import DataPreprocessor
+                        preprocessor = DataPreprocessor()
+                        X, y = preprocessor.fit_transform(data)
+                    except ImportError as e:
+                        st.error(f"Import error: {e}")
+                        return
+                    except Exception as e:
+                        st.error(f"Preprocessing error: {e}")
+                        return
                     
                     # Store globally accessible references
                     st.session_state.X_global = X
