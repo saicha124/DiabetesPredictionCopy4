@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, precision_score, recall_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import IsolationForest
 from sklearn.ensemble import IsolationForest
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -36,15 +35,15 @@ class AdvancedClientAnalytics:
         
         # Calculate core metrics
         accuracy = np.mean(y_true == y_pred)
-        f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
-        precision = precision_score(y_true, y_pred, average='weighted', zero_division=0)
-        recall = recall_score(y_true, y_pred, average='weighted', zero_division=0)
+        f1 = f1_score(y_true, y_pred, average='weighted', zero_division='warn')
+        precision = precision_score(y_true, y_pred, average='weighted', zero_division='warn')
+        recall = recall_score(y_true, y_pred, average='weighted', zero_division='warn')
         
         # Confusion matrix
         cm = confusion_matrix(y_true, y_pred)
         
         # Classification report
-        class_report = classification_report(y_true, y_pred, output_dict=True, zero_division=0)
+        class_report = classification_report(y_true, y_pred, output_dict=True, zero_division='warn')
         
         # Store metrics
         if client_id not in self.client_metrics_history:
@@ -152,7 +151,7 @@ class AdvancedClientAnalytics:
         scaler = StandardScaler()
         features_scaled = scaler.fit_transform(features_array)
         
-        isolation_forest = IsolationForest(contamination=0.2, random_state=42)
+        isolation_forest = IsolationForest(contamination='auto', random_state=42)
         anomaly_scores = isolation_forest.fit_predict(features_scaled)
         
         # Identify anomalous clients
