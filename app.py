@@ -259,40 +259,46 @@ def main():
             
             with col1:
                 if st.button("🚀 Start Training", disabled=st.session_state.training_started):
-                    # Show training initialization progress
-                    init_progress = st.progress(0)
-                    init_status = st.empty()
+                    # Create progress containers that persist during state changes
+                    training_container = st.container()
                     
-                    init_status.info("🔄 Initializing federated learning...")
-                    init_progress.progress(0.20, text="20% - Setting up parameters...")
-                    time.sleep(0.2)
-                    
-                    init_progress.progress(0.40, text="40% - Storing configuration...")
-                    # Store configuration
-                    st.session_state.num_clients = num_clients
-                    st.session_state.max_rounds = max_rounds
-                    st.session_state.enable_fog = enable_fog
-                    st.session_state.num_fog_nodes = num_fog_nodes
-                    st.session_state.fog_method = fog_method
-                    st.session_state.enable_dp = enable_dp
-                    st.session_state.epsilon = epsilon
-                    st.session_state.delta = delta
-                    st.session_state.distribution_strategy = distribution_strategy
-                    st.session_state.strategy_params = strategy_params
-                    st.session_state.model_type = internal_model_type
-                    
-                    init_progress.progress(0.60, text="60% - Initializing FL manager...")
-                    time.sleep(0.2)
-                    
-                    # Initialize FL manager
-                    fl_manager = FederatedLearningManager(
-                            num_clients=num_clients,
-                            max_rounds=max_rounds,
-                            aggregation_algorithm='FedAvg',
-                            enable_dp=enable_dp,
-                            epsilon=epsilon or 1.0,
-                            delta=delta or 1e-5
-                    )
+                    with training_container:
+                        init_progress = st.progress(0)
+                        init_status = st.empty()
+                        
+                        init_status.info("🔄 Initializing federated learning...")
+                        init_progress.progress(0.20, text="20% - Setting up parameters...")
+                        time.sleep(0.5)
+                        
+                        init_progress.progress(0.40, text="40% - Storing configuration...")
+                        # Store configuration
+                        st.session_state.num_clients = num_clients
+                        st.session_state.max_rounds = max_rounds
+                        st.session_state.enable_fog = enable_fog
+                        st.session_state.num_fog_nodes = num_fog_nodes
+                        st.session_state.fog_method = fog_method
+                        st.session_state.enable_dp = enable_dp
+                        st.session_state.epsilon = epsilon
+                        st.session_state.delta = delta
+                        st.session_state.distribution_strategy = distribution_strategy
+                        st.session_state.strategy_params = strategy_params
+                        st.session_state.model_type = internal_model_type
+                        
+                        init_progress.progress(0.60, text="60% - Initializing FL manager...")
+                        time.sleep(0.5)
+                        
+                        # Initialize FL manager
+                        fl_manager = FederatedLearningManager(
+                                num_clients=num_clients,
+                                max_rounds=max_rounds,
+                                aggregation_algorithm='FedAvg',
+                                enable_dp=enable_dp,
+                                epsilon=epsilon or 1.0,
+                                delta=delta or 1e-5
+                        )
+                        
+                        init_progress.progress(0.80, text="80% - Setting up training environment...")
+                        time.sleep(0.5)
                     
                     # Setup fog nodes if enabled
                     if enable_fog:
@@ -339,6 +345,12 @@ def main():
                     st.session_state.fog_results = []
                     st.session_state.best_accuracy = 0.0
                     st.session_state.current_round = 0
+                    
+                    # Complete initialization with 100% progress
+                    init_progress.progress(1.0, text="100% - Training ready!")
+                    time.sleep(0.5)
+                    init_status.success("✅ Training initialized successfully!")
+                    time.sleep(0.5)
                     
                     st.success("Training initialized! Switch to Live Monitoring tab to see progress.")
             
@@ -760,29 +772,33 @@ def main():
             col1, col2 = st.columns([1, 4])
             with col1:
                 if st.button("🔄 New Session", type="primary"):
-                    # Show session reset progress
-                    session_progress = st.progress(0)
-                    session_status = st.empty()
+                    # Create progress containers that persist during state changes
+                    progress_container = st.container()
                     
-                    session_status.info("🔄 Initializing new session...")
-                    session_progress.progress(0.25, text="25% - Clearing training history...")
-                    time.sleep(0.2)
-                    
-                    session_progress.progress(0.50, text="50% - Resetting federated learning state...")
-                    time.sleep(0.2)
-                    
-                    # Reset all training states
-                    for key in ['training_completed', 'training_started', 'training_in_progress', 'results', 
-                               'training_metrics', 'best_accuracy', 'fl_manager', 'current_training_round']:
-                        if key in st.session_state:
-                            del st.session_state[key]
-                    
-                    session_progress.progress(0.75, text="75% - Preparing new session...")
-                    time.sleep(0.2)
-                    
-                    session_progress.progress(1.0, text="100% - New session ready!")
-                    time.sleep(0.3)
-                    session_status.success("✅ New session started successfully!")
+                    with progress_container:
+                        session_progress = st.progress(0)
+                        session_status = st.empty()
+                        
+                        session_status.info("🔄 Initializing new session...")
+                        session_progress.progress(0.25, text="25% - Clearing training history...")
+                        time.sleep(0.5)
+                        
+                        session_progress.progress(0.50, text="50% - Resetting federated learning state...")
+                        time.sleep(0.5)
+                        
+                        # Reset all training states
+                        for key in ['training_completed', 'training_started', 'training_in_progress', 'results', 
+                                   'training_metrics', 'best_accuracy', 'fl_manager', 'current_training_round']:
+                            if key in st.session_state:
+                                del st.session_state[key]
+                        
+                        session_progress.progress(0.75, text="75% - Preparing new session...")
+                        time.sleep(0.5)
+                        
+                        session_progress.progress(1.0, text="100% - New session ready!")
+                        time.sleep(0.5)
+                        session_status.success("✅ New session started successfully!")
+                        time.sleep(0.5)
                     
                     st.rerun()
             with col2:
