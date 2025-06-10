@@ -339,15 +339,9 @@ def main():
                     # Initialize fresh session state
                     init_session_state()
                     
-                    # Use JavaScript to reload the page completely
-                    st.components.v1.html("""
-                    <script>
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1000);
-                    </script>
-                    <p>Reloading page to reset all parameters...</p>
-                    """, height=50)
+                    # Show success message and rerun without page reload
+                    st.success("Parameters reset successfully! You can now start a new training session.")
+                    st.rerun()
 
     # Progressive training execution with real-time updates
     if st.session_state.training_started and not st.session_state.training_completed:
