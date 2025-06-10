@@ -18,7 +18,7 @@ from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
 from client_visualization import ClientPerformanceVisualizer
 from journey_visualization import InteractiveJourneyVisualizer
 from advanced_client_analytics import AdvancedClientAnalytics
-
+from training_secret_sharing import TrainingLevelSecretSharingManager, integrate_training_secret_sharing
 
 from utils import *
 
@@ -182,6 +182,24 @@ def main():
                 
                 if distribution_strategy == "Geographic":
                     strategy_params['correlation_strength'] = st.slider("Correlation Strength", 0.1, 1.0, 0.8, 0.1)
+                
+                st.subheader("🔐 Training-Level Secret Sharing")
+                enable_training_ss = st.checkbox("Enable Secret Sharing in Training", value=True)
+                if enable_training_ss:
+                    if enable_fog:
+                        ss_threshold = st.slider("Secret Sharing Threshold", 
+                                               min_value=2, 
+                                               max_value=num_fog_nodes, 
+                                               value=max(2, int(0.67 * num_fog_nodes)),
+                                               help=f"Number of fog nodes required to reconstruct weights (max: {num_fog_nodes})")
+                        st.info(f"Using {num_fog_nodes} fog nodes for secret sharing distribution")
+                        st.success(f"Secret sharing: {ss_threshold}/{num_fog_nodes} threshold scheme")
+                    else:
+                        st.warning("Enable Fog Nodes to use secret sharing")
+                        enable_training_ss = False
+                        ss_threshold = 3  # Default value when disabled
+                else:
+                    ss_threshold = 3  # Default value when disabled
             
             st.markdown("---")
             col1, col2, col3 = st.columns(3)
@@ -222,6 +240,14 @@ def main():
                             st.session_state.fog_manager = fog_manager
                         
 
+                        
+                        # Integrate training-level secret sharing if enabled
+                        if enable_training_ss and enable_fog:
+                            ss_manager = integrate_training_secret_sharing(fl_manager, num_fog_nodes, ss_threshold)
+                            st.session_state.training_ss_manager = ss_manager
+                            st.session_state.training_ss_enabled = True
+                        else:
+                            st.session_state.training_ss_enabled = False
                         
                         st.session_state.fl_manager = fl_manager
                         
@@ -668,6 +694,28 @@ def main():
                     st.metric("📉 Loss", f"{latest_metrics.get('loss', 0):.4f}")
                 with col4:
                     st.metric("🏆 Best Accuracy", f"{st.session_state.best_accuracy:.3f}")
+                
+                # Secret sharing status
+                if hasattr(st.session_state, 'training_ss_enabled') and st.session_state.training_ss_enabled:
+                    st.subheader("🔐 Secret Sharing Status")
+                    if hasattr(st.session_state, 'training_ss_manager'):
+                        ss_metrics = st.session_state.training_ss_manager.get_security_metrics()
+                        
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("Fog Nodes", ss_metrics['num_fog_nodes'])
+                        with col2:
+                            st.metric("Threshold", ss_metrics['threshold'])
+                        with col3:
+                            st.metric("Security Level", ss_metrics['security_level'])
+                        with col4:
+                            st.metric("Active Clients", ss_metrics['current_participating_clients'])
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.info(f"Fault Tolerance: {ss_metrics['fault_tolerance']} nodes")
+                        with col2:
+                            st.info(f"Collusion Resistance: < {ss_metrics['collusion_resistance']} nodes")
                 
                 # Live client progress table
                 st.subheader("👥 Client Performance This Round")
