@@ -89,6 +89,22 @@ def main():
 
     # Sidebar
     with st.sidebar:
+        # Language selector at top
+        st.markdown("### 🌐 Language / Langue")
+        selected_language = st.selectbox(
+            get_translation("language_selector", st.session_state.language),
+            options=["English", "Français"],
+            index=0 if st.session_state.language == 'en' else 1,
+            key="language_selector"
+        )
+        
+        # Update language in session state
+        if selected_language == "English":
+            st.session_state.language = 'en'
+        else:
+            st.session_state.language = 'fr'
+        
+        st.markdown("---")
         st.header("🔧 System Configuration")
         
         # Data upload
@@ -112,12 +128,12 @@ def main():
 
     # Main tabs
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        get_translation("tab_training"), 
-        get_translation("tab_monitoring"), 
-        get_translation("tab_visualization"),
-        get_translation("tab_analytics"),
-        "👥 Analyses Clients",
-        get_translation("tab_risk"),
+        get_translation("tab_training", st.session_state.language), 
+        get_translation("tab_monitoring", st.session_state.language), 
+        get_translation("tab_visualization", st.session_state.language),
+        get_translation("tab_analytics", st.session_state.language),
+        get_translation("tab_facility", st.session_state.language),
+        get_translation("tab_risk", st.session_state.language),
         "🌐 Visualisation Graphique"
     ])
 
@@ -1254,25 +1270,25 @@ def main():
                         col1, col2, col3 = st.columns([2, 2, 1])
                         
                         with col1:
-                            st.subheader(get_translation("risk_assessment"))
+                            st.subheader(get_translation("risk_assessment", st.session_state.language))
                             
                             # Risk level determination with clinical thresholds
                             if risk_score < 0.25:
-                                risk_level = translate_risk_level(risk_score)
+                                risk_level = translate_risk_level(risk_score, st.session_state.language)
                                 risk_color = "success"
-                                clinical_advice = translate_clinical_advice(risk_score)
+                                clinical_advice = translate_clinical_advice(risk_score, st.session_state.language)
                             elif risk_score < 0.50:
-                                risk_level = translate_risk_level(risk_score)
+                                risk_level = translate_risk_level(risk_score, st.session_state.language)
                                 risk_color = "warning"
-                                clinical_advice = translate_clinical_advice(risk_score)
+                                clinical_advice = translate_clinical_advice(risk_score, st.session_state.language)
                             elif risk_score < 0.75:
-                                risk_level = translate_risk_level(risk_score)
+                                risk_level = translate_risk_level(risk_score, st.session_state.language)
                                 risk_color = "error"
-                                clinical_advice = translate_clinical_advice(risk_score)
+                                clinical_advice = translate_clinical_advice(risk_score, st.session_state.language)
                             else:
-                                risk_level = translate_risk_level(risk_score)
+                                risk_level = translate_risk_level(risk_score, st.session_state.language)
                                 risk_color = "error"
-                                clinical_advice = translate_clinical_advice(risk_score)
+                                clinical_advice = translate_clinical_advice(risk_score, st.session_state.language)
                             
                             # Risk display with confidence
                             if risk_color == "success":
@@ -1283,11 +1299,11 @@ def main():
                                 st.error(f"**{risk_level}**: {risk_score:.1%}")
                             
                             st.progress(risk_score)
-                            st.caption(f"{get_translation('model_confidence')}: {confidence:.1%}")
+                            st.caption(f"{get_translation('model_confidence', st.session_state.language)}: {confidence:.1%}")
                             
                         with col2:
-                            st.subheader(get_translation("clinical_guidance"))
-                            st.info(f"**{get_translation('recommendation')}**: {clinical_advice}")
+                            st.subheader(get_translation("clinical_guidance", st.session_state.language))
+                            st.info(f"**{get_translation('recommendation', st.session_state.language)}**: {clinical_advice}")
                             
                             # Risk factors identification
                             risk_factors = []
@@ -1684,7 +1700,7 @@ def main():
                     # Use the converged final global model for prediction
                     if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model'):
                         try:
-                            st.info("✅ " + get_translation("using_federated_model"))
+                            st.info("✅ " + get_translation("using_federated_model", st.session_state.language))
                             global_model = st.session_state.fl_manager.global_model
                             
                             # Preprocess patient data using the same preprocessing pipeline
