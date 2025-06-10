@@ -125,13 +125,13 @@ def main():
             
             with col1:
                 st.subheader("🏥 Medical Network Configuration")
-                num_clients = st.slider("Number of Medical Stations", 3, 20, 5)
-                max_rounds = st.slider("Maximum Training Rounds", 5, 50, 20)
+                num_clients = st.slider("Number of Medical Stations", 3, 20, 5, key="num_clients_slider")
+                max_rounds = st.slider("Maximum Training Rounds", 5, 50, 20, key="max_rounds_slider")
                 
                 st.subheader("🧠 Model Selection")
                 model_type = st.selectbox("Machine Learning Model", 
                                         ["Deep Learning (Neural Network)", "CNN (Convolutional)", "SVM (Support Vector)", "Logistic Regression", "Random Forest"],
-                                        help="Select the AI model type for diabetes prediction")
+                                        help="Select the AI model type for diabetes prediction", key="model_type_select")
                 
                 # Map display names to internal names
                 model_mapping = {
@@ -144,23 +144,23 @@ def main():
                 internal_model_type = model_mapping[model_type]
                 
                 st.subheader("🌫️ Fog Computing Setup")
-                enable_fog = st.checkbox("Enable Fog Nodes", value=True)
+                enable_fog = st.checkbox("Enable Fog Nodes", value=True, key="enable_fog_check")
                 if enable_fog:
-                    num_fog_nodes = st.slider("Number of Fog Nodes", 2, 6, 3)
+                    num_fog_nodes = st.slider("Number of Fog Nodes", 2, 6, 3, key="num_fog_nodes_slider")
                     fog_method = st.selectbox("Fog Aggregation Method", 
-                                            ["FedAvg", "FedProx", "Weighted", "Median", "Mixed Methods"])
+                                            ["FedAvg", "FedProx", "Weighted", "Median", "Mixed Methods"], key="fog_method_select")
                 else:
                     num_fog_nodes = 0
                     fog_method = "FedAvg"
             
             with col2:
                 st.subheader("🔒 Privacy Configuration")
-                enable_dp = st.checkbox("Enable Differential Privacy", value=True)
+                enable_dp = st.checkbox("Enable Differential Privacy", value=True, key="enable_dp_check")
                 if enable_dp:
-                    epsilon = st.slider("Privacy Budget (ε)", 0.1, 10.0, 1.0, 0.1)
+                    epsilon = st.slider("Privacy Budget (ε)", 0.1, 10.0, 1.0, 0.1, key="epsilon_slider")
                     delta = st.select_slider("Failure Probability (δ)", 
                                            options=[1e-6, 1e-5, 1e-4, 1e-3], 
-                                           value=1e-5, format_func=lambda x: f"{x:.0e}")
+                                           value=1e-5, format_func=lambda x: f"{x:.0e}", key="delta_select")
                 else:
                     epsilon = None
                     delta = None
@@ -288,11 +288,16 @@ def main():
             
             with col3:
                 if st.button("🔄 Reset All"):
+                    # Clear all session state except data
                     for key in list(st.session_state.keys()):
                         if key not in ['data', 'data_loaded']:
                             del st.session_state[key]
+                    
+                    # Reset widget values by using keys and default values
+                    st.session_state.reset_widgets = True
                     init_session_state()
                     st.success("System reset. You can now start training with 28 rounds.")
+                    st.rerun()
 
     # Progressive training execution with real-time updates
     if st.session_state.training_started and not st.session_state.training_completed:
