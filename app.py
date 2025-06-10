@@ -125,13 +125,29 @@ def main():
             
             with col1:
                 st.subheader("🏥 Medical Network Configuration")
-                num_clients = st.slider("Number of Medical Stations", 3, 20, 5, key="num_clients_slider")
-                max_rounds = st.slider("Maximum Training Rounds", 5, 50, 20, key="max_rounds_slider")
+                # Use session state to control default values for reset functionality
+                if 'reset_requested' in st.session_state and st.session_state.reset_requested:
+                    default_clients = 5
+                    default_rounds = 20
+                    st.session_state.reset_requested = False
+                else:
+                    default_clients = st.session_state.get('num_clients', 5)
+                    default_rounds = st.session_state.get('max_rounds', 20)
+                
+                num_clients = st.slider("Number of Medical Stations", 3, 20, default_clients)
+                max_rounds = st.slider("Maximum Training Rounds", 5, 50, default_rounds)
+                
+                # Store values in session state
+                st.session_state.num_clients = num_clients
+                st.session_state.max_rounds = max_rounds
                 
                 st.subheader("🧠 Model Selection")
+                default_model = "Deep Learning (Neural Network)" if 'reset_requested' in st.session_state else st.session_state.get('model_type_display', "Deep Learning (Neural Network)")
                 model_type = st.selectbox("Machine Learning Model", 
                                         ["Deep Learning (Neural Network)", "CNN (Convolutional)", "SVM (Support Vector)", "Logistic Regression", "Random Forest"],
-                                        help="Select the AI model type for diabetes prediction", key="model_type_select")
+                                        index=["Deep Learning (Neural Network)", "CNN (Convolutional)", "SVM (Support Vector)", "Logistic Regression", "Random Forest"].index(default_model),
+                                        help="Select the AI model type for diabetes prediction")
+                st.session_state.model_type_display = model_type
                 
                 # Map display names to internal names
                 model_mapping = {
@@ -144,11 +160,20 @@ def main():
                 internal_model_type = model_mapping[model_type]
                 
                 st.subheader("🌫️ Fog Computing Setup")
-                enable_fog = st.checkbox("Enable Fog Nodes", value=True, key="enable_fog_check")
+                default_fog = True if 'reset_requested' not in st.session_state else True
+                enable_fog = st.checkbox("Enable Fog Nodes", value=st.session_state.get('enable_fog', default_fog))
+                st.session_state.enable_fog = enable_fog
+                
                 if enable_fog:
-                    num_fog_nodes = st.slider("Number of Fog Nodes", 2, 6, 3, key="num_fog_nodes_slider")
-                    fog_method = st.selectbox("Fog Aggregation Method", 
-                                            ["FedAvg", "FedProx", "Weighted", "Median", "Mixed Methods"], key="fog_method_select")
+                    default_fog_nodes = 3 if 'reset_requested' not in st.session_state else 3
+                    num_fog_nodes = st.slider("Number of Fog Nodes", 2, 6, st.session_state.get('num_fog_nodes', default_fog_nodes))
+                    st.session_state.num_fog_nodes = num_fog_nodes
+                    
+                    default_fog_method = "FedAvg" if 'reset_requested' not in st.session_state else "FedAvg"
+                    fog_methods = ["FedAvg", "FedProx", "Weighted", "Median", "Mixed Methods"]
+                    current_method = st.session_state.get('fog_method', default_fog_method)
+                    fog_method = st.selectbox("Fog Aggregation Method", fog_methods, index=fog_methods.index(current_method))
+                    st.session_state.fog_method = fog_method
                 else:
                     num_fog_nodes = 0
                     fog_method = "FedAvg"
@@ -289,24 +314,25 @@ def main():
             
             with col3:
                 if st.button("🔄 Reset All"):
-                    # Clear all session state except data
+                    # Store data temporarily
+                    temp_data = st.session_state.get('data', None)
+                    temp_data_loaded = st.session_state.get('data_loaded', False)
+                    
+                    # Clear entire session state completely
                     for key in list(st.session_state.keys()):
-                        if key not in ['data', 'data_loaded']:
-                            del st.session_state[key]
+                        del st.session_state[key]
                     
-                    # Clear all widget keys to reset their values to defaults
-                    widget_keys = [
-                        'num_clients_slider', 'max_rounds_slider', 'model_type_select',
-                        'enable_fog_check', 'num_fog_nodes_slider', 'fog_method_select',
-                        'enable_dp_check', 'epsilon_slider', 'delta_select',
-                        'distribution_select', 'alpha_slider', 'classes_slider', 
-                        'skew_slider', 'correlation_slider', 'enable_ss_check', 'ss_threshold_slider'
-                    ]
-                    for widget_key in widget_keys:
-                        if widget_key in st.session_state:
-                            del st.session_state[widget_key]
+                    # Restore data
+                    if temp_data is not None:
+                        st.session_state.data = temp_data
+                        st.session_state.data_loaded = temp_data_loaded
                     
+                    # Initialize fresh session state
                     init_session_state()
+                    
+                    # Set a flag to indicate reset was requested
+                    st.session_state.reset_requested = True
+                    
                     st.success("System reset. All configuration parameters restored to defaults.")
                     st.rerun()
 
