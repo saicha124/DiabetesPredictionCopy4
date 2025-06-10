@@ -378,28 +378,34 @@ def main():
                 # Final safety check - if still None, create minimal data
                 if client_data is None:
                     st.error("Session state lost data - recreating minimal distribution")
-                    client_data = []
-                    samples_per_client = max(5, len(X) // num_clients)
-                    
-                    for i in range(num_clients):
-                        start_idx = (i * samples_per_client) % len(X)
-                        end_idx = min(start_idx + samples_per_client, len(X))
+                    if 'X_global' in st.session_state and 'y_global' in st.session_state:
+                        X_ref = st.session_state.X_global
+                        y_ref = st.session_state.y_global
                         
-                        client_X = X[start_idx:end_idx]
-                        client_y = y[start_idx:end_idx]
+                        client_data = []
+                        samples_per_client = max(5, len(X_ref) // num_clients)
                         
-                        if len(client_X) == 0:
-                            client_X = X[:1]
-                            client_y = y[:1]
+                        for i in range(num_clients):
+                            start_idx = (i * samples_per_client) % len(X_ref)
+                            end_idx = min(start_idx + samples_per_client, len(X_ref))
+                            
+                            client_X = X_ref[start_idx:end_idx]
+                            client_y = y_ref[start_idx:end_idx]
+                            
+                            if len(client_X) == 0:
+                                client_X = X_ref[:1]
+                                client_y = y_ref[:1]
+                            
+                            client_data.append({
+                                'X_train': client_X,
+                                'y_train': client_y,
+                                'X_test': client_X,
+                                'y_test': client_y
+                            })
                         
-                        client_data.append({
-                            'X_train': client_X,
-                            'y_train': client_y,
-                            'X_test': client_X,
-                            'y_test': client_y
-                        })
-                    
-                    st.session_state.processed_data = client_data
+                        st.session_state.processed_data = client_data
+                    else:
+                        raise ValueError("No processed data available and global references missing")
                 
                 # Debug client data structure
                 st.info(f"Client data type: {type(client_data)}")
