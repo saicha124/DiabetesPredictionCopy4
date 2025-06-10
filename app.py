@@ -156,7 +156,7 @@ def main():
                     default_rounds = st.session_state.get('max_rounds', 20)
                 
                 num_clients = st.slider(get_translation("num_medical_stations", st.session_state.language), 3, 20, default_clients)
-                max_rounds = st.slider(get_translation("max_training_rounds", st.session_state.language), 5, 50, default_rounds)
+                max_rounds = st.slider(get_translation("max_training_rounds", st.session_state.language), 5, 150, default_rounds)
                 
                 # Store values in session state
                 st.session_state.num_clients = num_clients
