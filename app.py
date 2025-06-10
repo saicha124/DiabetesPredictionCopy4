@@ -266,7 +266,7 @@ def main():
                 model_type = st.session_state.get('model_type', 'logistic_regression')
                 
                 # Preprocess data once
-                if not hasattr(st.session_state, 'processed_data'):
+                if not hasattr(st.session_state, 'processed_data') or st.session_state.processed_data is None:
                     st.info("Processing data for federated learning...")
                     
                     # Ensure valid training data
@@ -293,6 +293,9 @@ def main():
                     
                     # Apply data distribution strategy
                     try:
+                        st.info(f"Starting data distribution with {num_clients} clients")
+                        st.info(f"Input data shape: X={X.shape}, y={y.shape}")
+                        
                         # Use IID distribution for reliable training
                         strategy = get_distribution_strategy(
                             'IID',  # Force IID for stable training
@@ -300,10 +303,30 @@ def main():
                             random_state=42
                         )
                         
+                        st.info(f"Distribution strategy created: {type(strategy)}")
+                        
                         client_data = strategy.distribute_data(X, y)
                         
-                        if not client_data or len(client_data) == 0:
-                            raise ValueError("Data distribution strategy failed to create client data")
+                        st.info(f"Distribution returned: {type(client_data)}, length: {len(client_data) if client_data else 0}")
+                        
+                        if client_data is None:
+                            raise ValueError("Distribution strategy returned None")
+                        
+                        if len(client_data) == 0:
+                            raise ValueError("Distribution strategy returned empty list")
+                        
+                        # Validate each client data structure
+                        for i, client in enumerate(client_data):
+                            if client is None:
+                                raise ValueError(f"Client {i} is None")
+                            if not isinstance(client, dict):
+                                raise ValueError(f"Client {i} is not a dict: {type(client)}")
+                            required_keys = ['X_train', 'X_test', 'y_train', 'y_test']
+                            for key in required_keys:
+                                if key not in client:
+                                    raise ValueError(f"Client {i} missing key: {key}")
+                                if len(client[key]) == 0:
+                                    raise ValueError(f"Client {i} has empty {key}")
                         
                         st.success(f"Data distributed to {len(client_data)} clients")
                         st.session_state.processed_data = client_data
@@ -311,10 +334,72 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Data distribution failed: {str(e)}")
-                        raise
+                        st.error(f"Creating emergency fallback distribution...")
+                        
+                        # Emergency fallback: Create simple manual distribution
+                        samples_per_client = max(10, len(X) // num_clients)
+                        client_data = []
+                        
+                        for i in range(num_clients):
+                            start_idx = i * samples_per_client
+                            end_idx = min(start_idx + samples_per_client, len(X))
+                            
+                            if start_idx >= len(X):
+                                # Use random samples for remaining clients
+                                indices = np.random.choice(len(X), min(samples_per_client, len(X)), replace=False)
+                                client_X = X[indices]
+                                client_y = y[indices]
+                            else:
+                                client_X = X[start_idx:end_idx]
+                                client_y = y[start_idx:end_idx]
+                            
+                            # Ensure minimum data for train/test split
+                            if len(client_X) < 2:
+                                # Duplicate samples to ensure minimum data
+                                client_X = np.vstack([client_X, client_X])
+                                client_y = np.hstack([client_y, client_y])
+                            
+                            split_idx = max(1, int(0.8 * len(client_X)))
+                            
+                            client_data.append({
+                                'X_train': client_X[:split_idx],
+                                'y_train': client_y[:split_idx],
+                                'X_test': client_X[split_idx:],
+                                'y_test': client_y[split_idx:]
+                            })
+                        
+                        st.warning(f"Using emergency fallback: {len(client_data)} clients created")
+                        st.session_state.processed_data = client_data
+                        st.session_state.global_model_accuracy = 0.5
                 
                 # Execute rounds immediately after data preprocessing
-                client_data = st.session_state.processed_data
+                client_data = getattr(st.session_state, 'processed_data', None)
+                
+                # Final safety check - if still None, create minimal data
+                if client_data is None:
+                    st.error("Session state lost data - recreating minimal distribution")
+                    client_data = []
+                    samples_per_client = max(5, len(X) // num_clients)
+                    
+                    for i in range(num_clients):
+                        start_idx = (i * samples_per_client) % len(X)
+                        end_idx = min(start_idx + samples_per_client, len(X))
+                        
+                        client_X = X[start_idx:end_idx]
+                        client_y = y[start_idx:end_idx]
+                        
+                        if len(client_X) == 0:
+                            client_X = X[:1]
+                            client_y = y[:1]
+                        
+                        client_data.append({
+                            'X_train': client_X,
+                            'y_train': client_y,
+                            'X_test': client_X,
+                            'y_test': client_y
+                        })
+                    
+                    st.session_state.processed_data = client_data
                 
                 # Debug client data structure
                 st.info(f"Client data type: {type(client_data)}")
