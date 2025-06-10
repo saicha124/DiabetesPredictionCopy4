@@ -513,10 +513,14 @@ def main():
                                 if len(client[key]) == 0:
                                     raise ValueError(f"Client {i} has empty {key}")
                         
-                        # Complete data processing with 100% progress
-                        data_progress.progress(1.0, text="100% - Data processing complete!")
+                        # Data processing complete - but training will continue
+                        data_progress.progress(0.90, text="90% - Data processing complete, starting training...")
                         time.sleep(0.3)
-                        data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
+                        data_status.info(f"🔄 Data ready - federated learning training in progress...")
+                        
+                        # Store progress elements in session state for completion later
+                        st.session_state.data_progress = data_progress
+                        st.session_state.data_status = data_status
                         
                         st.success(f"Data distributed to {len(client_data)} clients")
                         st.session_state.processed_data = client_data
@@ -558,10 +562,14 @@ def main():
                                 'y_test': client_y[split_idx:]
                             })
                         
-                        # Complete emergency fallback with 100% progress
-                        data_progress.progress(1.0, text="100% - Emergency fallback complete!")
+                        # Emergency fallback ready - training will continue
+                        data_progress.progress(0.85, text="85% - Emergency fallback ready, starting training...")
                         time.sleep(0.3)
-                        data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
+                        data_status.info(f"🔄 Fallback data ready - federated learning training in progress...")
+                        
+                        # Store progress elements in session state for completion later
+                        st.session_state.data_progress = data_progress
+                        st.session_state.data_status = data_status
                         
                         st.warning(f"Using emergency fallback: {len(client_data)} clients created")
                         st.session_state.processed_data = client_data
@@ -598,10 +606,14 @@ def main():
                                 'y_test': client_y
                             })
                         
-                        # Complete session state recovery with 100% progress
-                        data_progress.progress(1.0, text="100% - Data recovery complete!")
+                        # Session state recovery ready - training will continue
+                        data_progress.progress(0.80, text="80% - Data recovery complete, starting training...")
                         time.sleep(0.3)
-                        data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
+                        data_status.info(f"🔄 Data recovered - federated learning training in progress...")
+                        
+                        # Store progress elements in session state for completion later
+                        st.session_state.data_progress = data_progress
+                        st.session_state.data_status = data_status
                         
                         st.session_state.processed_data = client_data
                     else:
@@ -748,6 +760,11 @@ def main():
                 st.session_state.training_completed = True
                 st.session_state.training_started = False
                 st.session_state.training_in_progress = False
+                
+                # Complete progress bar when training actually finishes
+                if hasattr(st.session_state, 'data_progress') and st.session_state.data_progress:
+                    st.session_state.data_progress.progress(1.0, text="100% - Federated learning training complete!")
+                    st.session_state.data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
                 
                 # Store final results with security metrics
                 final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
