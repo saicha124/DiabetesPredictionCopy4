@@ -389,7 +389,7 @@ def main():
                     data_status = st.empty()
                     
                     data_status.info(f"🔄 {get_translation('preparing_data', st.session_state.language)}")
-                    data_progress.progress(20, text=get_translation('processing_patient_data', st.session_state.language))
+                    data_progress.progress(0.20, text=f"20% - {get_translation('processing_patient_data', st.session_state.language)}")
                     
                     # Load authentic medical data from verified sources
                     if data is None or data.empty:
@@ -401,7 +401,7 @@ def main():
                             fetcher = RealMedicalDataFetcher()
                             demographics = fetcher.get_patient_demographics(data)
                             
-                            data_progress.progress(40, text="Validating medical data...")
+                            data_progress.progress(0.40, text="40% - Validating medical data...")
                             st.success(f"Loaded authentic medical data: {demographics['total_patients']} real patients, "
                                      f"{demographics['prevalence_rate']:.1%} diabetes prevalence")
                         except Exception as e:
@@ -409,7 +409,7 @@ def main():
                             return
                     
                     # Preprocess data with progress
-                    data_progress.progress(60, text="Preprocessing medical features...")
+                    data_progress.progress(0.60, text="60% - Preprocessing medical features...")
                     try:
                         from data_preprocessing import DataPreprocessor
                         preprocessor = DataPreprocessor()
@@ -434,7 +434,7 @@ def main():
                     st.info(f"Data preprocessed: {len(X)} samples, {X.shape[1]} features")
                     
                     # Create authentic medical facility cohorts with progress
-                    data_progress.progress(80, text=get_translation('setting_up_clients', st.session_state.language))
+                    data_progress.progress(0.80, text=f"80% - {get_translation('setting_up_clients', st.session_state.language)}")
                     try:
                         st.info(f"Creating {num_clients} medical facility cohorts from real patient data")
                         
@@ -1193,13 +1193,13 @@ def main():
                         analysis_status = st.empty()
                         
                         analysis_status.info(f"🔄 {get_translation('analyzing_predictions', st.session_state.language)}")
-                        analysis_progress.progress(20, text=get_translation('processing_patient_data', st.session_state.language))
+                        analysis_progress.progress(0.20, text=f"20% - {get_translation('processing_patient_data', st.session_state.language)}")
                         
                         # Create patient data array for prediction
                         patient_features = np.array([[pregnancies, glucose, blood_pressure, skin_thickness, 
                                                     insulin, bmi, dpf, age]])
                         
-                        analysis_progress.progress(50, text=get_translation('evaluating_performance', st.session_state.language))
+                        analysis_progress.progress(0.50, text=f"50% - {get_translation('evaluating_performance', st.session_state.language)}")
                         
                         # Use the converged final global model for prediction
                         if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model'):
