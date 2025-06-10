@@ -2023,7 +2023,59 @@ def main():
                 - Privacy-preserving communication
                 """)
 
-
+    with tab8:
+        st.header("🔐 Hierarchical Secret Sharing for Federated Learning")
+        
+        st.markdown("""
+        This section implements **Shamir's Secret Sharing** for the hierarchical federated learning architecture, 
+        where each client divides their model weights into shares and distributes them across fog nodes.
+        """)
+        
+        # Create the secret sharing demo
+        create_secret_sharing_demo()
+        
+        # Integration with federated learning
+        st.subheader("🔗 Integration with Federated Learning")
+        
+        if st.session_state.training_completed:
+            st.success("Training completed - Secret sharing can be applied to trained weights")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**Current Training Results:**")
+                if st.session_state.training_metrics:
+                    final_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
+                    total_rounds = len(st.session_state.training_metrics)
+                    st.metric("Final Accuracy", f"{final_accuracy:.3f}")
+                    st.metric("Training Rounds", total_rounds)
+            
+            with col2:
+                st.markdown("**Secret Sharing Benefits:**")
+                st.info("No single fog node sees complete weights")
+                st.info("Threshold-based reconstruction security")
+                st.info("Fault tolerance against node failures")
+        
+        else:
+            st.info("Complete federated learning training to see integration with actual model weights")
+        
+        # Current configuration display
+        if hasattr(st.session_state, 'secret_sharing_enabled') and st.session_state.secret_sharing_enabled:
+            st.subheader("Current Configuration")
+            config = st.session_state.ss_config
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Fog Nodes", config.num_fog_nodes)
+                st.metric("Threshold", config.threshold)
+            with col2:
+                st.metric("Prime Modulus", f"{config.prime_modulus:,}")
+                st.metric("Security Level", f"{config.threshold}/{config.num_fog_nodes}")
+            with col3:
+                fault_tolerance = config.num_fog_nodes - config.threshold
+                st.metric("Fault Tolerance", f"{fault_tolerance} nodes")
+                collusion_resistance = config.threshold - 1
+                st.metric("Collusion Resistance", f"< {collusion_resistance} nodes")
 
 if __name__ == "__main__":
     main()

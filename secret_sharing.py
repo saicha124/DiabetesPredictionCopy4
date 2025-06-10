@@ -11,6 +11,7 @@ import numpy as np
 import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
+import matplotlib.pyplot as plt
 from typing import List, Dict, Tuple, Any
 import random
 from dataclasses import dataclass
