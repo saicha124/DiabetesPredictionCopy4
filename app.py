@@ -692,6 +692,20 @@ def main():
     with tab2:
         st.header("🏥 Medical Station Monitoring")
         
+        # Add reset button for new training sessions
+        if st.session_state.training_completed or (hasattr(st.session_state, 'results') and st.session_state.results):
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                if st.button("🔄 New Session", type="primary"):
+                    # Reset all training states
+                    for key in ['training_completed', 'training_started', 'training_in_progress', 'results', 
+                               'training_metrics', 'best_accuracy', 'fl_manager', 'current_training_round']:
+                        if key in st.session_state:
+                            del st.session_state[key]
+                    st.rerun()
+            with col2:
+                st.info("Click 'New Session' to test different privacy budgets with fresh training")
+        
         if st.session_state.training_started and hasattr(st.session_state, 'training_in_progress'):
             current_round = st.session_state.get('current_training_round', 0)
             max_rounds = st.session_state.get('max_rounds', 20)
