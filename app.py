@@ -67,6 +67,8 @@ def init_session_state():
         st.session_state.client_progress = {}
     if 'training_in_progress' not in st.session_state:
         st.session_state.training_in_progress = False
+    if 'language' not in st.session_state:
+        st.session_state.language = 'en'
     if 'processed_data' not in st.session_state:
         st.session_state.processed_data = None
     if 'training_data' not in st.session_state:
