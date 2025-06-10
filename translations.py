@@ -30,6 +30,19 @@ TRANSLATIONS = {
         "delta": "Delta (δ)",
         "committee_size": "Committee Size",
         
+        # Training interface sections
+        "medical_network_config": "🏥 Medical Network Configuration",
+        "num_medical_stations": "Number of Medical Stations", 
+        "max_training_rounds": "Maximum Training Rounds",
+        "model_selection": "🧠 Model Selection",
+        "machine_learning_model": "Machine Learning Model",
+        "fog_computing_setup": "🌫️ Fog Computing Setup",
+        "enable_fog_nodes": "Enable Fog Nodes",
+        "num_fog_nodes": "Number of Fog Nodes",
+        "fog_aggregation_method": "Fog Aggregation Method",
+        "privacy_configuration": "🔒 Privacy Configuration",
+        "data_distribution": "📊 Data Distribution",
+        
         # Buttons
         "start_training": "🚀 Start FL Training",
         "stop_training": "⏹️ Stop Training",
@@ -114,6 +127,19 @@ TRANSLATIONS = {
         "epsilon": "Epsilon (ε)",
         "delta": "Delta (δ)",
         "committee_size": "Taille du Comité",
+        
+        # Training interface sections
+        "medical_network_config": "🏥 Configuration Réseau Médical",
+        "num_medical_stations": "Nombre de Stations Médicales", 
+        "max_training_rounds": "Rondes d'Entraînement Maximum",
+        "model_selection": "🧠 Sélection de Modèle",
+        "machine_learning_model": "Modèle d'Apprentissage Automatique",
+        "fog_computing_setup": "🌫️ Configuration Informatique Fog",
+        "enable_fog_nodes": "Activer Nœuds Fog",
+        "num_fog_nodes": "Nombre de Nœuds Fog",
+        "fog_aggregation_method": "Méthode d'Agrégation Fog",
+        "privacy_configuration": "🔒 Configuration de Confidentialité",
+        "data_distribution": "📊 Distribution de Données",
         
         # Buttons
         "start_training": "🚀 Démarrer Formation FL",

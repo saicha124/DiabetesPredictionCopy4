@@ -144,7 +144,7 @@ def main():
             col1, col2 = st.columns(2)
             
             with col1:
-                st.subheader("🏥 Medical Network Configuration")
+                st.subheader(get_translation("medical_network_config", st.session_state.language))
                 # Use session state to control default values for reset functionality
                 if 'reset_requested' in st.session_state and st.session_state.reset_requested:
                     default_clients = 5
@@ -154,16 +154,16 @@ def main():
                     default_clients = st.session_state.get('num_clients', 5)
                     default_rounds = st.session_state.get('max_rounds', 20)
                 
-                num_clients = st.slider("Number of Medical Stations", 3, 20, default_clients)
-                max_rounds = st.slider("Maximum Training Rounds", 5, 50, default_rounds)
+                num_clients = st.slider(get_translation("num_medical_stations", st.session_state.language), 3, 20, default_clients)
+                max_rounds = st.slider(get_translation("max_training_rounds", st.session_state.language), 5, 50, default_rounds)
                 
                 # Store values in session state
                 st.session_state.num_clients = num_clients
                 st.session_state.max_rounds = max_rounds
                 
-                st.subheader("🧠 Model Selection")
+                st.subheader(get_translation("model_selection", st.session_state.language))
                 default_model = "Deep Learning (Neural Network)" if 'reset_requested' in st.session_state else st.session_state.get('model_type_display', "Deep Learning (Neural Network)")
-                model_type = st.selectbox("Machine Learning Model", 
+                model_type = st.selectbox(get_translation("machine_learning_model", st.session_state.language), 
                                         ["Deep Learning (Neural Network)", "CNN (Convolutional)", "SVM (Support Vector)", "Logistic Regression", "Random Forest"],
                                         index=["Deep Learning (Neural Network)", "CNN (Convolutional)", "SVM (Support Vector)", "Logistic Regression", "Random Forest"].index(default_model),
                                         help="Select the AI model type for diabetes prediction")
@@ -179,28 +179,28 @@ def main():
                 }
                 internal_model_type = model_mapping[model_type]
                 
-                st.subheader("🌫️ Fog Computing Setup")
+                st.subheader(get_translation("fog_computing_setup", st.session_state.language))
                 default_fog = True if 'reset_requested' not in st.session_state else True
-                enable_fog = st.checkbox("Enable Fog Nodes", value=st.session_state.get('enable_fog', default_fog))
+                enable_fog = st.checkbox(get_translation("enable_fog_nodes", st.session_state.language), value=st.session_state.get('enable_fog', default_fog))
                 st.session_state.enable_fog = enable_fog
                 
                 if enable_fog:
                     default_fog_nodes = 3 if 'reset_requested' not in st.session_state else 3
-                    num_fog_nodes = st.slider("Number of Fog Nodes", 2, 6, st.session_state.get('num_fog_nodes', default_fog_nodes))
+                    num_fog_nodes = st.slider(get_translation("num_fog_nodes", st.session_state.language), 2, 6, st.session_state.get('num_fog_nodes', default_fog_nodes))
                     st.session_state.num_fog_nodes = num_fog_nodes
                     
                     default_fog_method = "FedAvg" if 'reset_requested' not in st.session_state else "FedAvg"
                     fog_methods = ["FedAvg", "FedProx", "Weighted", "Median", "Mixed Methods"]
                     current_method = st.session_state.get('fog_method', default_fog_method)
-                    fog_method = st.selectbox("Fog Aggregation Method", fog_methods, index=fog_methods.index(current_method))
+                    fog_method = st.selectbox(get_translation("fog_aggregation_method", st.session_state.language), fog_methods, index=fog_methods.index(current_method))
                     st.session_state.fog_method = fog_method
                 else:
                     num_fog_nodes = 0
                     fog_method = "FedAvg"
             
             with col2:
-                st.subheader("🔒 Privacy Configuration")
-                enable_dp = st.checkbox("Enable Differential Privacy", value=True, key="enable_dp_check")
+                st.subheader(get_translation("privacy_configuration", st.session_state.language))
+                enable_dp = st.checkbox(get_translation("enable_privacy", st.session_state.language), value=True, key="enable_dp_check")
                 if enable_dp:
                     epsilon = st.slider("Privacy Budget (ε)", 0.1, 10.0, 1.0, 0.1, key="epsilon_slider")
                     delta = st.select_slider("Failure Probability (δ)", 
