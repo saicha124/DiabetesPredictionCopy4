@@ -303,25 +303,7 @@ def main():
                         client_data = strategy.distribute_data(X, y)
                         
                         if not client_data or len(client_data) == 0:
-                            st.error("Data distribution failed - creating manual distribution")
-                            # Create manual IID distribution as fallback
-                            samples_per_client = len(X) // num_clients
-                            client_data = []
-                            for i in range(num_clients):
-                                start_idx = i * samples_per_client
-                                end_idx = start_idx + samples_per_client if i < num_clients - 1 else len(X)
-                                
-                                client_X = X[start_idx:end_idx]
-                                client_y = y[start_idx:end_idx]
-                                
-                                # Create train/test split
-                                split_idx = max(1, int(0.8 * len(client_X)))
-                                client_data.append({
-                                    'X_train': client_X[:split_idx],
-                                    'y_train': client_y[:split_idx],
-                                    'X_test': client_X[split_idx:],
-                                    'y_test': client_y[split_idx:]
-                                })
+                            raise ValueError("Data distribution strategy failed to create client data")
                         
                         st.success(f"Data distributed to {len(client_data)} clients")
                         st.session_state.processed_data = client_data
@@ -334,12 +316,45 @@ def main():
                 # Execute rounds immediately after data preprocessing
                 client_data = st.session_state.processed_data
                 
-                # Validate client data structure
-                if not client_data or len(client_data) == 0:
+                # Debug client data structure
+                st.info(f"Client data type: {type(client_data)}")
+                st.info(f"Client data length: {len(client_data) if client_data else 0}")
+                
+                # Detailed validation with debugging
+                if client_data is None:
+                    st.error("Client data is None - data distribution failed")
+                    raise ValueError("Client data is None")
+                
+                if not isinstance(client_data, list):
+                    st.error(f"Client data is not a list, got: {type(client_data)}")
+                    raise ValueError(f"Expected list, got {type(client_data)}")
+                
+                if len(client_data) == 0:
+                    st.error("Client data list is empty")
                     raise ValueError("No client data available for training")
                 
-                # Use processed data directly - validation handled during distribution
-                st.info(f"Starting training with {len(client_data)} clients")
+                # Validate each client's data structure
+                valid_clients = 0
+                for i, client in enumerate(client_data):
+                    if client and isinstance(client, dict):
+                        required_keys = ['X_train', 'y_train', 'X_test', 'y_test']
+                        if all(key in client for key in required_keys):
+                            if all(len(client[key]) > 0 for key in required_keys):
+                                valid_clients += 1
+                            else:
+                                st.warning(f"Client {i} has empty data arrays")
+                        else:
+                            st.warning(f"Client {i} missing required keys: {[k for k in required_keys if k not in client]}")
+                    else:
+                        st.warning(f"Client {i} is invalid: {type(client)}")
+                
+                st.info(f"Found {valid_clients} valid clients out of {len(client_data)} total")
+                
+                if valid_clients == 0:
+                    st.error("No valid clients found with proper data structure")
+                    raise ValueError("No valid clients available for training")
+                
+                st.success(f"Starting training with {valid_clients} valid clients")
                 
                 # Execute all rounds in sequence
                 for round_num in range(st.session_state.current_training_round, max_rounds):

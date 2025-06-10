@@ -40,6 +40,18 @@ class IIDDistribution(DataDistributionStrategy):
     
     def distribute_data(self, X: np.ndarray, y: np.ndarray) -> List[Dict[str, np.ndarray]]:
         """Distribute data randomly among clients (IID)"""
+        if len(X) == 0 or len(y) == 0:
+            raise ValueError("Cannot distribute empty dataset")
+        
+        if self.num_clients <= 0:
+            raise ValueError("Number of clients must be positive")
+        
+        # Ensure minimum samples per client
+        min_samples_per_client = max(2, len(X) // (self.num_clients * 2))
+        if len(X) < self.num_clients * min_samples_per_client:
+            # Adjust number of clients if dataset is too small
+            self.num_clients = max(1, len(X) // min_samples_per_client)
+        
         # Shuffle data
         indices = np.random.permutation(len(X))
         X_shuffled = X[indices]
@@ -60,22 +72,30 @@ class IIDDistribution(DataDistributionStrategy):
             client_X = X_shuffled[start_idx:end_idx]
             client_y = y_shuffled[start_idx:end_idx]
             
-            # Split into train/test
-            if len(client_X) > 1 and len(np.unique(client_y)) > 1:
-                try:
-                    X_train, X_test, y_train, y_test = train_test_split(
-                        client_X, client_y, test_size=0.2, random_state=self.random_state + i, 
-                        stratify=client_y
-                    )
-                except ValueError:
-                    # Fallback if stratification fails
-                    split_idx = int(0.8 * len(client_X))
-                    X_train, X_test = client_X[:split_idx], client_X[split_idx:]
-                    y_train, y_test = client_y[:split_idx], client_y[split_idx:]
-            else:
+            # Ensure client has at least one sample
+            if len(client_X) == 0:
+                # Give this client at least one sample
+                client_X = X_shuffled[:1]
+                client_y = y_shuffled[:1]
+            
+            # Split into train/test with minimum validation
+            if len(client_X) >= 2:
                 split_idx = max(1, int(0.8 * len(client_X)))
                 X_train, X_test = client_X[:split_idx], client_X[split_idx:]
                 y_train, y_test = client_y[:split_idx], client_y[split_idx:]
+                
+                # Ensure test set has at least one sample
+                if len(X_test) == 0:
+                    X_test = X_train[-1:]
+                    y_test = y_train[-1:]
+                    X_train = X_train[:-1]
+                    y_train = y_train[:-1]
+            else:
+                # Single sample case - duplicate for train/test
+                X_train = client_X
+                y_train = client_y
+                X_test = client_X
+                y_test = client_y
             
             client_data.append({
                 'X_train': X_train,
@@ -84,7 +104,17 @@ class IIDDistribution(DataDistributionStrategy):
                 'y_test': y_test
             })
         
-        return client_data
+        # Validate all clients have data
+        valid_clients = []
+        for i, client in enumerate(client_data):
+            if (len(client['X_train']) > 0 and len(client['y_train']) > 0 and 
+                len(client['X_test']) > 0 and len(client['y_test']) > 0):
+                valid_clients.append(client)
+        
+        if len(valid_clients) == 0:
+            raise ValueError("Failed to create valid client data distributions")
+        
+        return valid_clients
 
 class NonIIDDistribution(DataDistributionStrategy):
     """Non-IID distribution with class imbalance"""
