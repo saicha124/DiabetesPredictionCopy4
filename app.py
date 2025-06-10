@@ -1679,49 +1679,72 @@ def main():
                                                 insulin, bmi, dpf, age]])
                     
                     # Use the converged final global model for prediction
-                    st.info("✅ Using converged global federated model from completed training")
-                    try:
-                        # Get the converged global model from federated learning manager
-                        global_model = st.session_state.fl_manager.global_model
+                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model'):
+                        try:
+                            st.info("✅ Using converged global federated model from completed training")
+                            global_model = st.session_state.fl_manager.global_model
+                            
+                            # Preprocess patient data using the same preprocessing pipeline
+                            from data_preprocessing import DataPreprocessor
+                            preprocessor = DataPreprocessor()
+                            
+                            # Create a DataFrame with the patient data
+                            patient_df = pd.DataFrame({
+                                'Pregnancies': [pregnancies],
+                                'Glucose': [glucose], 
+                                'BloodPressure': [blood_pressure],
+                                'SkinThickness': [skin_thickness],
+                                'Insulin': [insulin],
+                                'BMI': [bmi],
+                                'DiabetesPedigreeFunction': [dpf],
+                                'Age': [age]
+                            })
+                            
+                            # Use the same preprocessing pipeline as training
+                            if hasattr(st.session_state, 'training_data') and st.session_state.training_data is not None:
+                                preprocessor.fit_transform(st.session_state.training_data)
+                                processed_features = preprocessor.transform(patient_df)
+                            else:
+                                processed_features = patient_features
+                            
+                            # Display model convergence information
+                            if hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
+                                final_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
+                                total_rounds = len(st.session_state.training_metrics)
+                                st.success(f"Model converged after {total_rounds} rounds with {final_accuracy:.3f} accuracy")
+                            
+                            # Make prediction using the actual converged federated model
+                            if hasattr(global_model, 'predict_proba') and global_model.predict_proba is not None:
+                                risk_probabilities = global_model.predict_proba(processed_features)[0]
+                                risk_score = risk_probabilities[1]  # Probability of diabetes class
+                                confidence = max(risk_probabilities)
+                                st.info(f"Model prediction probability: {risk_score:.3f}")
+                            elif hasattr(global_model, 'predict') and global_model.predict is not None:
+                                prediction = global_model.predict(processed_features)[0]
+                                risk_score = float(prediction)
+                                confidence = 0.85
+                                st.info(f"Model prediction: {risk_score}")
+                            else:
+                                raise ValueError("Trained model does not support prediction")
+                            
+                            # Store patient data for explanations
+                            st.session_state.current_patient = {
+                                'features': patient_features[0],
+                                'feature_names': ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 
+                                                'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age'],
+                                'risk_score': risk_score,
+                                'confidence': confidence
+                            }
                         
-                        # Display model convergence information
-                        if hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
-                            final_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
-                            total_rounds = len(st.session_state.training_metrics)
-                            st.success(f"Model converged after {total_rounds} rounds with {final_accuracy:.3f} accuracy")
-                        
-                        # Make prediction using the trained model
-                        if hasattr(global_model, 'predict_proba'):
-                            risk_probabilities = global_model.predict_proba(patient_features)[0]
-                            risk_score = risk_probabilities[1]  # Probability of diabetes
-                            confidence = max(risk_probabilities)
-                        else:
-                            prediction = global_model.predict(patient_features)[0]
-                            risk_score = float(prediction)
-                            confidence = 0.85  # Default confidence for non-probabilistic models
-                        
-                        # Store patient data for explanations
-                        st.session_state.current_patient = {
-                            'features': patient_features[0],
-                            'feature_names': ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 
-                                            'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age'],
-                            'risk_score': risk_score,
-                            'confidence': confidence
-                        }
-                        
-                    except Exception as e:
-                        # Fallback to statistical model based on training data
-                        st.warning("Using statistical model for prediction")
-                        
-                        # Calculate risk based on known diabetes indicators
-                        glucose_risk = max(0, (glucose - 100) / 100)
-                        bmi_risk = max(0, (bmi - 25) / 15)
-                        age_risk = age / 80
-                        family_risk = dpf
-                        
-                        risk_score = min(1.0, (glucose_risk * 0.4 + bmi_risk * 0.3 + 
-                                             age_risk * 0.2 + family_risk * 0.1))
-                        confidence = 0.75
+                        except Exception as model_error:
+                            st.error(f"Federated model prediction failed: {model_error}")
+                            st.warning("Training may not be completed yet. Please run federated training first.")
+                            return
+                    else:
+                        # Training not completed yet - inform user
+                        st.warning("⚠️ Federated learning training not completed yet")
+                        st.info("Please complete the federated training first to use the converged model for risk assessment")
+                        return
                     
                     # Display results
                     col1, col2, col3 = st.columns([1, 1, 1])
