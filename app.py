@@ -18,6 +18,7 @@ from differential_privacy import DifferentialPrivacyManager
 from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
 from client_visualization import ClientPerformanceVisualizer
 from journey_visualization import InteractiveJourneyVisualizer
+from performance_optimizer import create_performance_optimizer
 from advanced_client_analytics import AdvancedClientAnalytics
 from real_medical_data_fetcher import RealMedicalDataFetcher, load_authentic_medical_data
 from training_secret_sharing import TrainingLevelSecretSharingManager, integrate_training_secret_sharing
@@ -884,6 +885,18 @@ def main():
                     st.metric("📉 Loss", f"{latest_metrics.get('loss', 0):.4f}")
                 with col4:
                     st.metric("🏆 Best Accuracy", f"{st.session_state.best_accuracy:.3f}")
+                
+                # Performance optimization recommendations
+                if st.session_state.training_completed and st.session_state.best_accuracy < 0.85:
+                    st.markdown("---")
+                    st.warning(f"⏳ Target accuracy (85%) not reached. Current: {st.session_state.best_accuracy:.1%}")
+                    
+                    # Create performance optimizer
+                    optimizer = create_performance_optimizer()
+                    optimizer.create_optimization_dashboard(
+                        st.session_state.best_accuracy, 
+                        st.session_state.training_metrics
+                    )
                 
                 # Privacy status
                 if hasattr(st.session_state, 'enable_dp') and st.session_state.enable_dp:
