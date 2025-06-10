@@ -102,13 +102,14 @@ def main():
                 return
 
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "🎛️ Training Control", 
         "🏥 Live Monitoring", 
         "🗺️ Learning Journey Map",
         "📊 Performance Analysis",
         "👥 Client Analytics",
-        "🩺 Risk Assessment"
+        "🩺 Risk Assessment",
+        "🌐 Graph Visualization"
     ])
 
     with tab1:
@@ -1596,6 +1597,389 @@ def main():
         else:
             st.warning("Please complete federated learning training to use the risk assessment tool.")
             st.info("The risk assessment uses the trained global model for accurate predictions.")
+
+    with tab7:
+        st.header("🌐 Graph Visualization")
+        
+        # Visualization options
+        col1, col2 = st.columns([1, 3])
+        
+        with col1:
+            st.subheader("📊 Visualization Options")
+            
+            viz_type = st.selectbox(
+                "Select Visualization Type",
+                ["Network Topology", "Hierarchical FL Architecture", "Data Flow Diagram", "Performance Network"]
+            )
+            
+            if st.session_state.training_completed:
+                show_metrics = st.checkbox("Show Performance Metrics", value=True)
+                show_data_flow = st.checkbox("Show Data Flow", value=True)
+                show_fog_nodes = st.checkbox("Show Fog Nodes", value=True)
+            else:
+                show_metrics = False
+                show_data_flow = True
+                show_fog_nodes = True
+        
+        with col2:
+            if viz_type == "Network Topology":
+                st.subheader("🔗 Federated Learning Network Topology")
+                
+                # Create network graph using plotly
+                import networkx as nx
+                
+                # Create network graph
+                G = nx.Graph()
+                
+                # Add global server node
+                G.add_node("Global Server", 
+                          type="server", 
+                          size=30, 
+                          color="red",
+                          pos=(0, 0))
+                
+                # Add fog nodes if enabled
+                if show_fog_nodes:
+                    fog_positions = [(-2, 1), (0, 2), (2, 1)]
+                    for i, pos in enumerate(fog_positions):
+                        fog_id = f"Fog Node {i+1}"
+                        G.add_node(fog_id, 
+                                  type="fog", 
+                                  size=20, 
+                                  color="orange",
+                                  pos=pos)
+                        G.add_edge("Global Server", fog_id)
+                
+                # Add client nodes
+                if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
+                    num_clients = len(st.session_state.fl_manager.clients)
+                else:
+                    num_clients = 5
+                
+                # Client positions in a circle
+                import math
+                client_positions = []
+                for i in range(num_clients):
+                    angle = 2 * math.pi * i / num_clients
+                    x = 3 * math.cos(angle)
+                    y = 3 * math.sin(angle)
+                    client_positions.append((x, y))
+                
+                for i, pos in enumerate(client_positions):
+                    client_id = f"Medical Facility {i+1}"
+                    
+                    # Color based on performance if available
+                    if show_metrics and hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
+                        # Use last round metrics for coloring
+                        color = "lightgreen"  # Default
+                        if hasattr(st.session_state, 'client_performance'):
+                            # Color based on performance
+                            color = "lightgreen" if i % 2 == 0 else "lightblue"
+                    else:
+                        color = "lightblue"
+                    
+                    G.add_node(client_id, 
+                              type="client", 
+                              size=15, 
+                              color=color,
+                              pos=pos)
+                    
+                    # Connect to fog nodes or directly to server
+                    if show_fog_nodes:
+                        fog_node = f"Fog Node {i % 3 + 1}"
+                        G.add_edge(fog_node, client_id)
+                    else:
+                        G.add_edge("Global Server", client_id)
+                
+                # Create plotly network visualization
+                pos = nx.get_node_attributes(G, 'pos')
+                
+                # Extract node positions
+                node_x = []
+                node_y = []
+                node_text = []
+                node_color = []
+                node_size = []
+                
+                for node in G.nodes():
+                    x, y = pos[node]
+                    node_x.append(x)
+                    node_y.append(y)
+                    node_text.append(node)
+                    node_color.append(G.nodes[node]['color'])
+                    node_size.append(G.nodes[node]['size'])
+                
+                # Extract edge positions
+                edge_x = []
+                edge_y = []
+                
+                for edge in G.edges():
+                    x0, y0 = pos[edge[0]]
+                    x1, y1 = pos[edge[1]]
+                    edge_x.extend([x0, x1, None])
+                    edge_y.extend([y0, y1, None])
+                
+                # Create the plot
+                fig = go.Figure()
+                
+                # Add edges
+                fig.add_trace(go.Scatter(
+                    x=edge_x, y=edge_y,
+                    line=dict(width=2, color='gray'),
+                    hoverinfo='none',
+                    mode='lines',
+                    showlegend=False
+                ))
+                
+                # Add nodes
+                fig.add_trace(go.Scatter(
+                    x=node_x, y=node_y,
+                    mode='markers+text',
+                    text=node_text,
+                    textposition="middle center",
+                    textfont=dict(size=10, color="white"),
+                    hoverinfo='text',
+                    hovertext=node_text,
+                    marker=dict(
+                        size=node_size,
+                        color=node_color,
+                        line=dict(width=2, color='white')
+                    ),
+                    showlegend=False
+                ))
+                
+                fig.update_layout(
+                    title="Federated Learning Network Topology",
+                    showlegend=False,
+                    hovermode='closest',
+                    margin=dict(b=20,l=5,r=5,t=40),
+                    annotations=[ dict(
+                        text="Interactive Network Graph - Hover over nodes for details",
+                        showarrow=False,
+                        xref="paper", yref="paper",
+                        x=0.005, y=-0.002,
+                        xanchor='left', yanchor='bottom',
+                        font=dict(color='gray', size=12)
+                    )],
+                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    height=600
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+            elif viz_type == "Hierarchical FL Architecture":
+                st.subheader("🏗️ Hierarchical Federated Learning Architecture")
+                
+                # Create hierarchical diagram
+                fig = go.Figure()
+                
+                # Global Server Level
+                fig.add_trace(go.Scatter(
+                    x=[0], y=[3],
+                    mode='markers+text',
+                    text=['Global Server'],
+                    textposition="middle center",
+                    textfont=dict(size=12, color="white"),
+                    marker=dict(size=40, color='red', symbol='square'),
+                    name='Global Server'
+                ))
+                
+                # Fog Nodes Level
+                fog_x = [-2, 0, 2]
+                fog_y = [2, 2, 2]
+                fig.add_trace(go.Scatter(
+                    x=fog_x, y=fog_y,
+                    mode='markers+text',
+                    text=['Fog Node 1', 'Fog Node 2', 'Fog Node 3'],
+                    textposition="middle center",
+                    textfont=dict(size=10, color="white"),
+                    marker=dict(size=30, color='orange', symbol='diamond'),
+                    name='Fog Nodes'
+                ))
+                
+                # Client Nodes Level
+                client_x = [-3, -2, -1, 0, 1, 2, 3]
+                client_y = [1, 1, 1, 1, 1, 1, 1]
+                fig.add_trace(go.Scatter(
+                    x=client_x, y=client_y,
+                    mode='markers+text',
+                    text=['Client 1', 'Client 2', 'Client 3', 'Client 4', 'Client 5', 'Client 6', 'Client 7'],
+                    textposition="bottom center",
+                    textfont=dict(size=8),
+                    marker=dict(size=20, color='lightblue', symbol='circle'),
+                    name='Medical Facilities'
+                ))
+                
+                # Add connections
+                # Global to Fog
+                for x in fog_x:
+                    fig.add_trace(go.Scatter(
+                        x=[0, x], y=[3, 2],
+                        mode='lines',
+                        line=dict(color='gray', width=2),
+                        showlegend=False,
+                        hoverinfo='skip'
+                    ))
+                
+                # Fog to Clients
+                fog_client_mapping = {
+                    -2: [-3, -2],  # Fog 1 to Clients 1,2
+                    0: [-1, 0, 1],   # Fog 2 to Clients 3,4,5
+                    2: [2, 3]        # Fog 3 to Clients 6,7
+                }
+                
+                for fog_x_pos, client_x_positions in fog_client_mapping.items():
+                    for client_x_pos in client_x_positions:
+                        fig.add_trace(go.Scatter(
+                            x=[fog_x_pos, client_x_pos], y=[2, 1],
+                            mode='lines',
+                            line=dict(color='gray', width=1),
+                            showlegend=False,
+                            hoverinfo='skip'
+                        ))
+                
+                fig.update_layout(
+                    title="Hierarchical Federated Learning Architecture",
+                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-4, 4]),
+                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0.5, 3.5]),
+                    height=500,
+                    showlegend=True,
+                    legend=dict(x=0, y=1)
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+            elif viz_type == "Data Flow Diagram":
+                st.subheader("🔄 Data Flow in Federated Learning")
+                
+                # Create Sankey diagram for data flow
+                fig = go.Figure(data=[go.Sankey(
+                    node = dict(
+                        pad = 15,
+                        thickness = 20,
+                        line = dict(color = "black", width = 0.5),
+                        label = ["Medical Facility 1", "Medical Facility 2", "Medical Facility 3", 
+                                "Medical Facility 4", "Medical Facility 5", "Fog Node 1", "Fog Node 2", 
+                                "Fog Node 3", "Global Server", "Aggregated Model"],
+                        color = ["lightblue", "lightblue", "lightblue", "lightblue", "lightblue",
+                                "orange", "orange", "orange", "red", "green"]
+                    ),
+                    link = dict(
+                        source = [0, 1, 2, 3, 4, 5, 6, 7, 8],  # indices correspond to labels
+                        target = [5, 5, 6, 6, 7, 8, 8, 8, 9],
+                        value = [1, 1, 1, 1, 1, 2, 2, 1, 5]
+                    )
+                )])
+                
+                fig.update_layout(
+                    title_text="Data Flow: Local Models → Fog Aggregation → Global Model",
+                    font_size=10,
+                    height=400
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+            elif viz_type == "Performance Network":
+                st.subheader("📈 Performance Network Visualization")
+                
+                if st.session_state.training_completed and hasattr(st.session_state, 'training_metrics'):
+                    # Create performance-based network
+                    fig = go.Figure()
+                    
+                    # Simulate client performance data
+                    num_clients = 5
+                    client_names = [f"Medical Facility {i+1}" for i in range(num_clients)]
+                    
+                    # Create circular layout
+                    angles = [2 * math.pi * i / num_clients for i in range(num_clients)]
+                    client_x = [2 * math.cos(angle) for angle in angles]
+                    client_y = [2 * math.sin(angle) for angle in angles]
+                    
+                    # Simulate performance scores
+                    performance_scores = [0.85, 0.78, 0.92, 0.81, 0.87]
+                    
+                    # Color based on performance
+                    colors = ['red' if score < 0.8 else 'orange' if score < 0.85 else 'green' 
+                             for score in performance_scores]
+                    
+                    # Add client nodes with performance coloring
+                    fig.add_trace(go.Scatter(
+                        x=client_x, y=client_y,
+                        mode='markers+text',
+                        text=[f"{name}<br>Acc: {score:.2f}" for name, score in zip(client_names, performance_scores)],
+                        textposition="bottom center",
+                        marker=dict(
+                            size=[score*50 for score in performance_scores],  # Size based on performance
+                            color=colors,
+                            line=dict(width=2, color='white')
+                        ),
+                        name='Medical Facilities'
+                    ))
+                    
+                    # Add central server
+                    fig.add_trace(go.Scatter(
+                        x=[0], y=[0],
+                        mode='markers+text',
+                        text=['Global Server<br>Avg: 0.85'],
+                        textposition="middle center",
+                        textfont=dict(color="white", size=12),
+                        marker=dict(size=40, color='blue', symbol='square'),
+                        name='Global Server'
+                    ))
+                    
+                    # Add connections with thickness based on performance
+                    for i, (x, y, score) in enumerate(zip(client_x, client_y, performance_scores)):
+                        fig.add_trace(go.Scatter(
+                            x=[0, x], y=[0, y],
+                            mode='lines',
+                            line=dict(color='gray', width=score*5),  # Thickness based on performance
+                            showlegend=False,
+                            hoverinfo='skip'
+                        ))
+                    
+                    fig.update_layout(
+                        title="Performance-Based Network View<br><sub>Node size and connection thickness represent performance</sub>",
+                        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                        height=600,
+                        showlegend=True
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Performance legend
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("🔴 Poor Performance", "< 0.80")
+                    with col2:
+                        st.metric("🟡 Good Performance", "0.80 - 0.85")
+                    with col3:
+                        st.metric("🟢 Excellent Performance", "> 0.85")
+                        
+                else:
+                    st.info("Complete federated learning training to view performance network visualization.")
+        
+        # Additional graph information
+        if viz_type == "Network Topology":
+            st.subheader("📋 Network Information")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                **Network Components:**
+                - 🔴 Global Server: Central coordination
+                - 🟠 Fog Nodes: Regional aggregation
+                - 🔵 Medical Facilities: Local training
+                """)
+            
+            with col2:
+                st.markdown("""
+                **Network Features:**
+                - Hierarchical 3-tier architecture
+                - Distributed model aggregation
+                - Privacy-preserving communication
+                """)
 
 if __name__ == "__main__":
     main()
