@@ -14,6 +14,7 @@ from fog_aggregation import HierarchicalFederatedLearning
 from differential_privacy import DifferentialPrivacyManager
 from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
 from client_visualization import ClientPerformanceVisualizer
+from journey_visualization import InteractiveJourneyVisualizer
 from utils import *
 
 # Page configuration
@@ -65,6 +66,8 @@ def init_session_state():
         st.session_state.training_data = None
     if 'client_visualizer' not in st.session_state:
         st.session_state.client_visualizer = ClientPerformanceVisualizer()
+    if 'journey_visualizer' not in st.session_state:
+        st.session_state.journey_visualizer = InteractiveJourneyVisualizer()
 
 def main():
     init_session_state()
@@ -831,103 +834,29 @@ def main():
             st.dataframe(model_df, use_container_width=True)
 
     with tab3:
-        st.header("🗺️ Federated Learning Journey Map")
+        st.header("🗺️ Interactive Learning Journey Visualization")
         
-        # Define stages
-        stages = [
-            {"id": 1, "name": "Patient Enrollment", "icon": "👥", "description": "Recruit medical stations for federated training"},
-            {"id": 2, "name": "Data Distribution", "icon": "📊", "description": "Distribute patient data across medical facilities"},
-            {"id": 3, "name": "Privacy Setup", "icon": "🔒", "description": "Configure differential privacy parameters"},
-            {"id": 4, "name": "Model Initialization", "icon": "🧠", "description": "Initialize global diabetes prediction model"},
-            {"id": 5, "name": "Local Training", "icon": "💻", "description": "Patient agents train on local health data"},
-            {"id": 6, "name": "Fog Aggregation", "icon": "🌫️", "description": "Regional medical centers aggregate local models"},
-            {"id": 7, "name": "Global Aggregation", "icon": "🌍", "description": "Central hub combines regional models"},
-            {"id": 8, "name": "Model Convergence", "icon": "🎯", "description": "Achieve target accuracy for diabetes prediction"},
-            {"id": 9, "name": "Deployment Ready", "icon": "✅", "description": "Model ready for clinical deployment"}
-        ]
+        # Initialize and update journey visualizer
+        journey_viz = st.session_state.journey_visualizer
+        journey_viz.initialize_journey(st.session_state)
         
-        # Determine current stage based on training progress
-        current_stage = 1
-        if st.session_state.training_completed:
-            current_stage = 9
-        elif st.session_state.training_started and st.session_state.training_metrics:
-            rounds = len(st.session_state.training_metrics)
-            max_rounds = st.session_state.get('max_rounds', 20)
-            current_round = st.session_state.get('current_training_round', 0)
-            
-            # Progressive stage advancement based on training progress
-            if rounds >= max_rounds or current_round >= max_rounds:
-                current_stage = 9  # Deployment Ready
-            elif rounds >= max(8, int(max_rounds * 0.8)) or current_round >= max(8, int(max_rounds * 0.8)):
-                current_stage = 8  # Model Convergence
-            elif rounds >= max(5, int(max_rounds * 0.5)) or current_round >= max(5, int(max_rounds * 0.5)):
-                current_stage = 7  # Global Aggregation
-            elif rounds >= max(2, int(max_rounds * 0.2)) or current_round >= max(2, int(max_rounds * 0.2)):
-                current_stage = 6  # Fog Aggregation
-            elif rounds >= 1 or current_round >= 1:
-                current_stage = 5  # Local Training
-            else:
-                current_stage = 4  # Model Initialization
-        elif st.session_state.training_started:
-            current_stage = 4  # Model Initialization
-        elif st.session_state.get('enable_dp') is not None:
-            current_stage = 3  # Privacy Setup
-        elif st.session_state.get('data_loaded', False):
-            current_stage = 2  # Data Distribution
+        # Create journey progress summary
+        journey_viz.create_progress_summary()
         
-        # Display journey map
-        col1, col2 = st.columns([3, 1])
+        st.markdown("---")
         
-        with col1:
-            st.subheader(f"Current Stage: {current_stage}/9")
-            
-            # Progress bar
-            progress = current_stage / len(stages)
-            st.progress(progress)
-            
-            # Stage visualization
-            for i, stage in enumerate(stages, 1):
-                if i == current_stage:
-                    st.markdown(f"## 🔄 Stage {i}: {stage['icon']} {stage['name']}")
-                    st.markdown(f"**{stage['description']}**")
-                    
-                    # Stage-specific status with security metrics
-                    if i == 3:  # Privacy Setup
-                        st.write("🔒 Differential privacy enabled (ε=1.0, δ=1e-5)")
-                        st.write("👥 Committee-based validation active")
-                        st.write("⭐ Reputation system initialized")
-                    elif i == 5 and st.session_state.training_metrics:
-                        rounds = len(st.session_state.training_metrics)
-                        st.write(f"✅ Local training - Round {rounds}")
-                        if hasattr(st.session_state, 'round_client_metrics') and st.session_state.round_client_metrics:
-                            latest_round = max(st.session_state.round_client_metrics.keys())
-                            client_data = st.session_state.round_client_metrics[latest_round]
-                            if client_data:
-                                avg_committee = np.mean([c.get('committee_score', 0.8) for c in client_data.values()])
-                                st.write(f"🛡️ Committee validation: {avg_committee:.3f}")
-                    elif i == 6 and st.session_state.training_metrics:
-                        rounds = len(st.session_state.training_metrics)
-                        st.write(f"🌫️ Fog aggregation - Round {rounds}")
-                        st.write("📊 Regional model consolidation active")
-                    elif i == 7 and st.session_state.training_metrics:
-                        rounds = len(st.session_state.training_metrics)
-                        st.write(f"🌍 Global aggregation - Round {rounds}")
-                        st.write("🔄 Central model synthesis")
-                    elif i == 8 and st.session_state.training_metrics:
-                        accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
-                        st.write(f"🎯 Current accuracy: {accuracy:.3f}")
-                        st.write("📈 Convergence monitoring active")
-                    elif i == 9 and st.session_state.training_completed:
-                        final_accuracy = st.session_state.results.get('accuracy', 0)
-                        st.write(f"✅ Final accuracy: {final_accuracy:.3f}")
-                        st.write("🏥 Ready for clinical deployment!")
-                    else:
-                        st.write("✅ Stage completed" if i < current_stage else "🔄 In progress")
-                    
-                elif i < current_stage:
-                    st.markdown(f"✅ Stage {i}: {stage['icon']} {stage['name']}")
-                else:
-                    st.markdown(f"⏳ Stage {i}: {stage['icon']} {stage['name']}")
+        # Main journey map
+        journey_viz.create_journey_map()
+        
+        st.markdown("---")
+        
+        # Timeline view
+        journey_viz.create_timeline_view()
+        
+        st.markdown("---")
+        
+        # Interactive controls
+        journey_viz.create_interactive_controls()
         
         with col2:
             st.subheader("📚 Hierarchical Protocol Steps")
