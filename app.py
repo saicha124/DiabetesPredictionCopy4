@@ -18,6 +18,7 @@ from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
 from client_visualization import ClientPerformanceVisualizer
 from journey_visualization import InteractiveJourneyVisualizer
 from advanced_client_analytics import AdvancedClientAnalytics
+from secret_sharing import HierarchicalSecretSharing, SecretSharingConfig, create_secret_sharing_demo
 
 from utils import *
 
@@ -106,14 +107,15 @@ def main():
                 return
 
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "🎛️ Training Control", 
         "🏥 Live Monitoring", 
         "🗺️ Learning Journey Map",
         "📊 Performance Analysis",
         "👥 Client Analytics",
         "🩺 Risk Assessment",
-        "🌐 Graph Visualization"
+        "🌐 Graph Visualization",
+        "🔐 Secret Sharing"
     ])
 
     with tab1:
@@ -176,7 +178,28 @@ def main():
                     strategy_params['classes_per_client'] = st.slider("Classes per Client", 1, 2, 1)
                 elif distribution_strategy == "Quantity Skew":
                     strategy_params['skew_factor'] = st.slider("Skew Factor", 1.0, 5.0, 2.0, 0.5)
-                elif distribution_strategy == "Geographic":
+                
+                st.subheader("🔐 Secret Sharing Configuration")
+                enable_secret_sharing = st.checkbox("Enable Secret Sharing", value=True)
+                if enable_secret_sharing:
+                    ss_num_fog_nodes = st.slider("Number of Fog Nodes for Sharing", 3, 10, 5)
+                    ss_threshold = st.slider("Reconstruction Threshold", 2, ss_num_fog_nodes, min(3, ss_num_fog_nodes))
+                    ss_prime_modulus = st.selectbox("Prime Modulus", [2**31 - 1, 2**32 - 5, 2**61 - 1], index=0)
+                    
+                    if ss_threshold > ss_num_fog_nodes:
+                        st.error("Threshold cannot exceed number of fog nodes")
+                        enable_secret_sharing = False
+                    elif ss_threshold < 2:
+                        st.error("Threshold must be at least 2")
+                        enable_secret_sharing = False
+                    else:
+                        st.success(f"Secret sharing: {ss_threshold}/{ss_num_fog_nodes} threshold scheme")
+                else:
+                    ss_num_fog_nodes = 5
+                    ss_threshold = 3
+                    ss_prime_modulus = 2**31 - 1
+                
+                if distribution_strategy == "Geographic":
                     strategy_params['correlation_strength'] = st.slider("Correlation Strength", 0.1, 1.0, 0.8, 0.1)
             
             st.markdown("---")
@@ -216,6 +239,20 @@ def main():
                                 fog_aggregation_method=fog_method
                             )
                             st.session_state.fog_manager = fog_manager
+                        
+                        # Setup secret sharing if enabled
+                        if enable_secret_sharing:
+                            ss_config = SecretSharingConfig(
+                                num_fog_nodes=ss_num_fog_nodes,
+                                threshold=ss_threshold,
+                                prime_modulus=ss_prime_modulus
+                            )
+                            hierarchical_ss = HierarchicalSecretSharing(ss_config)
+                            st.session_state.secret_sharing = hierarchical_ss
+                            st.session_state.ss_config = ss_config
+                            st.session_state.secret_sharing_enabled = True
+                        else:
+                            st.session_state.secret_sharing_enabled = False
                         
                         st.session_state.fl_manager = fl_manager
                         
