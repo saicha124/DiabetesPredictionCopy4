@@ -433,7 +433,8 @@ def main():
                     
                     st.info(f"Data preprocessed: {len(X)} samples, {X.shape[1]} features")
                     
-                    # Create authentic medical facility cohorts
+                    # Create authentic medical facility cohorts with progress
+                    data_progress.progress(80, text=get_translation('setting_up_clients', st.session_state.language))
                     try:
                         st.info(f"Creating {num_clients} medical facility cohorts from real patient data")
                         
@@ -784,9 +785,26 @@ def main():
                     }
                 st.rerun()
             
-            # Enhanced Progress display
+            # Enhanced Progress display with elegant styling
             progress = current_round / max_rounds if max_rounds > 0 else 0
-            st.progress(progress, text=f"{get_translation('training_progress', st.session_state.language)}: {get_translation('round', st.session_state.language)} {current_round}/{max_rounds}")
+            
+            # Main training progress bar
+            progress_text = f"{get_translation('training_progress', st.session_state.language)}: {get_translation('round', st.session_state.language)} {current_round}/{max_rounds}"
+            training_progress = st.progress(progress, text=progress_text)
+            
+            # Add visual progress indicator
+            if progress > 0:
+                progress_percentage = int(progress * 100)
+                if progress_percentage < 25:
+                    progress_color = "🔴"
+                elif progress_percentage < 50:
+                    progress_color = "🟡"
+                elif progress_percentage < 75:
+                    progress_color = "🟠"
+                else:
+                    progress_color = "🟢"
+                
+                st.markdown(f"**{progress_color} {progress_percentage}% Complete**")
             
             # Training status with detailed progress
             col1, col2, col3 = st.columns([2, 1, 1])
@@ -1170,9 +1188,18 @@ def main():
                     submitted = st.form_submit_button("🔍 " + get_translation("analyze_risk", st.session_state.language), use_container_width=True)
                     
                     if submitted:
+                        # Show patient analysis progress
+                        analysis_progress = st.progress(0)
+                        analysis_status = st.empty()
+                        
+                        analysis_status.info(f"🔄 {get_translation('analyzing_predictions', st.session_state.language)}")
+                        analysis_progress.progress(20, text=get_translation('processing_patient_data', st.session_state.language))
+                        
                         # Create patient data array for prediction
                         patient_features = np.array([[pregnancies, glucose, blood_pressure, skin_thickness, 
                                                     insulin, bmi, dpf, age]])
+                        
+                        analysis_progress.progress(50, text=get_translation('evaluating_performance', st.session_state.language))
                         
                         # Use the converged final global model for prediction
                         if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model'):
