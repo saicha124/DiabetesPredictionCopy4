@@ -18,7 +18,7 @@ from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
 from client_visualization import ClientPerformanceVisualizer
 from journey_visualization import InteractiveJourneyVisualizer
 from advanced_client_analytics import AdvancedClientAnalytics
-
+from secret_sharing import HierarchicalSecretSharing, create_secret_sharing_demo
 from utils import *
 
 # Page configuration
@@ -106,14 +106,15 @@ def main():
                 return
 
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "🎛️ Training Control", 
         "🏥 Live Monitoring", 
         "🗺️ Learning Journey Map",
         "📊 Performance Analysis",
         "👥 Client Analytics",
         "🩺 Risk Assessment",
-        "🌐 Graph Visualization"
+        "🌐 Graph Visualization",
+        "🔐 Secret Sharing"
     ])
 
     with tab1:
@@ -1986,7 +1987,16 @@ def main():
                 - Privacy-preserving communication
                 """)
 
-
+    with tab8:
+        st.header("🔐 Hierarchical Secret Sharing for Federated Learning")
+        
+        st.markdown("""
+        This section implements **Shamir's Secret Sharing** for the hierarchical federated learning architecture, 
+        where each client divides their model weights into shares and distributes them across fog nodes.
+        """)
+        
+        # Create the secret sharing demo
+        create_secret_sharing_demo()
 
 if __name__ == "__main__":
     main()
