@@ -259,46 +259,46 @@ def main():
             
             with col1:
                 if st.button("🚀 Start Training", disabled=st.session_state.training_started):
-                    # Create progress containers that persist during state changes
-                    training_container = st.container()
+                    st.session_state.training_initialization = True
+                
+                # Show progress bar when initialization is active
+                if st.session_state.get('training_initialization', False):
+                    init_progress = st.progress(0)
+                    init_status = st.empty()
                     
-                    with training_container:
-                        init_progress = st.progress(0)
-                        init_status = st.empty()
-                        
-                        init_status.info("🔄 Initializing federated learning...")
-                        init_progress.progress(0.20, text="20% - Setting up parameters...")
-                        time.sleep(0.5)
-                        
-                        init_progress.progress(0.40, text="40% - Storing configuration...")
-                        # Store configuration
-                        st.session_state.num_clients = num_clients
-                        st.session_state.max_rounds = max_rounds
-                        st.session_state.enable_fog = enable_fog
-                        st.session_state.num_fog_nodes = num_fog_nodes
-                        st.session_state.fog_method = fog_method
-                        st.session_state.enable_dp = enable_dp
-                        st.session_state.epsilon = epsilon
-                        st.session_state.delta = delta
-                        st.session_state.distribution_strategy = distribution_strategy
-                        st.session_state.strategy_params = strategy_params
-                        st.session_state.model_type = internal_model_type
-                        
-                        init_progress.progress(0.60, text="60% - Initializing FL manager...")
-                        time.sleep(0.5)
-                        
-                        # Initialize FL manager
-                        fl_manager = FederatedLearningManager(
-                                num_clients=num_clients,
-                                max_rounds=max_rounds,
-                                aggregation_algorithm='FedAvg',
-                                enable_dp=enable_dp,
-                                epsilon=epsilon or 1.0,
-                                delta=delta or 1e-5
-                        )
-                        
-                        init_progress.progress(0.80, text="80% - Setting up training environment...")
-                        time.sleep(0.5)
+                    init_status.info("🔄 Initializing federated learning...")
+                    init_progress.progress(0.20, text="20% - Setting up parameters...")
+                    time.sleep(0.5)
+                    
+                    init_progress.progress(0.40, text="40% - Storing configuration...")
+                    # Store configuration
+                    st.session_state.num_clients = num_clients
+                    st.session_state.max_rounds = max_rounds
+                    st.session_state.enable_fog = enable_fog
+                    st.session_state.num_fog_nodes = num_fog_nodes
+                    st.session_state.fog_method = fog_method
+                    st.session_state.enable_dp = enable_dp
+                    st.session_state.epsilon = epsilon
+                    st.session_state.delta = delta
+                    st.session_state.distribution_strategy = distribution_strategy
+                    st.session_state.strategy_params = strategy_params
+                    st.session_state.model_type = internal_model_type
+                    
+                    init_progress.progress(0.60, text="60% - Initializing FL manager...")
+                    time.sleep(0.5)
+                    
+                    # Initialize FL manager
+                    fl_manager = FederatedLearningManager(
+                            num_clients=num_clients,
+                            max_rounds=max_rounds,
+                            aggregation_algorithm='FedAvg',
+                            enable_dp=enable_dp,
+                            epsilon=epsilon or 1.0,
+                            delta=delta or 1e-5
+                    )
+                    
+                    init_progress.progress(0.80, text="80% - Setting up training environment...")
+                    time.sleep(0.5)
                     
                     # Setup fog nodes if enabled
                     if enable_fog:
@@ -352,7 +352,11 @@ def main():
                     init_status.success("✅ Training initialized successfully!")
                     time.sleep(0.5)
                     
+                    # Clear initialization flag to hide progress bar
+                    st.session_state.training_initialization = False
+                    
                     st.success("Training initialized! Switch to Live Monitoring tab to see progress.")
+                    st.rerun()
             
             with col2:
                 if st.button("⏹️ Stop Training", disabled=not st.session_state.training_started):
