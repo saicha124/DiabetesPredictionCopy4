@@ -259,52 +259,61 @@ def main():
             
             with col1:
                 if st.button("🚀 Start Training", disabled=st.session_state.training_started):
-                    with st.spinner("Initializing federated learning..."):
-                        # Store configuration
-                        st.session_state.num_clients = num_clients
-                        st.session_state.max_rounds = max_rounds
-                        st.session_state.enable_fog = enable_fog
-                        st.session_state.num_fog_nodes = num_fog_nodes
-                        st.session_state.fog_method = fog_method
-                        st.session_state.enable_dp = enable_dp
-                        st.session_state.epsilon = epsilon
-                        st.session_state.delta = delta
-                        st.session_state.distribution_strategy = distribution_strategy
-                        st.session_state.strategy_params = strategy_params
-                        st.session_state.model_type = internal_model_type
-                        
-                        # Initialize FL manager
-                        fl_manager = FederatedLearningManager(
+                    # Show training initialization progress
+                    init_progress = st.progress(0)
+                    init_status = st.empty()
+                    
+                    init_status.info("🔄 Initializing federated learning...")
+                    init_progress.progress(0.20, text="20% - Setting up parameters...")
+                    time.sleep(0.2)
+                    
+                    init_progress.progress(0.40, text="40% - Storing configuration...")
+                    # Store configuration
+                    st.session_state.num_clients = num_clients
+                    st.session_state.max_rounds = max_rounds
+                    st.session_state.enable_fog = enable_fog
+                    st.session_state.num_fog_nodes = num_fog_nodes
+                    st.session_state.fog_method = fog_method
+                    st.session_state.enable_dp = enable_dp
+                    st.session_state.epsilon = epsilon
+                    st.session_state.delta = delta
+                    st.session_state.distribution_strategy = distribution_strategy
+                    st.session_state.strategy_params = strategy_params
+                    st.session_state.model_type = internal_model_type
+                    
+                    init_progress.progress(0.60, text="60% - Initializing FL manager...")
+                    time.sleep(0.2)
+                    
+                    # Initialize FL manager
+                    fl_manager = FederatedLearningManager(
                             num_clients=num_clients,
                             max_rounds=max_rounds,
                             aggregation_algorithm='FedAvg',
                             enable_dp=enable_dp,
                             epsilon=epsilon or 1.0,
                             delta=delta or 1e-5
+                    )
+                    
+                    # Setup fog nodes if enabled
+                    if enable_fog:
+                        fog_manager = HierarchicalFederatedLearning(
+                            num_clients=num_clients,
+                            num_fog_nodes=num_fog_nodes,
+                            fog_aggregation_method=fog_method
                         )
-                        
-                        # Setup fog nodes if enabled
-                        if enable_fog:
-                            fog_manager = HierarchicalFederatedLearning(
-                                num_clients=num_clients,
-                                num_fog_nodes=num_fog_nodes,
-                                fog_aggregation_method=fog_method
-                            )
-                            st.session_state.fog_manager = fog_manager
-                        
-
-                        
-                        # Integrate training-level secret sharing if enabled
-                        if enable_training_ss and enable_fog:
-                            ss_manager = integrate_training_secret_sharing(fl_manager, num_fog_nodes, ss_threshold)
-                            st.session_state.training_ss_manager = ss_manager
-                            st.session_state.training_ss_enabled = True
-                        else:
-                            st.session_state.training_ss_enabled = False
-                        
-                        st.session_state.fl_manager = fl_manager
-                        
-                        # Ensure data is available before starting training
+                        st.session_state.fog_manager = fog_manager
+                    
+                    # Integrate training-level secret sharing if enabled
+                    if enable_training_ss and enable_fog:
+                        ss_manager = integrate_training_secret_sharing(fl_manager, num_fog_nodes, ss_threshold)
+                        st.session_state.training_ss_manager = ss_manager
+                        st.session_state.training_ss_enabled = True
+                    else:
+                        st.session_state.training_ss_enabled = False
+                    
+                    st.session_state.fl_manager = fl_manager
+                    
+                    # Ensure data is available before starting training
                         training_data = None
                         if hasattr(st.session_state, 'data') and st.session_state.data is not None:
                             training_data = st.session_state.data
@@ -751,11 +760,30 @@ def main():
             col1, col2 = st.columns([1, 4])
             with col1:
                 if st.button("🔄 New Session", type="primary"):
+                    # Show session reset progress
+                    session_progress = st.progress(0)
+                    session_status = st.empty()
+                    
+                    session_status.info("🔄 Initializing new session...")
+                    session_progress.progress(0.25, text="25% - Clearing training history...")
+                    time.sleep(0.2)
+                    
+                    session_progress.progress(0.50, text="50% - Resetting federated learning state...")
+                    time.sleep(0.2)
+                    
                     # Reset all training states
                     for key in ['training_completed', 'training_started', 'training_in_progress', 'results', 
                                'training_metrics', 'best_accuracy', 'fl_manager', 'current_training_round']:
                         if key in st.session_state:
                             del st.session_state[key]
+                    
+                    session_progress.progress(0.75, text="75% - Preparing new session...")
+                    time.sleep(0.2)
+                    
+                    session_progress.progress(1.0, text="100% - New session ready!")
+                    time.sleep(0.3)
+                    session_status.success("✅ New session started successfully!")
+                    
                     st.rerun()
             with col2:
                 st.info(get_translation("click_new_session", st.session_state.language))
