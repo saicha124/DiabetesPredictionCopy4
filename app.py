@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import time
 import math
+import json
 from datetime import datetime, timedelta
 
 # Import custom modules
@@ -17,6 +18,7 @@ from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
 from client_visualization import ClientPerformanceVisualizer
 from journey_visualization import InteractiveJourneyVisualizer
 from advanced_client_analytics import AdvancedClientAnalytics
+from gamified_tracker import GamifiedLearningTracker
 from utils import *
 
 # Page configuration
@@ -72,6 +74,8 @@ def init_session_state():
         st.session_state.journey_visualizer = InteractiveJourneyVisualizer()
     if 'advanced_analytics' not in st.session_state:
         st.session_state.advanced_analytics = AdvancedClientAnalytics()
+    if 'gamified_tracker' not in st.session_state:
+        st.session_state.gamified_tracker = GamifiedLearningTracker()
 
 def main():
     init_session_state()
@@ -103,14 +107,15 @@ def main():
                 return
 
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "🎛️ Training Control", 
         "🏥 Live Monitoring", 
         "🗺️ Learning Journey Map",
         "📊 Performance Analysis",
         "👥 Client Analytics",
         "🩺 Risk Assessment",
-        "🌐 Graph Visualization"
+        "🌐 Graph Visualization",
+        "🎮 Gamified Progress"
     ])
 
     with tab1:
@@ -1982,6 +1987,117 @@ def main():
                 - Distributed model aggregation
                 - Privacy-preserving communication
                 """)
+
+    with tab8:
+        st.header("🎮 Gamified Learning Progress Tracker")
+        
+        # Initialize progress tracking data
+        if st.session_state.training_completed:
+            # Update progress based on completed training
+            training_data = {
+                'rounds_completed': len(st.session_state.training_metrics) if st.session_state.training_metrics else 0,
+                'final_accuracy': st.session_state.training_metrics[-1].get('accuracy', 0) if st.session_state.training_metrics else 0,
+                'converged': st.session_state.training_completed,
+                'privacy_enabled': True,  # Assume privacy is enabled
+                'num_clients': 5,  # Default number of clients
+                'aggregation_algorithm': 'FedAvg'
+            }
+            
+            # Update progress silently (without notifications in this tab)
+            st.session_state.gamified_tracker.update_progress(training_data)
+        
+        # Display the comprehensive gamified dashboard
+        st.session_state.gamified_tracker.create_progress_dashboard()
+        
+        # Additional features
+        st.subheader("🏆 Achievement Actions")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("📊 Export Progress Report", use_container_width=True):
+                progress_report = st.session_state.gamified_tracker.export_progress_report()
+                st.download_button(
+                    label="📥 Download Report",
+                    data=json.dumps(progress_report, indent=2),
+                    file_name="federated_learning_progress_report.json",
+                    mime="application/json",
+                    use_container_width=True
+                )
+        
+        with col2:
+            if st.button("🔄 Reset Progress", use_container_width=True):
+                if st.checkbox("Confirm Reset (This will clear all progress)"):
+                    st.session_state.gamified_tracker = GamifiedLearningTracker()
+                    st.success("Progress reset successfully!")
+                    st.rerun()
+        
+        with col3:
+            if st.button("📈 Simulation Mode", use_container_width=True):
+                st.info("Simulation mode allows you to preview achievements without actual training.")
+                
+                # Add simulation controls
+                with st.expander("🎯 Achievement Simulator", expanded=False):
+                    st.markdown("**Unlock achievements for testing:**")
+                    
+                    sim_col1, sim_col2 = st.columns(2)
+                    
+                    with sim_col1:
+                        if st.button("🚀 Unlock First Steps"):
+                            st.session_state.gamified_tracker.achievements["first_training"]["unlocked"] = True
+                            st.success("Achievement unlocked!")
+                            st.rerun()
+                        
+                        if st.button("🎯 Unlock Accuracy Master"):
+                            st.session_state.gamified_tracker.achievements["accuracy_milestone"]["unlocked"] = True
+                            st.success("Achievement unlocked!")
+                            st.rerun()
+                        
+                        if st.button("⚡ Unlock Convergence Expert"):
+                            st.session_state.gamified_tracker.achievements["convergence_expert"]["unlocked"] = True
+                            st.success("Achievement unlocked!")
+                            st.rerun()
+                    
+                    with sim_col2:
+                        if st.button("🛡️ Unlock Privacy Guardian"):
+                            st.session_state.gamified_tracker.achievements["privacy_guardian"]["unlocked"] = True
+                            st.success("Achievement unlocked!")
+                            st.rerun()
+                        
+                        if st.button("🤝 Unlock Collaboration Champion"):
+                            st.session_state.gamified_tracker.achievements["collaboration_champion"]["unlocked"] = True
+                            st.success("Achievement unlocked!")
+                            st.rerun()
+                        
+                        if st.button("📊 Unlock Data Scientist"):
+                            st.session_state.gamified_tracker.achievements["data_scientist"]["unlocked"] = True
+                            st.success("Achievement unlocked!")
+                            st.rerun()
+        
+        # Quick stats sidebar
+        with st.sidebar:
+            st.markdown("---")
+            st.subheader("🎮 Quick Progress")
+            
+            current_level = st.session_state.gamified_tracker.get_current_level()
+            total_points = st.session_state.gamified_tracker.get_total_points()
+            achievements_unlocked = len([a for a in st.session_state.gamified_tracker.achievements.values() if a["unlocked"]])
+            total_achievements = len(st.session_state.gamified_tracker.achievements)
+            
+            st.metric("Level", current_level)
+            st.metric("Points", total_points)
+            st.metric("Achievements", f"{achievements_unlocked}/{total_achievements}")
+            
+            # Progress to next level
+            next_milestone = st.session_state.gamified_tracker.get_next_milestone()
+            if next_milestone["points_needed"] > 0:
+                st.progress(next_milestone["progress_percentage"] / 100)
+                st.caption(f"Next level: {next_milestone['points_needed']} points needed")
+            else:
+                st.progress(1.0)
+                st.caption("Max level reached!")
+            
+            st.markdown("---")
 
 if __name__ == "__main__":
     main()
