@@ -233,8 +233,20 @@ class FederatedLearningManager:
                 # Committee-based security check
                 validated_updates = self._committee_validation(client_updates)
                 
-                # Apply differential privacy
+                # Apply differential privacy with current parameters
                 if self.enable_dp and self.dp_manager:
+                    # Update privacy parameters if they changed in session state
+                    if hasattr(st, 'session_state'):
+                        current_epsilon = st.session_state.get('epsilon', self.epsilon)
+                        current_delta = st.session_state.get('delta', self.delta)
+                        
+                        # Update DP manager parameters if they changed
+                        if current_epsilon != self.dp_manager.epsilon or current_delta != self.dp_manager.delta:
+                            self.dp_manager.epsilon = current_epsilon
+                            self.dp_manager.delta = current_delta
+                            self.dp_manager.noise_scale = self.dp_manager._calculate_noise_scale()
+                            print(f"Updated privacy parameters: ε={current_epsilon}, δ={current_delta}")
+                    
                     validated_updates = self.dp_manager.add_noise(validated_updates)
                 
                 # Aggregate updates

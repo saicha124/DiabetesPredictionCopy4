@@ -744,6 +744,34 @@ def main():
                 with col4:
                     st.metric("🏆 Best Accuracy", f"{st.session_state.best_accuracy:.3f}")
                 
+                # Privacy status
+                if hasattr(st.session_state, 'enable_dp') and st.session_state.enable_dp:
+                    st.subheader("🔒 Differential Privacy Status")
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        current_epsilon = st.session_state.get('epsilon', 1.0)
+                        st.metric("Privacy Budget (ε)", f"{current_epsilon:.2f}")
+                    with col2:
+                        current_delta = st.session_state.get('delta', 1e-5)
+                        st.metric("Failure Prob (δ)", f"{current_delta:.0e}")
+                    with col3:
+                        noise_level = "High" if current_epsilon < 1.0 else "Medium" if current_epsilon < 3.0 else "Low"
+                        st.metric("Noise Level", noise_level)
+                    with col4:
+                        privacy_strength = "Strong" if current_epsilon < 1.0 else "Moderate" if current_epsilon < 3.0 else "Weak"
+                        st.metric("Privacy Strength", privacy_strength)
+                    
+                    # Privacy budget consumption indicator
+                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'dp_manager'):
+                        dp_manager = st.session_state.fl_manager.dp_manager
+                        if hasattr(dp_manager, 'privacy_accountant'):
+                            remaining_eps, remaining_delta = dp_manager.privacy_accountant.get_remaining_budget()
+                            used_eps = dp_manager.privacy_accountant.total_epsilon - remaining_eps
+                            usage_percent = (used_eps / dp_manager.privacy_accountant.total_epsilon) * 100 if dp_manager.privacy_accountant.total_epsilon > 0 else 0
+                            
+                            st.progress(usage_percent / 100, text=f"Privacy Budget Used: {usage_percent:.1f}% (ε={used_eps:.3f}/{dp_manager.privacy_accountant.total_epsilon:.3f})")
+                
                 # Secret sharing status
                 if hasattr(st.session_state, 'training_ss_enabled') and st.session_state.training_ss_enabled:
                     st.subheader("🔐 Secret Sharing Status")
