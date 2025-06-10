@@ -96,8 +96,22 @@ class InteractiveJourneyVisualizer:
             if session_state.get('training_metrics'):
                 total_rounds = session_state.get('max_rounds', 20)
                 current_round = len(session_state.get('training_metrics', []))
-                return min(100, (current_round / total_rounds) * 100)
-            return 0
+                
+                # Calculate gradual progress based on current stage
+                if self.current_stage == 4:  # Training Initiation
+                    # Progress from 0% to 30% based on rounds completed
+                    base_progress = min(30, (current_round / max(1, total_rounds * 0.1)) * 30)
+                elif self.current_stage == 5:  # Fog Aggregation
+                    # Progress from 30% to 70% based on rounds completed
+                    round_ratio = current_round / total_rounds
+                    base_progress = 30 + min(40, round_ratio * 40)
+                elif self.current_stage == 6:  # Global Convergence
+                    # Progress from 70% to 95% based on rounds completed
+                    round_ratio = current_round / total_rounds
+                    base_progress = 70 + min(25, round_ratio * 25)
+                
+                return min(95, base_progress)  # Cap at 95% until truly complete
+            return 10 if self.current_stage == 4 else 0
         elif self.current_stage == 8:  # Results Analysis
             # Check if training is truly completed
             if session_state.get('training_completed', False) or (hasattr(session_state, 'results') and session_state.results):

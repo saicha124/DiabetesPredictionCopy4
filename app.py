@@ -303,6 +303,9 @@ def main():
                         )
                         st.session_state.fog_manager = fog_manager
                     
+                    init_progress.progress(0.80, text="80% - Setting up fog nodes...")
+                    time.sleep(0.2)
+                    
                     # Integrate training-level secret sharing if enabled
                     if enable_training_ss and enable_fog:
                         ss_manager = integrate_training_secret_sharing(fl_manager, num_fog_nodes, ss_threshold)
@@ -310,6 +313,10 @@ def main():
                         st.session_state.training_ss_enabled = True
                     else:
                         st.session_state.training_ss_enabled = False
+                    
+                    init_progress.progress(1.0, text="100% - FL manager ready!")
+                    time.sleep(0.3)
+                    init_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
                     
                     st.session_state.fl_manager = fl_manager
                     
