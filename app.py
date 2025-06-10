@@ -18,7 +18,7 @@ from hierarchical_fl_protocol import HierarchicalFederatedLearningEngine
 from client_visualization import ClientPerformanceVisualizer
 from journey_visualization import InteractiveJourneyVisualizer
 from advanced_client_analytics import AdvancedClientAnalytics
-from secret_sharing import HierarchicalSecretSharing, SecretSharingConfig, create_secret_sharing_demo
+
 
 from utils import *
 
@@ -107,15 +107,14 @@ def main():
                 return
 
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "🎛️ Training Control", 
         "🏥 Live Monitoring", 
         "🗺️ Learning Journey Map",
         "📊 Performance Analysis",
         "👥 Client Analytics",
         "🩺 Risk Assessment",
-        "🌐 Graph Visualization",
-        "🔐 Secret Sharing"
+        "🌐 Graph Visualization"
     ])
 
     with tab1:
@@ -179,31 +178,7 @@ def main():
                 elif distribution_strategy == "Quantity Skew":
                     strategy_params['skew_factor'] = st.slider("Skew Factor", 1.0, 5.0, 2.0, 0.5)
                 
-                st.subheader("🔐 Secret Sharing Configuration")
-                enable_secret_sharing = st.checkbox("Enable Secret Sharing", value=True)
-                if enable_secret_sharing:
-                    # Use the fog nodes from fog computing setup as the maximum
-                    if enable_fog:
-                        ss_num_fog_nodes = num_fog_nodes  # Use the same fog nodes
-                        st.info(f"Using {num_fog_nodes} fog nodes from Fog Computing Setup")
-                    else:
-                        ss_num_fog_nodes = st.slider("Number of Fog Nodes for Sharing", 3, 10, 5, key="ss_nodes_slider")
-                    
-                    ss_threshold = st.slider("Reconstruction Threshold", 2, ss_num_fog_nodes, min(3, ss_num_fog_nodes), key="ss_threshold_slider")
-                    ss_prime_modulus = st.selectbox("Prime Modulus", [2**31 - 1, 2**32 - 5, 2**61 - 1], index=0, key="ss_prime_select")
-                    
-                    if ss_threshold > ss_num_fog_nodes:
-                        st.error("Threshold cannot exceed number of fog nodes")
-                        enable_secret_sharing = False
-                    elif ss_threshold < 2:
-                        st.error("Threshold must be at least 2")
-                        enable_secret_sharing = False
-                    else:
-                        st.success(f"Secret sharing: {ss_threshold}/{ss_num_fog_nodes} threshold scheme")
-                else:
-                    ss_num_fog_nodes = 5
-                    ss_threshold = 3
-                    ss_prime_modulus = 2**31 - 1
+
                 
                 if distribution_strategy == "Geographic":
                     strategy_params['correlation_strength'] = st.slider("Correlation Strength", 0.1, 1.0, 0.8, 0.1)
@@ -246,19 +221,7 @@ def main():
                             )
                             st.session_state.fog_manager = fog_manager
                         
-                        # Setup secret sharing if enabled
-                        if enable_secret_sharing:
-                            ss_config = SecretSharingConfig(
-                                num_fog_nodes=ss_num_fog_nodes,
-                                threshold=ss_threshold,
-                                prime_modulus=ss_prime_modulus
-                            )
-                            hierarchical_ss = HierarchicalSecretSharing(ss_config)
-                            st.session_state.secret_sharing = hierarchical_ss
-                            st.session_state.ss_config = ss_config
-                            st.session_state.secret_sharing_enabled = True
-                        else:
-                            st.session_state.secret_sharing_enabled = False
+
                         
                         st.session_state.fl_manager = fl_manager
                         
@@ -2029,59 +1992,7 @@ def main():
                 - Privacy-preserving communication
                 """)
 
-    with tab8:
-        st.header("🔐 Hierarchical Secret Sharing for Federated Learning")
-        
-        st.markdown("""
-        This section implements **Shamir's Secret Sharing** for the hierarchical federated learning architecture, 
-        where each client divides their model weights into shares and distributes them across fog nodes.
-        """)
-        
-        # Create the secret sharing demo
-        create_secret_sharing_demo()
-        
-        # Integration with federated learning
-        st.subheader("🔗 Integration with Federated Learning")
-        
-        if st.session_state.training_completed:
-            st.success("Training completed - Secret sharing can be applied to trained weights")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Current Training Results:**")
-                if st.session_state.training_metrics:
-                    final_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
-                    total_rounds = len(st.session_state.training_metrics)
-                    st.metric("Final Accuracy", f"{final_accuracy:.3f}")
-                    st.metric("Training Rounds", total_rounds)
-            
-            with col2:
-                st.markdown("**Secret Sharing Benefits:**")
-                st.info("No single fog node sees complete weights")
-                st.info("Threshold-based reconstruction security")
-                st.info("Fault tolerance against node failures")
-        
-        else:
-            st.info("Complete federated learning training to see integration with actual model weights")
-        
-        # Current configuration display
-        if hasattr(st.session_state, 'secret_sharing_enabled') and st.session_state.secret_sharing_enabled:
-            st.subheader("Current Configuration")
-            config = st.session_state.ss_config
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Fog Nodes", config.num_fog_nodes)
-                st.metric("Threshold", config.threshold)
-            with col2:
-                st.metric("Prime Modulus", f"{config.prime_modulus:,}")
-                st.metric("Security Level", f"{config.threshold}/{config.num_fog_nodes}")
-            with col3:
-                fault_tolerance = config.num_fog_nodes - config.threshold
-                st.metric("Fault Tolerance", f"{fault_tolerance} nodes")
-                collusion_resistance = config.threshold - 1
-                st.metric("Collusion Resistance", f"< {collusion_resistance} nodes")
+
 
 if __name__ == "__main__":
     main()
