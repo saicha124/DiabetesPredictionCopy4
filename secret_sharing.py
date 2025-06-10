@@ -24,11 +24,11 @@ class SecretSharingConfig:
     num_fog_nodes: int = 5
     threshold: int = 3
     prime_modulus: int = 2**31 - 1  # Large prime for finite field arithmetic
-    polynomial_degree: int = None  # Will be set to threshold - 1
+    polynomial_degree: int = 2  # Will be set to threshold - 1
     
     def __post_init__(self):
         if self.polynomial_degree is None:
-            self.polynomial_degree = self.threshold - 1
+            self.polynomial_degree = max(1, self.threshold - 1)
         
         # Validate configuration
         if self.threshold > self.num_fog_nodes:
@@ -147,10 +147,11 @@ class ShamirSecretSharing:
                 fog_shares[fog_node_id].append(share_value)
         
         # Convert lists back to numpy arrays
+        result = {}
         for fog_node_id in fog_shares:
-            fog_shares[fog_node_id] = np.array(fog_shares[fog_node_id])
+            result[fog_node_id] = np.array(fog_shares[fog_node_id])
         
-        return fog_shares
+        return result
     
     def reconstruct_model_weights(self, fog_shares: Dict[int, np.ndarray], 
                                 original_shape: Tuple) -> np.ndarray:
@@ -254,14 +255,14 @@ def create_secret_sharing_demo():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        num_fog_nodes = st.slider("Number of Fog Nodes", min_value=3, max_value=10, value=5)
+        num_fog_nodes = st.slider("Number of Fog Nodes", min_value=3, max_value=10, value=5, key="ss_num_fog_nodes")
     
     with col2:
         threshold = st.slider("Reconstruction Threshold", min_value=2, max_value=num_fog_nodes, 
-                            value=min(3, num_fog_nodes))
+                            value=min(3, num_fog_nodes), key="ss_threshold")
     
     with col3:
-        demo_weights_size = st.slider("Demo Weight Matrix Size", min_value=5, max_value=50, value=20)
+        demo_weights_size = st.slider("Demo Weight Matrix Size", min_value=5, max_value=50, value=20, key="ss_demo_size")
     
     # Create configuration
     try:
@@ -404,7 +405,7 @@ def create_secret_sharing_demo():
             axes[2].axis('off')
             
             plt.tight_layout()
-            st.pyplot(plt)
+            st.pyplot(plt.gcf())
             
         except Exception as e:
             st.error(f"Reconstruction failed: {e}")

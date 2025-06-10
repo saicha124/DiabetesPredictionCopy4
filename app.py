@@ -182,9 +182,15 @@ def main():
                 st.subheader("🔐 Secret Sharing Configuration")
                 enable_secret_sharing = st.checkbox("Enable Secret Sharing", value=True)
                 if enable_secret_sharing:
-                    ss_num_fog_nodes = st.slider("Number of Fog Nodes for Sharing", 3, 10, 5)
-                    ss_threshold = st.slider("Reconstruction Threshold", 2, ss_num_fog_nodes, min(3, ss_num_fog_nodes))
-                    ss_prime_modulus = st.selectbox("Prime Modulus", [2**31 - 1, 2**32 - 5, 2**61 - 1], index=0)
+                    # Use the fog nodes from fog computing setup as the maximum
+                    if enable_fog:
+                        ss_num_fog_nodes = num_fog_nodes  # Use the same fog nodes
+                        st.info(f"Using {num_fog_nodes} fog nodes from Fog Computing Setup")
+                    else:
+                        ss_num_fog_nodes = st.slider("Number of Fog Nodes for Sharing", 3, 10, 5, key="ss_nodes_slider")
+                    
+                    ss_threshold = st.slider("Reconstruction Threshold", 2, ss_num_fog_nodes, min(3, ss_num_fog_nodes), key="ss_threshold_slider")
+                    ss_prime_modulus = st.selectbox("Prime Modulus", [2**31 - 1, 2**32 - 5, 2**61 - 1], index=0, key="ss_prime_select")
                     
                     if ss_threshold > ss_num_fog_nodes:
                         st.error("Threshold cannot exceed number of fog nodes")
