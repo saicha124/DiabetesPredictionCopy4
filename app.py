@@ -20,12 +20,13 @@ from journey_visualization import InteractiveJourneyVisualizer
 from advanced_client_analytics import AdvancedClientAnalytics
 from real_medical_data_fetcher import RealMedicalDataFetcher, load_authentic_medical_data
 from training_secret_sharing import TrainingLevelSecretSharingManager, integrate_training_secret_sharing
+from translations import get_translation, translate_risk_level, translate_clinical_advice
 
 from utils import *
 
 # Page configuration
 st.set_page_config(
-    page_title="Hierarchical Federated Learning Platform",
+    page_title=get_translation("page_title"),
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -109,17 +110,17 @@ def main():
 
     # Main tabs
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "🎛️ Training Control", 
-        "🏥 Live Monitoring", 
-        "🗺️ Learning Journey Map",
-        "📊 Performance Analysis",
-        "👥 Client Analytics",
-        "🩺 Risk Assessment",
-        "🌐 Graph Visualization"
+        get_translation("tab_training"), 
+        get_translation("tab_monitoring"), 
+        get_translation("tab_visualization"),
+        get_translation("tab_analytics"),
+        "👥 Analyses Clients",
+        get_translation("tab_risk"),
+        "🌐 Visualisation Graphique"
     ])
 
     with tab1:
-        st.header("🎛️ Federated Learning Training Control")
+        st.header("🎛️ " + get_translation("tab_training"))
         
         if st.session_state.data_loaded:
             col1, col2 = st.columns(2)
