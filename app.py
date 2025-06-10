@@ -314,32 +314,32 @@ def main():
                     st.session_state.fl_manager = fl_manager
                     
                     # Ensure data is available before starting training
-                        training_data = None
-                        if hasattr(st.session_state, 'data') and st.session_state.data is not None:
-                            training_data = st.session_state.data
-                        else:
-                            # Load diabetes dataset directly
-                            try:
-                                training_data = pd.read_csv('diabetes.csv')
-                                st.session_state.data = training_data
-                                st.session_state.data_loaded = True
-                                st.info(f"Auto-loaded diabetes dataset: {training_data.shape[0]} patients")
-                            except Exception as e:
-                                st.error(f"Failed to load diabetes dataset: {str(e)}")
-                                return
-                        
-                        if training_data is None or training_data.empty:
-                            st.error("No valid training data available")
+                    training_data = None
+                    if hasattr(st.session_state, 'data') and st.session_state.data is not None:
+                        training_data = st.session_state.data
+                    else:
+                        # Load diabetes dataset directly
+                        try:
+                            training_data = pd.read_csv('diabetes.csv')
+                            st.session_state.data = training_data
+                            st.session_state.data_loaded = True
+                            st.info(f"Auto-loaded diabetes dataset: {training_data.shape[0]} patients")
+                        except Exception as e:
+                            st.error(f"Failed to load diabetes dataset: {str(e)}")
                             return
-                            
-                        st.session_state.training_data = training_data
-                        st.session_state.training_started = True
-                        st.session_state.training_completed = False
-                        st.session_state.training_metrics = []
-                        st.session_state.fog_results = []
-                        st.session_state.best_accuracy = 0.0
-                        st.session_state.current_round = 0
+                    
+                    if training_data is None or training_data.empty:
+                        st.error("No valid training data available")
+                        return
                         
+                    st.session_state.training_data = training_data
+                    st.session_state.training_started = True
+                    st.session_state.training_completed = False
+                    st.session_state.training_metrics = []
+                    st.session_state.fog_results = []
+                    st.session_state.best_accuracy = 0.0
+                    st.session_state.current_round = 0
+                    
                     st.success("Training initialized! Switch to Live Monitoring tab to see progress.")
             
             with col2:
