@@ -216,8 +216,8 @@ def main():
                     st.session_state.epsilon = None
                     st.session_state.delta = None
                 
-                st.subheader("📊 Data Distribution")
-                distribution_strategy = st.selectbox("Distribution Strategy", 
+                st.subheader(get_translation("data_distribution", st.session_state.language))
+                distribution_strategy = st.selectbox(get_translation("distribution_strategy", st.session_state.language), 
                                                    ["IID", "Non-IID", "Pathological", "Quantity Skew", "Geographic"], key="distribution_select")
                 
                 # Strategy-specific parameters
