@@ -5,6 +5,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, log_loss
 import time
+import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import streamlit as st
@@ -245,9 +246,45 @@ class FederatedLearningManager:
                             self.dp_manager.epsilon = current_epsilon
                             self.dp_manager.delta = current_delta
                             self.dp_manager.noise_scale = self.dp_manager._calculate_noise_scale()
-                            print(f"Updated privacy parameters: ε={current_epsilon}, δ={current_delta}")
+                            print(f"Updated privacy parameters: ε={current_epsilon}, δ={current_delta}, noise_scale={self.dp_manager.noise_scale}")
                     
-                    validated_updates = self.dp_manager.add_noise(validated_updates)
+                    # Add noise to validated updates with adaptive sensitivity
+                    print(f"Applying DP noise with ε={self.dp_manager.epsilon}, noise_scale={self.dp_manager.noise_scale}")
+                    noisy_updates = []
+                    for update in validated_updates:
+                        if 'parameters' in update and isinstance(update['parameters'], np.ndarray):
+                            original_params = update['parameters'].copy()
+                            
+                            # Calculate adaptive sensitivity based on parameter magnitude
+                            param_magnitude = np.linalg.norm(original_params)
+                            adaptive_sensitivity = max(0.1, param_magnitude * 0.1)  # 10% of parameter magnitude
+                            
+                            # Calculate noise scale with adaptive sensitivity
+                            if self.dp_manager.delta == 0:
+                                noise_scale = adaptive_sensitivity / self.dp_manager.epsilon
+                            else:
+                                import math
+                                c = math.sqrt(2 * math.log(1.25 / self.dp_manager.delta))
+                                noise_scale = c * adaptive_sensitivity / self.dp_manager.epsilon
+                            
+                            # Add Gaussian noise
+                            noise = np.random.normal(0, noise_scale, size=original_params.shape)
+                            noisy_params = original_params + noise
+                            
+                            noisy_update = update.copy()
+                            noisy_update['parameters'] = noisy_params
+                            noisy_update['dp_applied'] = True
+                            noisy_update['epsilon'] = self.dp_manager.epsilon
+                            noisy_update['noise_magnitude'] = np.linalg.norm(noise)
+                            noisy_update['adaptive_sensitivity'] = adaptive_sensitivity
+                            noisy_update['noise_scale_used'] = noise_scale
+                            
+                            print(f"Client {update.get('client_id', 'unknown')}: ε={self.dp_manager.epsilon}, sensitivity={adaptive_sensitivity:.4f}, noise_scale={noise_scale:.4f}, noise_mag={np.linalg.norm(noise):.6f}")
+                            noisy_updates.append(noisy_update)
+                        else:
+                            noisy_updates.append(update)
+                    
+                    validated_updates = noisy_updates
                 
                 # Aggregate updates
                 self.global_model = self.aggregator.aggregate(
@@ -259,12 +296,25 @@ class FederatedLearningManager:
                 
                 # Record metrics
                 round_time = time.time() - start_time
+                
+                # Calculate DP effects if applied
+                dp_effects = {}
+                if self.enable_dp and validated_updates:
+                    dp_applied_count = sum(1 for update in validated_updates if update.get('dp_applied', False))
+                    avg_noise_magnitude = np.mean([update.get('noise_magnitude', 0) for update in validated_updates if 'noise_magnitude' in update]) if validated_updates else 0
+                    dp_effects = {
+                        'dp_noise_applied': dp_applied_count,
+                        'avg_noise_magnitude': avg_noise_magnitude,
+                        'epsilon_used': self.dp_manager.epsilon if self.dp_manager else 0
+                    }
+                
                 metrics = {
                     'round': self.current_round,
                     'accuracy': accuracy,
                     'loss': loss,
                     'f1_score': f1,
-                    'execution_time': round_time
+                    'execution_time': round_time,
+                    **dp_effects
                 }
                 
                 # Store metrics in training history (no session state access)
