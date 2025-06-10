@@ -259,16 +259,13 @@ def main():
             
             with col1:
                 if st.button("🚀 Start Training", disabled=st.session_state.training_started):
-                    st.session_state.training_initialization = True
-                
-                # Show progress bar when initialization is active
-                if st.session_state.get('training_initialization', False):
+                    # Show training initialization progress
                     init_progress = st.progress(0)
                     init_status = st.empty()
                     
                     init_status.info("🔄 Initializing federated learning...")
                     init_progress.progress(0.20, text="20% - Setting up parameters...")
-                    time.sleep(0.5)
+                    time.sleep(0.2)
                     
                     init_progress.progress(0.40, text="40% - Storing configuration...")
                     # Store configuration
@@ -285,7 +282,7 @@ def main():
                     st.session_state.model_type = internal_model_type
                     
                     init_progress.progress(0.60, text="60% - Initializing FL manager...")
-                    time.sleep(0.5)
+                    time.sleep(0.2)
                     
                     # Initialize FL manager
                     fl_manager = FederatedLearningManager(
@@ -296,9 +293,6 @@ def main():
                             epsilon=epsilon or 1.0,
                             delta=delta or 1e-5
                     )
-                    
-                    init_progress.progress(0.80, text="80% - Setting up training environment...")
-                    time.sleep(0.5)
                     
                     # Setup fog nodes if enabled
                     if enable_fog:
@@ -320,43 +314,33 @@ def main():
                     st.session_state.fl_manager = fl_manager
                     
                     # Ensure data is available before starting training
-                    training_data = None
-                    if hasattr(st.session_state, 'data') and st.session_state.data is not None:
-                        training_data = st.session_state.data
-                    else:
-                        # Load diabetes dataset directly
-                        try:
-                            training_data = pd.read_csv('diabetes.csv')
-                            st.session_state.data = training_data
-                            st.session_state.data_loaded = True
-                            st.info(f"Auto-loaded diabetes dataset: {training_data.shape[0]} patients")
-                        except Exception as e:
-                            st.error(f"Failed to load diabetes dataset: {str(e)}")
-                            return
-                    
-                    if training_data is None or training_data.empty:
-                        st.error("No valid training data available")
-                        return
+                        training_data = None
+                        if hasattr(st.session_state, 'data') and st.session_state.data is not None:
+                            training_data = st.session_state.data
+                        else:
+                            # Load diabetes dataset directly
+                            try:
+                                training_data = pd.read_csv('diabetes.csv')
+                                st.session_state.data = training_data
+                                st.session_state.data_loaded = True
+                                st.info(f"Auto-loaded diabetes dataset: {training_data.shape[0]} patients")
+                            except Exception as e:
+                                st.error(f"Failed to load diabetes dataset: {str(e)}")
+                                return
                         
-                    st.session_state.training_data = training_data
-                    st.session_state.training_started = True
-                    st.session_state.training_completed = False
-                    st.session_state.training_metrics = []
-                    st.session_state.fog_results = []
-                    st.session_state.best_accuracy = 0.0
-                    st.session_state.current_round = 0
-                    
-                    # Complete initialization with 100% progress
-                    init_progress.progress(1.0, text="100% - Training ready!")
-                    time.sleep(0.5)
-                    init_status.success("✅ Training initialized successfully!")
-                    time.sleep(0.5)
-                    
-                    # Clear initialization flag to hide progress bar
-                    st.session_state.training_initialization = False
-                    
+                        if training_data is None or training_data.empty:
+                            st.error("No valid training data available")
+                            return
+                            
+                        st.session_state.training_data = training_data
+                        st.session_state.training_started = True
+                        st.session_state.training_completed = False
+                        st.session_state.training_metrics = []
+                        st.session_state.fog_results = []
+                        st.session_state.best_accuracy = 0.0
+                        st.session_state.current_round = 0
+                        
                     st.success("Training initialized! Switch to Live Monitoring tab to see progress.")
-                    st.rerun()
             
             with col2:
                 if st.button("⏹️ Stop Training", disabled=not st.session_state.training_started):
@@ -776,33 +760,29 @@ def main():
             col1, col2 = st.columns([1, 4])
             with col1:
                 if st.button("🔄 New Session", type="primary"):
-                    # Create progress containers that persist during state changes
-                    progress_container = st.container()
+                    # Show session reset progress
+                    session_progress = st.progress(0)
+                    session_status = st.empty()
                     
-                    with progress_container:
-                        session_progress = st.progress(0)
-                        session_status = st.empty()
-                        
-                        session_status.info("🔄 Initializing new session...")
-                        session_progress.progress(0.25, text="25% - Clearing training history...")
-                        time.sleep(0.5)
-                        
-                        session_progress.progress(0.50, text="50% - Resetting federated learning state...")
-                        time.sleep(0.5)
-                        
-                        # Reset all training states
-                        for key in ['training_completed', 'training_started', 'training_in_progress', 'results', 
-                                   'training_metrics', 'best_accuracy', 'fl_manager', 'current_training_round']:
-                            if key in st.session_state:
-                                del st.session_state[key]
-                        
-                        session_progress.progress(0.75, text="75% - Preparing new session...")
-                        time.sleep(0.5)
-                        
-                        session_progress.progress(1.0, text="100% - New session ready!")
-                        time.sleep(0.5)
-                        session_status.success("✅ New session started successfully!")
-                        time.sleep(0.5)
+                    session_status.info("🔄 Initializing new session...")
+                    session_progress.progress(0.25, text="25% - Clearing training history...")
+                    time.sleep(0.2)
+                    
+                    session_progress.progress(0.50, text="50% - Resetting federated learning state...")
+                    time.sleep(0.2)
+                    
+                    # Reset all training states
+                    for key in ['training_completed', 'training_started', 'training_in_progress', 'results', 
+                               'training_metrics', 'best_accuracy', 'fl_manager', 'current_training_round']:
+                        if key in st.session_state:
+                            del st.session_state[key]
+                    
+                    session_progress.progress(0.75, text="75% - Preparing new session...")
+                    time.sleep(0.2)
+                    
+                    session_progress.progress(1.0, text="100% - New session ready!")
+                    time.sleep(0.3)
+                    session_status.success("✅ New session started successfully!")
                     
                     st.rerun()
             with col2:
