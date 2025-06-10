@@ -1410,7 +1410,7 @@ def main():
             st.subheader("🔍 Patient Risk Analysis")
             
             # Patient input form
-            with st.form("patient_assessment"):
+            with st.form("patient_risk_assessment_form"):
                 st.markdown("### Patient Information")
                 
                 col1, col2 = st.columns(2)
