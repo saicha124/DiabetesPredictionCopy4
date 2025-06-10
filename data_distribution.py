@@ -98,8 +98,9 @@ class NonIIDDistribution(DataDistributionStrategy):
         unique_classes = np.unique(y)
         num_classes = len(unique_classes)
         
-        # Create Dirichlet distribution for each class
-        client_data = [{'X_train': [], 'X_test': [], 'y_train': [], 'y_test': []} for _ in range(self.num_clients)]
+        # Initialize client data storage
+        client_X_parts = [[] for _ in range(self.num_clients)]
+        client_y_parts = [[] for _ in range(self.num_clients)]
         
         for class_label in unique_classes:
             # Get indices for this class
@@ -124,22 +125,19 @@ class NonIIDDistribution(DataDistributionStrategy):
                     client_class_X = class_X[start_idx:end_idx]
                     client_class_y = class_y[start_idx:end_idx]
                     
-                    # Add to client data
-                    if len(client_data[i]['X_train']) == 0:
-                        client_data[i]['X_train'] = client_class_X
-                        client_data[i]['y_train'] = client_class_y
-                    else:
-                        client_data[i]['X_train'] = np.vstack([client_data[i]['X_train'], client_class_X])
-                        client_data[i]['y_train'] = np.concatenate([client_data[i]['y_train'], client_class_y])
+                    # Add to client lists
+                    client_X_parts[i].append(client_class_X)
+                    client_y_parts[i].append(client_class_y)
                 
                 start_idx = end_idx
         
-        # Create train/test splits for each client
+        # Combine data parts for each client and create train/test splits
         final_client_data = []
         for i in range(self.num_clients):
-            if len(client_data[i]['X_train']) > 0:
-                X_client = client_data[i]['X_train']
-                y_client = client_data[i]['y_train']
+            if len(client_X_parts[i]) > 0:
+                # Concatenate all parts for this client
+                X_client = np.vstack(client_X_parts[i])
+                y_client = np.concatenate(client_y_parts[i])
                 
                 if len(X_client) > 1 and len(np.unique(y_client)) > 1:
                     try:
