@@ -167,31 +167,32 @@ def main():
                 
                 st.subheader("📊 Data Distribution")
                 distribution_strategy = st.selectbox("Distribution Strategy", 
-                                                   ["IID", "Non-IID", "Pathological", "Quantity Skew", "Geographic"])
+                                                   ["IID", "Non-IID", "Pathological", "Quantity Skew", "Geographic"], key="distribution_select")
                 
                 # Strategy-specific parameters
                 strategy_params = {}
                 if distribution_strategy == "Non-IID":
-                    strategy_params['alpha'] = st.slider("Dirichlet Alpha", 0.1, 2.0, 0.5, 0.1)
+                    strategy_params['alpha'] = st.slider("Dirichlet Alpha", 0.1, 2.0, 0.5, 0.1, key="alpha_slider")
                 elif distribution_strategy == "Pathological":
-                    strategy_params['classes_per_client'] = st.slider("Classes per Client", 1, 2, 1)
+                    strategy_params['classes_per_client'] = st.slider("Classes per Client", 1, 2, 1, key="classes_slider")
                 elif distribution_strategy == "Quantity Skew":
-                    strategy_params['skew_factor'] = st.slider("Skew Factor", 1.0, 5.0, 2.0, 0.5)
+                    strategy_params['skew_factor'] = st.slider("Skew Factor", 1.0, 5.0, 2.0, 0.5, key="skew_slider")
                 
 
                 
                 if distribution_strategy == "Geographic":
-                    strategy_params['correlation_strength'] = st.slider("Correlation Strength", 0.1, 1.0, 0.8, 0.1)
+                    strategy_params['correlation_strength'] = st.slider("Correlation Strength", 0.1, 1.0, 0.8, 0.1, key="correlation_slider")
                 
                 st.subheader("🔐 Training-Level Secret Sharing")
-                enable_training_ss = st.checkbox("Enable Secret Sharing in Training", value=True)
+                enable_training_ss = st.checkbox("Enable Secret Sharing in Training", value=True, key="enable_ss_check")
                 if enable_training_ss:
                     if enable_fog:
                         ss_threshold = st.slider("Secret Sharing Threshold", 
                                                min_value=2, 
                                                max_value=num_fog_nodes, 
                                                value=max(2, int(0.67 * num_fog_nodes)),
-                                               help=f"Number of fog nodes required to reconstruct weights (max: {num_fog_nodes})")
+                                               help=f"Number of fog nodes required to reconstruct weights (max: {num_fog_nodes})",
+                                               key="ss_threshold_slider")
                         st.info(f"Using {num_fog_nodes} fog nodes for secret sharing distribution")
                         st.success(f"Secret sharing: {ss_threshold}/{num_fog_nodes} threshold scheme")
                     else:
@@ -293,10 +294,20 @@ def main():
                         if key not in ['data', 'data_loaded']:
                             del st.session_state[key]
                     
-                    # Reset widget values by using keys and default values
-                    st.session_state.reset_widgets = True
+                    # Clear all widget keys to reset their values to defaults
+                    widget_keys = [
+                        'num_clients_slider', 'max_rounds_slider', 'model_type_select',
+                        'enable_fog_check', 'num_fog_nodes_slider', 'fog_method_select',
+                        'enable_dp_check', 'epsilon_slider', 'delta_select',
+                        'distribution_select', 'alpha_slider', 'classes_slider', 
+                        'skew_slider', 'correlation_slider', 'enable_ss_check', 'ss_threshold_slider'
+                    ]
+                    for widget_key in widget_keys:
+                        if widget_key in st.session_state:
+                            del st.session_state[widget_key]
+                    
                     init_session_state()
-                    st.success("System reset. You can now start training with 28 rounds.")
+                    st.success("System reset. All configuration parameters restored to defaults.")
                     st.rerun()
 
     # Progressive training execution with real-time updates
