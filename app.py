@@ -132,7 +132,7 @@ def main():
                 if enable_fog:
                     num_fog_nodes = st.slider("Number of Fog Nodes", 2, 6, 3)
                     fog_method = st.selectbox("Fog Aggregation Method", 
-                                            ["FedAvg", "Weighted", "Median", "Mixed Methods"])
+                                            ["FedAvg", "FedProx", "Weighted", "Median", "Mixed Methods"])
                 else:
                     num_fog_nodes = 0
                     fog_method = "FedAvg"

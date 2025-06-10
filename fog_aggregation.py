@@ -7,10 +7,11 @@ from sklearn.metrics import accuracy_score, log_loss, f1_score
 class FogNode:
     """Represents a fog computing node in hierarchical federated learning"""
     
-    def __init__(self, fog_id: int, client_ids: List[int], aggregation_method: str = "FedAvg"):
+    def __init__(self, fog_id: int, client_ids: List[int], aggregation_method: str = "FedAvg", mu: float = 0.01):
         self.fog_id = fog_id
         self.client_ids = client_ids
         self.aggregation_method = aggregation_method
+        self.mu = mu  # FedProx proximal parameter
         self.local_model = None
         self.aggregation_history = []
         self.performance_metrics = {
@@ -20,6 +21,7 @@ class FogNode:
             'aggregation_time': [],
             'communication_overhead': []
         }
+        self.client_round_metrics = {}  # Track per-client per-round metrics
     
     def aggregate_client_updates(self, client_updates: List[Dict[str, Any]], global_model) -> Dict[str, Any]:
         """Aggregate updates from clients assigned to this fog node"""
@@ -34,6 +36,8 @@ class FogNode:
         # Perform aggregation based on method
         if self.aggregation_method == "FedAvg":
             aggregated_update = self._fedavg_aggregation(fog_client_updates, global_model)
+        elif self.aggregation_method == "FedProx":
+            aggregated_update = self._fedprox_aggregation(fog_client_updates, global_model)
         elif self.aggregation_method == "WeightedAvg":
             aggregated_update = self._weighted_aggregation(fog_client_updates, global_model)
         elif self.aggregation_method == "Median":
@@ -102,6 +106,52 @@ class FogNode:
             'parameters': aggregated_params,
             'num_samples': total_samples,
             'client_count': len(client_updates)
+        }
+    
+    def _fedprox_aggregation(self, client_updates: List[Dict[str, Any]], global_model) -> Dict[str, Any]:
+        """FedProx aggregation with proximal regularization"""
+        if not client_updates:
+            return None
+        
+        # Get global model parameters for proximal term
+        try:
+            if hasattr(global_model, 'coef_') and hasattr(global_model, 'intercept_'):
+                global_params = np.concatenate([
+                    global_model.coef_.flatten(),
+                    global_model.intercept_.flatten()
+                ])
+            else:
+                global_params = None
+        except:
+            global_params = None
+        
+        total_samples = sum(update['num_samples'] for update in client_updates)
+        if total_samples == 0:
+            return None
+        
+        # Aggregate with proximal regularization
+        aggregated_params = None
+        
+        for update in client_updates:
+            weight = update['num_samples'] / total_samples
+            params = update['parameters']
+            
+            # Apply proximal regularization if global params available
+            if global_params is not None and isinstance(params, np.ndarray) and len(params) == len(global_params):
+                regularized_params = params - self.mu * (params - global_params)
+            else:
+                regularized_params = params
+            
+            if aggregated_params is None:
+                aggregated_params = weight * regularized_params
+            else:
+                aggregated_params += weight * regularized_params
+        
+        return {
+            'parameters': aggregated_params,
+            'num_samples': total_samples,
+            'client_count': len(client_updates),
+            'proximal_mu': self.mu
         }
     
     def _weighted_aggregation(self, client_updates: List[Dict[str, Any]], global_model) -> Dict[str, Any]:
@@ -213,11 +263,8 @@ class HierarchicalFederatedLearning:
             num_clients_for_fog = clients_per_fog + (1 if fog_id < remaining_clients else 0)
             client_ids = list(range(current_client, current_client + num_clients_for_fog))
             
-            # Create fog node with different aggregation methods for diversity
-            aggregation_methods = ["FedAvg", "WeightedAvg", "Median"]
-            method = aggregation_methods[fog_id % len(aggregation_methods)]
-            
-            fog_node = FogNode(fog_id, client_ids, method)
+            # Create fog node with configurable aggregation method
+            fog_node = FogNode(fog_id, client_ids, self.fog_aggregation_method, mu=0.01)
             self.fog_nodes.append(fog_node)
             
             current_client += num_clients_for_fog
