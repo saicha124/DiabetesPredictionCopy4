@@ -73,7 +73,13 @@ class FederatedLearningManager:
     def setup_clients(self, data):
         """Setup federated clients with data partitions"""
         # Preprocess data
-        X, y = self.preprocessor.fit_transform(data)
+        processed_data = self.preprocessor.fit_transform(data)
+        if isinstance(processed_data, tuple):
+            X, y = processed_data
+        else:
+            # Handle case where data is already processed
+            X = processed_data.drop('Outcome', axis=1) if 'Outcome' in processed_data.columns else processed_data.iloc[:, :-1]
+            y = processed_data['Outcome'] if 'Outcome' in processed_data.columns else processed_data.iloc[:, -1]
         
         # Create data partitions for clients
         client_data = self._partition_data(X, y)
