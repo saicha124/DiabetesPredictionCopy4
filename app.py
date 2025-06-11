@@ -1734,6 +1734,210 @@ def main():
     with tab5:
         st.header("🏥 Advanced Medical Facility Analytics")
         
+        # Add correlation matrix analysis
+        st.subheader("📊 Feature Correlation Analysis")
+        
+        # Load and analyze diabetes dataset
+        try:
+            # Load diabetes data for correlation analysis
+            if os.path.exists('diabetes.csv'):
+                diabetes_data = pd.read_csv('diabetes.csv')
+                
+                # Create tabs for different analysis types
+                corr_tab1, corr_tab2, corr_tab3 = st.tabs([
+                    "Correlation Matrix", 
+                    "Feature Relationships", 
+                    "Clinical Insights"
+                ])
+                
+                with corr_tab1:
+                    st.subheader("Feature Correlation Heatmap")
+                    
+                    # Calculate correlation matrix
+                    correlation_matrix = diabetes_data.corr()
+                    
+                    # Create interactive heatmap using Plotly
+                    fig_corr = go.Figure(data=go.Heatmap(
+                        z=correlation_matrix.values,
+                        x=correlation_matrix.columns,
+                        y=correlation_matrix.columns,
+                        colorscale='RdBu',
+                        zmid=0,
+                        text=correlation_matrix.round(3).values,
+                        texttemplate="%{text}",
+                        textfont={"size": 10},
+                        hoverongaps=False
+                    ))
+                    
+                    fig_corr.update_layout(
+                        title="Diabetes Features Correlation Matrix",
+                        xaxis_title="Features",
+                        yaxis_title="Features",
+                        height=600,
+                        width=800
+                    )
+                    
+                    st.plotly_chart(fig_corr, use_container_width=True)
+                    
+                    # Display correlation insights
+                    st.subheader("Key Correlations")
+                    
+                    # Find strongest positive and negative correlations (excluding diagonal)
+                    corr_values = correlation_matrix.values
+                    np.fill_diagonal(corr_values, 0)  # Remove diagonal
+                    
+                    # Get indices of max and min correlations
+                    max_corr_idx = np.unravel_index(np.argmax(corr_values), corr_values.shape)
+                    min_corr_idx = np.unravel_index(np.argmin(corr_values), corr_values.shape)
+                    
+                    max_corr_val = corr_values[max_corr_idx]
+                    min_corr_val = corr_values[min_corr_idx]
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.metric(
+                            "Strongest Positive Correlation",
+                            f"{correlation_matrix.columns[max_corr_idx[0]]} ↔ {correlation_matrix.columns[max_corr_idx[1]]}",
+                            f"{max_corr_val:.3f}"
+                        )
+                    
+                    with col2:
+                        st.metric(
+                            "Strongest Negative Correlation", 
+                            f"{correlation_matrix.columns[min_corr_idx[0]]} ↔ {correlation_matrix.columns[min_corr_idx[1]]}",
+                            f"{min_corr_val:.3f}"
+                        )
+                
+                with corr_tab2:
+                    st.subheader("Feature Relationship Analysis")
+                    
+                    # Select features for detailed analysis
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        feature_x = st.selectbox(
+                            "Select X-axis feature:",
+                            diabetes_data.columns,
+                            index=1  # Default to Glucose
+                        )
+                    
+                    with col2:
+                        feature_y = st.selectbox(
+                            "Select Y-axis feature:",
+                            diabetes_data.columns,
+                            index=5  # Default to BMI
+                        )
+                    
+                    # Create scatter plot with correlation
+                    correlation_xy = diabetes_data[feature_x].corr(diabetes_data[feature_y])
+                    
+                    fig_scatter = px.scatter(
+                        diabetes_data,
+                        x=feature_x,
+                        y=feature_y,
+                        color='Outcome',
+                        title=f"{feature_x} vs {feature_y} (Correlation: {correlation_xy:.3f})",
+                        color_discrete_map={0: 'blue', 1: 'red'},
+                        labels={'color': 'Diabetes Status'}
+                    )
+                    
+                    # Add trend line
+                    fig_scatter.add_traces(
+                        px.scatter(
+                            diabetes_data, 
+                            x=feature_x, 
+                            y=feature_y,
+                            trendline="ols"
+                        ).data
+                    )
+                    
+                    st.plotly_chart(fig_scatter, use_container_width=True)
+                    
+                    # Statistical analysis
+                    st.subheader("Statistical Summary")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("Correlation Coefficient", f"{correlation_xy:.4f}")
+                    
+                    with col2:
+                        # Calculate R-squared
+                        r_squared = correlation_xy ** 2
+                        st.metric("R-squared", f"{r_squared:.4f}")
+                    
+                    with col3:
+                        # Determine correlation strength
+                        if abs(correlation_xy) > 0.7:
+                            strength = "Strong"
+                        elif abs(correlation_xy) > 0.3:
+                            strength = "Moderate"
+                        else:
+                            strength = "Weak"
+                        st.metric("Correlation Strength", strength)
+                
+                with corr_tab3:
+                    st.subheader("Clinical Interpretation")
+                    
+                    # Clinical insights based on correlations
+                    clinical_insights = {
+                        'Glucose-Outcome': {
+                            'correlation': diabetes_data['Glucose'].corr(diabetes_data['Outcome']),
+                            'insight': 'Blood glucose level is the strongest predictor of diabetes. Higher glucose levels indicate increased diabetes risk.',
+                            'clinical_significance': 'Fasting glucose ≥126 mg/dL indicates diabetes; 100-125 mg/dL indicates prediabetes.'
+                        },
+                        'BMI-Outcome': {
+                            'correlation': diabetes_data['BMI'].corr(diabetes_data['Outcome']),
+                            'insight': 'Body Mass Index shows moderate correlation with diabetes risk. Obesity is a major risk factor.',
+                            'clinical_significance': 'BMI ≥30 significantly increases diabetes risk. Weight management is crucial for prevention.'
+                        },
+                        'Age-Outcome': {
+                            'correlation': diabetes_data['Age'].corr(diabetes_data['Outcome']),
+                            'insight': 'Age correlates with diabetes risk. Risk increases significantly after age 45.',
+                            'clinical_significance': 'Regular screening recommended for individuals over 45, especially with other risk factors.'
+                        },
+                        'DiabetesPedigreeFunction-Outcome': {
+                            'correlation': diabetes_data['DiabetesPedigreeFunction'].corr(diabetes_data['Outcome']),
+                            'insight': 'Family history (diabetes pedigree) shows correlation with diabetes development.',
+                            'clinical_significance': 'Strong family history requires earlier and more frequent screening.'
+                        }
+                    }
+                    
+                    for feature_pair, data in clinical_insights.items():
+                        with st.expander(f"📋 {feature_pair.replace('-', ' vs ')} Analysis"):
+                            col1, col2 = st.columns([1, 3])
+                            
+                            with col1:
+                                st.metric("Correlation", f"{data['correlation']:.3f}")
+                            
+                            with col2:
+                                st.write(f"**Clinical Insight:** {data['insight']}")
+                                st.info(f"**Significance:** {data['clinical_significance']}")
+                    
+                    # Summary recommendations
+                    st.subheader("🩺 Clinical Recommendations")
+                    
+                    recommendations = [
+                        "**Primary Risk Factors:** Monitor glucose levels, BMI, and blood pressure regularly",
+                        "**Secondary Factors:** Consider age, family history, and pregnancy history in risk assessment",
+                        "**Preventive Measures:** Focus on glucose control and weight management for high-risk patients",
+                        "**Screening Protocol:** Implement risk-stratified screening based on correlation patterns",
+                        "**Patient Education:** Emphasize modifiable risk factors (glucose, BMI, lifestyle)"
+                    ]
+                    
+                    for rec in recommendations:
+                        st.write(f"• {rec}")
+            
+            else:
+                st.error("Diabetes dataset not found. Please ensure diabetes.csv is available.")
+        
+        except Exception as e:
+            st.error(f"Error loading correlation analysis: {str(e)}")
+            st.info("Using backup correlation analysis...")
+        
+        st.markdown("---")
+        
         if st.session_state.training_started and hasattr(st.session_state, 'advanced_analytics'):
             analytics = st.session_state.advanced_analytics
             
