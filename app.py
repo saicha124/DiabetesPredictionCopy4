@@ -7,6 +7,7 @@ import time
 import threading
 import math
 import json
+import os
 from datetime import datetime, timedelta
 
 # Import custom modules
@@ -659,7 +660,24 @@ def main():
                 
                 st.success(f"Starting training with {valid_clients} valid clients")
                 
-                # Execute actual federated learning training
+                # Initialize real-time progress tracking
+                progress_container = st.container()
+                with progress_container:
+                    st.subheader("🔄 Federated Learning Training Progress")
+                    
+                    # Create progress elements for training
+                    training_progress = st.progress(0.0, text="0% - Initializing federated learning...")
+                    training_status = st.empty()
+                    current_round_display = st.empty()
+                    accuracy_display = st.empty()
+                
+                # Store progress elements in session state for real-time updates
+                st.session_state.training_progress = training_progress
+                st.session_state.training_status = training_status
+                st.session_state.current_round_display = current_round_display
+                st.session_state.accuracy_display = accuracy_display
+                
+                # Execute actual federated learning training with progress tracking
                 training_results = fl_manager.train(data)
                 
                 # Process real training results from federated learning

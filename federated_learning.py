@@ -232,6 +232,17 @@ class FederatedLearningManager:
             for round_num in range(self.max_rounds):
                 self.current_round = round_num + 1
                 
+                # Update progress bar in real-time
+                progress_percentage = (round_num + 1) / self.max_rounds
+                progress_text = f"{progress_percentage:.0%} - Round {self.current_round}/{self.max_rounds}"
+                
+                # Update Streamlit progress elements if available
+                if hasattr(st, 'session_state'):
+                    if hasattr(st.session_state, 'training_progress'):
+                        st.session_state.training_progress.progress(progress_percentage, text=progress_text)
+                    if hasattr(st.session_state, 'current_round_display'):
+                        st.session_state.current_round_display.info(f"🔄 Training Round {self.current_round} of {self.max_rounds}")
+                
                 start_time = time.time()
                 
                 # Parallel client training
@@ -323,8 +334,16 @@ class FederatedLearningManager:
                     **dp_effects
                 }
                 
-                # Store metrics in training history (no session state access)
+                # Store metrics in training history and update real-time display
                 self.training_history.append(metrics)
+                
+                # Update real-time accuracy display
+                if hasattr(st, 'session_state'):
+                    if hasattr(st.session_state, 'accuracy_display'):
+                        st.session_state.accuracy_display.success(f"🎯 Current Accuracy: {accuracy:.1%} | Best: {self.best_accuracy:.1%}")
+                    if hasattr(st.session_state, 'training_status'):
+                        status_text = f"Round {self.current_round}: Accuracy {accuracy:.1%}, Loss {loss:.4f}"
+                        st.session_state.training_status.info(status_text)
                 
                 # Store confusion matrix
                 if not hasattr(self, 'confusion_matrices'):
@@ -361,6 +380,13 @@ class FederatedLearningManager:
                           f"Best accuracy: {self.best_accuracy:.3f}")
                     self.early_stopped = True
                     self.convergence_reason = "model_convergence"
+                    
+                    # Update progress to 100% when converged
+                    if hasattr(st, 'session_state'):
+                        if hasattr(st.session_state, 'training_progress'):
+                            st.session_state.training_progress.progress(1.0, text="100% - Training Complete (Converged)")
+                        if hasattr(st.session_state, 'training_status'):
+                            st.session_state.training_status.success(f"✅ Training converged at round {self.current_round}")
                     break
                 
                 # STOPPING CRITERION 2: MAXIMUM ROUNDS CHECK
