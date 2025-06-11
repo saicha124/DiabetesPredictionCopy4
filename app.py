@@ -2978,13 +2978,13 @@ def main():
                         'Model Type'
                     ],
                     'Current Value': [
-                        st.session_state.get('num_clients', 5),
-                        st.session_state.get('num_fog_nodes', 3),
-                        st.session_state.get('max_rounds', 20),
-                        st.session_state.get('distribution_strategy', 'IID'),
+                        str(st.session_state.get('num_clients', 5)),
+                        str(st.session_state.get('num_fog_nodes', 3)),
+                        str(st.session_state.get('max_rounds', 20)),
+                        str(st.session_state.get('distribution_strategy', 'IID')),
                         'Enabled' if st.session_state.get('enable_dp', True) else 'Disabled',
                         'FedAvg',
-                        st.session_state.get('model_type', 'Logistic Regression')
+                        str(st.session_state.get('model_type', 'Logistic Regression'))
                     ],
                     'Impact on Accuracy': [
                         'High - More diversity',
