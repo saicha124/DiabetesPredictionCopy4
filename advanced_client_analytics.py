@@ -419,7 +419,12 @@ class AdvancedClientAnalytics:
         
         # Round selector
         round_options = [f"Round {m['round']}" for m in history]
-        selected_round_name = st.selectbox("Select Training Round", round_options, index=-1)
+        if not round_options:
+            st.warning("No training rounds available for analysis")
+            return
+            
+        default_index = len(round_options) - 1 if round_options else 0
+        selected_round_name = st.selectbox("Select Training Round", round_options, index=default_index)
         round_idx = int(selected_round_name.split()[-1])
         
         # Find corresponding metrics
