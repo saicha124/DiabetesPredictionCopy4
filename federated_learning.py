@@ -324,7 +324,11 @@ class FederatedLearningManager:
                 )
                 
                 # Evaluate global model
-                accuracy, loss, f1, cm = self._evaluate_global_model()
+                eval_results = self._evaluate_global_model()
+                accuracy = eval_results['accuracy']
+                loss = eval_results['loss']
+                f1 = eval_results['f1_score']
+                cm = eval_results['confusion_matrix']
                 
                 # Record metrics
                 round_time = time.time() - start_time
@@ -345,6 +349,8 @@ class FederatedLearningManager:
                     'accuracy': accuracy,
                     'loss': loss,
                     'f1_score': f1,
+                    'precision': eval_results['precision'],
+                    'recall': eval_results['recall'],
                     'execution_time': round_time,
                     **dp_effects
                 }
@@ -649,11 +655,11 @@ class FederatedLearningManager:
         
         # Calculate metrics
         accuracy = accuracy_score(all_true_labels, all_predictions)
-        f1 = f1_score(all_true_labels, all_predictions, average='weighted', zero_division=0)
+        f1 = f1_score(all_true_labels, all_predictions, average='weighted', zero_division='warn')
         
         try:
-            precision = precision_score(all_true_labels, all_predictions, average='weighted', zero_division=0)
-            recall = recall_score(all_true_labels, all_predictions, average='weighted', zero_division=0)
+            precision = precision_score(all_true_labels, all_predictions, average='weighted', zero_division='warn')
+            recall = recall_score(all_true_labels, all_predictions, average='weighted', zero_division='warn')
         except ImportError:
             # Fallback if precision/recall imports fail
             precision = f1
