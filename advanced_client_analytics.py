@@ -60,7 +60,7 @@ class AdvancedClientAnalytics:
             'classification_report': class_report,
             'data_size': len(y_true),
             'class_distribution': np.bincount(y_true),
-            'prediction_confidence': np.mean(np.max(y_prob, axis=1)) if y_prob is not None else None,
+            'prediction_confidence': np.mean(y_prob) if y_prob is not None else None,
             'model_complexity': self._estimate_model_complexity(model_params) if model_params else None
         }
         
