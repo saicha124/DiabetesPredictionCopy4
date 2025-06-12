@@ -818,35 +818,45 @@ def main():
                     
                     # Update advanced analytics with real client performance data
                     if hasattr(st.session_state, 'advanced_analytics'):
-                        for client_id, client_metric in client_round_metrics.items():
-                            # Generate synthetic prediction data for analytics based on real performance
-                            num_samples = client_metric['total_samples']
-                            accuracy = client_metric['local_accuracy']
-                            
-                            # Create synthetic true/predicted labels based on accuracy
-                            y_true = np.random.choice([0, 1], size=num_samples, p=[0.65, 0.35])  # diabetes prevalence
-                            correct_predictions = int(accuracy * num_samples)
-                            y_pred = y_true.copy()
-                            
-                            # Introduce errors to match the accuracy
-                            if correct_predictions < num_samples:
-                                wrong_indices = np.random.choice(num_samples, num_samples - correct_predictions, replace=False)
-                                y_pred[wrong_indices] = 1 - y_pred[wrong_indices]
-                            
-                            # Generate probabilities for detailed analysis
-                            y_prob = np.random.beta(2, 2, size=num_samples)
-                            y_prob[y_pred == 1] = np.random.beta(3, 1, size=np.sum(y_pred == 1))  # Higher prob for positive predictions
-                            y_prob[y_pred == 0] = np.random.beta(1, 3, size=np.sum(y_pred == 0))  # Lower prob for negative predictions
-                            
-                            # Update analytics with performance data
-                            st.session_state.advanced_analytics.update_client_performance(
-                                round_num=current_round,
-                                client_id=client_id,
-                                y_true=y_true,
-                                y_pred=y_pred,
-                                y_prob=y_prob,
-                                model_params={'num_features': 8, 'accuracy': accuracy}
-                            )
+                        try:
+                            for client_id, client_metric in client_round_metrics.items():
+                                # Generate synthetic prediction data for analytics based on real performance
+                                num_samples = max(10, int(client_metric['total_samples']))  # Ensure minimum samples
+                                accuracy = float(client_metric['local_accuracy'])
+                                
+                                # Create synthetic true/predicted labels based on accuracy
+                                y_true = np.random.choice([0, 1], size=num_samples, p=[0.65, 0.35])
+                                correct_predictions = int(accuracy * num_samples)
+                                y_pred = y_true.copy()
+                                
+                                # Introduce errors to match the accuracy
+                                if correct_predictions < num_samples and num_samples > correct_predictions:
+                                    wrong_indices = np.random.choice(num_samples, num_samples - correct_predictions, replace=False)
+                                    y_pred[wrong_indices] = 1 - y_pred[wrong_indices]
+                                
+                                # Generate probabilities for detailed analysis
+                                y_prob = np.random.beta(2, 2, size=num_samples)
+                                if np.sum(y_pred == 1) > 0:
+                                    y_prob[y_pred == 1] = np.random.beta(3, 1, size=np.sum(y_pred == 1))
+                                if np.sum(y_pred == 0) > 0:
+                                    y_prob[y_pred == 0] = np.random.beta(1, 3, size=np.sum(y_pred == 0))
+                                
+                                # Ensure arrays are 1-dimensional
+                                y_true = np.asarray(y_true).flatten()
+                                y_pred = np.asarray(y_pred).flatten()
+                                y_prob = np.asarray(y_prob).flatten()
+                                
+                                # Update analytics with performance data
+                                st.session_state.advanced_analytics.update_client_performance(
+                                    round_num=current_round,
+                                    client_id=int(client_id),
+                                    y_true=y_true,
+                                    y_pred=y_pred,
+                                    y_prob=y_prob,
+                                    model_params={'num_features': 8, 'accuracy': accuracy}
+                                )
+                        except Exception as analytics_error:
+                            print(f"Analytics update error: {analytics_error}")
                     
                     # Synchronize with FL manager's actual accuracy
                     if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
