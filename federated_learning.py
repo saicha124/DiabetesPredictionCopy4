@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, log_loss
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, log_loss, precision_score, recall_score
 import time
 import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -366,7 +366,7 @@ class FederatedLearningManager:
                             
                             # Re-evaluate the restored model to get accurate final metrics
                             final_metrics = self._evaluate_global_model()
-                            if final_metrics:
+                            if final_metrics and isinstance(final_metrics, dict):
                                 # Update the current accuracy to reflect restored model
                                 accuracy = final_metrics.get('accuracy', self.best_metric_value)
                                 loss = final_metrics.get('loss', 0)
@@ -608,7 +608,14 @@ class FederatedLearningManager:
     def _evaluate_global_model(self):
         """Evaluate global model on all clients' test data"""
         if self.global_model is None:
-            return 0.0, 1.0, 0.0, np.zeros((2, 2))
+            return {
+                'accuracy': 0.0,
+                'loss': 1.0,
+                'f1_score': 0.0,
+                'precision': 0.0,
+                'recall': 0.0,
+                'confusion_matrix': np.zeros((2, 2))
+            }
             
         all_predictions = []
         all_true_labels = []
@@ -631,11 +638,26 @@ class FederatedLearningManager:
                     continue
         
         if len(all_predictions) == 0:
-            return 0.0, 1.0, 0.0, np.zeros((2, 2))
+            return {
+                'accuracy': 0.0,
+                'loss': 1.0,
+                'f1_score': 0.0,
+                'precision': 0.0,
+                'recall': 0.0,
+                'confusion_matrix': np.zeros((2, 2))
+            }
         
         # Calculate metrics
         accuracy = accuracy_score(all_true_labels, all_predictions)
-        f1 = f1_score(all_true_labels, all_predictions, average='weighted')
+        f1 = f1_score(all_true_labels, all_predictions, average='weighted', zero_division=0)
+        
+        try:
+            precision = precision_score(all_true_labels, all_predictions, average='weighted', zero_division=0)
+            recall = recall_score(all_true_labels, all_predictions, average='weighted', zero_division=0)
+        except ImportError:
+            # Fallback if precision/recall imports fail
+            precision = f1
+            recall = f1
         
         # Calculate loss
         try:
@@ -646,7 +668,14 @@ class FederatedLearningManager:
         # Confusion matrix
         cm = confusion_matrix(all_true_labels, all_predictions)
         
-        return accuracy, loss, f1, cm
+        return {
+            'accuracy': accuracy,
+            'loss': loss,
+            'f1_score': f1,
+            'precision': precision,
+            'recall': recall,
+            'confusion_matrix': cm
+        }
     
     def _check_global_convergence(self):
         """
