@@ -352,12 +352,40 @@ class FederatedLearningManager:
                 # Store metrics in training history and update real-time display
                 self.training_history.append(metrics)
                 
+                # Early stopping logic with model checkpointing
+                if self.enable_early_stopping:
+                    early_stop_triggered = self._check_early_stopping(metrics)
+                    if early_stop_triggered:
+                        print(f"🛑 Early stopping triggered at round {self.current_round}!")
+                        print(f"Best {self.early_stop_metric}: {self.best_metric_value:.4f} at round {self.best_round}")
+                        
+                        # Restore best model
+                        if self.best_model_state is not None:
+                            self._restore_best_model()
+                            print(f"✅ Best model from round {self.best_round} restored")
+                        
+                        # Update progress to 100% when early stopped
+                        if hasattr(st, 'session_state'):
+                            if hasattr(st.session_state, 'training_progress'):
+                                st.session_state.training_progress.progress(1.0, text="100% - Training Complete (Early Stopping)")
+                            if hasattr(st.session_state, 'training_status'):
+                                st.session_state.training_status.success(f"✅ Early stopping at round {self.current_round} - Best {self.early_stop_metric}: {self.best_metric_value:.4f}")
+                        
+                        self.early_stopped = True
+                        self.convergence_reason = "early_stopping"
+                        break
+                
                 # Update real-time accuracy display
                 if hasattr(st, 'session_state'):
                     if hasattr(st.session_state, 'accuracy_display'):
-                        st.session_state.accuracy_display.success(f"🎯 Current Accuracy: {accuracy:.1%} | Best: {self.best_accuracy:.1%}")
+                        best_display = f" | Best: {self.best_accuracy:.1%}"
+                        if self.enable_early_stopping and self.best_metric_value is not None:
+                            best_display += f" (Round {self.best_round})"
+                        st.session_state.accuracy_display.success(f"🎯 Current Accuracy: {accuracy:.1%}{best_display}")
                     if hasattr(st.session_state, 'training_status'):
                         status_text = f"Round {self.current_round}: Accuracy {accuracy:.1%}, Loss {loss:.4f}"
+                        if self.enable_early_stopping:
+                            status_text += f" | Patience: {self.patience_counter}/{self.patience}"
                         st.session_state.training_status.info(status_text)
                 
                 # Store confusion matrix
@@ -517,7 +545,7 @@ class FederatedLearningManager:
         """Validate an update against committee consensus"""
         if not committee_updates:
             return True
-        
+    
         # Simple validation: check if parameters are within reasonable bounds
         try:
             update_params = update['parameters']
@@ -667,3 +695,93 @@ class FederatedLearningManager:
             print(f"   - Performance variance: {accuracy_variance:.6f}")
         
         return convergence_detected
+    
+    def _check_early_stopping(self, current_metrics):
+        """
+        Check if early stopping criteria are met and handle model checkpointing.
+        
+        Args:
+            current_metrics (dict): Current round performance metrics
+            
+        Returns:
+            bool: True if training should stop, False otherwise
+        """
+        current_value = current_metrics.get(self.early_stop_metric)
+        if current_value is None:
+            return False
+        
+        # Initialize best value if this is the first round
+        if self.best_metric_value is None:
+            self.best_metric_value = current_value
+            self.best_round = self.current_round
+            self._save_model_checkpoint()
+            self.patience_counter = 0
+            return False
+        
+        # Check if current metric is better than best
+        is_better = False
+        if self.early_stop_metric == 'loss':
+            # For loss, lower is better
+            if current_value < (self.best_metric_value - self.min_improvement):
+                is_better = True
+        else:
+            # For accuracy, f1_score, etc., higher is better
+            if current_value > (self.best_metric_value + self.min_improvement):
+                is_better = True
+        
+        if is_better:
+            # New best metric found
+            self.best_metric_value = current_value
+            self.best_round = self.current_round
+            self._save_model_checkpoint()
+            self.patience_counter = 0
+            print(f"📈 New best {self.early_stop_metric}: {current_value:.4f} at round {self.current_round}")
+            return False
+        else:
+            # No improvement
+            self.patience_counter += 1
+            print(f"⏳ No improvement for {self.patience_counter}/{self.patience} rounds")
+            
+            if self.patience_counter >= self.patience:
+                return True
+            
+        return False
+    
+    def _save_model_checkpoint(self):
+        """Save the current best model state for later restoration."""
+        try:
+            if hasattr(self, 'global_model') and self.global_model is not None:
+                # For scikit-learn models, we can pickle the model
+                import pickle
+                import io
+                
+                # Create a deep copy of the model state
+                buffer = io.BytesIO()
+                pickle.dump(self.global_model, buffer)
+                buffer.seek(0)
+                self.best_model_state = buffer.getvalue()
+                
+                print(f"💾 Model checkpoint saved at round {self.current_round}")
+                
+        except Exception as e:
+            print(f"⚠️ Warning: Could not save model checkpoint: {str(e)}")
+            self.best_model_state = None
+    
+    def _restore_best_model(self):
+        """Restore the best saved model state."""
+        try:
+            if self.best_model_state is not None:
+                import pickle
+                import io
+                
+                buffer = io.BytesIO(self.best_model_state)
+                self.global_model = pickle.load(buffer)
+                
+                print(f"🔄 Best model from round {self.best_round} restored")
+                return True
+                
+        except Exception as e:
+            print(f"⚠️ Warning: Could not restore best model: {str(e)}")
+            return False
+        
+        return False
