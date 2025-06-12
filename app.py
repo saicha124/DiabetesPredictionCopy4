@@ -159,11 +159,43 @@ def main():
                     default_rounds = st.session_state.get('max_rounds', 20)
                 
                 num_clients = st.slider(get_translation("num_medical_stations", st.session_state.language), 3, 20, default_clients)
-                max_rounds = st.slider(get_translation("max_training_rounds", st.session_state.language), 5, 150, default_rounds)
+                max_rounds = st.slider(get_translation("max_training_rounds", st.session_state.language), 10, 150, default_rounds)
+                
+                # Early stopping configuration
+                st.subheader("🛑 Early Stopping Configuration")
+                
+                col1_es, col2_es = st.columns(2)
+                
+                with col1_es:
+                    enable_early_stopping = st.checkbox("Enable Early Stopping", value=True,
+                                                       help="Stop training when validation metric stops improving")
+                    
+                    patience = st.slider("Patience (rounds)", min_value=3, max_value=20, value=5,
+                                       help="Number of rounds to wait without improvement before stopping")
+                
+                with col2_es:
+                    early_stop_metric = st.selectbox("Early Stop Metric", 
+                                                    ["accuracy", "loss", "f1_score"], 
+                                                    index=0,
+                                                    help="Metric to monitor for early stopping")
+                    
+                    min_improvement = st.number_input("Minimum Improvement", 
+                                                    min_value=0.001, max_value=0.1, 
+                                                    value=0.001, step=0.001, format="%.3f",
+                                                    help="Minimum improvement required to reset patience counter")
+                
+                if enable_early_stopping:
+                    st.info(f"Training will stop if {early_stop_metric} doesn't improve by {min_improvement:.3f} for {patience} consecutive rounds")
+                else:
+                    st.warning("Early stopping disabled - training will run for full duration")
                 
                 # Store values in session state
                 st.session_state.num_clients = num_clients
                 st.session_state.max_rounds = max_rounds
+                st.session_state.enable_early_stopping = enable_early_stopping
+                st.session_state.patience = patience
+                st.session_state.early_stop_metric = early_stop_metric
+                st.session_state.min_improvement = min_improvement
                 
                 st.subheader(get_translation("model_selection", st.session_state.language))
                 default_model = "Deep Learning (Neural Network)" if 'reset_requested' in st.session_state else st.session_state.get('model_type_display', "Deep Learning (Neural Network)")
@@ -284,17 +316,30 @@ def main():
                     st.session_state.strategy_params = strategy_params
                     st.session_state.model_type = internal_model_type
                     
+                    # Early stopping parameters
+                    early_stopping_config = {
+                        'enable_early_stopping': st.session_state.get('enable_early_stopping', True),
+                        'patience': st.session_state.get('patience', 5),
+                        'early_stop_metric': st.session_state.get('early_stop_metric', 'accuracy'),
+                        'min_improvement': st.session_state.get('min_improvement', 0.001)
+                    }
+                    
                     init_progress.progress(0.60, text="60% - Initializing FL manager...")
                     time.sleep(0.2)
                     
-                    # Initialize FL manager
+                    # Initialize FL manager with early stopping
                     fl_manager = FederatedLearningManager(
                             num_clients=num_clients,
                             max_rounds=max_rounds,
                             aggregation_algorithm='FedAvg',
                             enable_dp=enable_dp,
                             epsilon=epsilon or 1.0,
-                            delta=delta or 1e-5
+                            delta=delta or 1e-5,
+                            # Early stopping parameters
+                            enable_early_stopping=early_stopping_config['enable_early_stopping'],
+                            patience=early_stopping_config['patience'],
+                            early_stop_metric=early_stopping_config['early_stop_metric'],
+                            min_improvement=early_stopping_config['min_improvement']
                     )
                     
                     # Setup fog nodes if enabled

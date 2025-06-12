@@ -22,7 +22,9 @@ class FederatedLearningManager:
     def __init__(self, num_clients=5, max_rounds=20, target_accuracy=0.85,
                  aggregation_algorithm='FedAvg', enable_dp=True, epsilon=1.0, 
                  delta=1e-5, committee_size=3, model_type='logistic_regression',
-                 privacy_mechanism='gaussian', gradient_clip_norm=1.0):
+                 privacy_mechanism='gaussian', gradient_clip_norm=1.0,
+                 enable_early_stopping=True, patience=5, early_stop_metric='accuracy',
+                 min_improvement=0.001):
         self.num_clients = num_clients
         self.max_rounds = max_rounds
         self.target_accuracy = target_accuracy
@@ -34,6 +36,19 @@ class FederatedLearningManager:
         self.model_type = model_type
         self.privacy_mechanism = privacy_mechanism
         self.gradient_clip_norm = gradient_clip_norm
+        
+        # Early stopping parameters
+        self.enable_early_stopping = enable_early_stopping
+        self.patience = patience
+        self.early_stop_metric = early_stop_metric
+        self.min_improvement = min_improvement
+        
+        # Early stopping tracking variables
+        self.best_metric_value = None
+        self.patience_counter = 0
+        self.early_stopped = False
+        self.best_model_state = None
+        self.best_round = 0
         
         # Initialize components
         self.preprocessor = DataPreprocessor()
