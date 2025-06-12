@@ -1441,6 +1441,9 @@ def main():
                                 else:
                                     raise ValueError("Trained model does not support prediction")
                                 
+                                # Update progress for risk calculation
+                                analysis_progress.progress(0.75, text=f"75% - {get_translation('calculating_risk', st.session_state.language)}")
+                                
                                 # Store patient data for explanations
                                 st.session_state.current_patient = {
                                     'features': patient_features[0],
@@ -1449,6 +1452,9 @@ def main():
                                     'risk_score': risk_score,
                                     'confidence': confidence
                                 }
+                                
+                                # Update progress for clinical analysis
+                                analysis_progress.progress(0.90, text=f"90% - {get_translation('preparing_results', st.session_state.language)}")
                             
                             except Exception as model_error:
                                 st.error(f"Federated model prediction failed: {model_error}")
@@ -1600,6 +1606,10 @@ def main():
                             ))
                             fig_gauge.update_layout(height=300)
                             st.plotly_chart(fig_gauge, use_container_width=True)
+                        
+                        # Complete the progress bar to 100%
+                        analysis_progress.progress(1.0, text=f"100% - {get_translation('analysis_complete', st.session_state.language)}")
+                        analysis_status.success(f"✅ {get_translation('risk_analysis_completed', st.session_state.language)}")
             
             with tab_explain:
                 st.subheader("📊 Feature Importance Analysis")

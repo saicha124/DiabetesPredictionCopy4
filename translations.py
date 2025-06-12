@@ -112,6 +112,13 @@ TRANSLATIONS = {
         "model_prediction": "Model prediction: {score}",
         "federated_model_prediction_failed": "Federated model prediction failed: {error}",
         "training_may_not_be_completed": "Training may not be completed yet. Please run federated training first.",
+        "processing_patient_data": "Processing patient data",
+        "evaluating_performance": "Evaluating performance",
+        "analyzing_predictions": "Analyzing risk predictions", 
+        "calculating_risk": "Calculating risk factors",
+        "preparing_results": "Preparing clinical results",
+        "analysis_complete": "Analysis complete",
+        "risk_analysis_completed": "Risk analysis completed",
         
         # Facility Analytics Tab
         "facility_analytics": "Facility Analytics",
@@ -349,6 +356,13 @@ TRANSLATIONS = {
         "model_prediction": "Prédiction du modèle: {score}",
         "federated_model_prediction_failed": "Échec de la prédiction du modèle fédéré: {error}",
         "training_may_not_be_completed": "L'entraînement n'est peut-être pas encore terminé. Veuillez d'abord exécuter l'entraînement fédéré.",
+        "processing_patient_data": "Traitement des données patient",
+        "evaluating_performance": "Évaluation des performances",
+        "analyzing_predictions": "Analyse des prédictions de risque",
+        "calculating_risk": "Calcul des facteurs de risque",
+        "preparing_results": "Préparation des résultats cliniques",
+        "analysis_complete": "Analyse terminée",
+        "risk_analysis_completed": "Analyse de risque terminée",
         
         # Facility Analytics Tab
         "facility_analytics": "Analytiques d'Établissement",
