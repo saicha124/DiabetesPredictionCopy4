@@ -832,11 +832,16 @@ def main():
                 
                 # Store final results with security metrics
                 final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
-                # Use the actual final accuracy from federated learning training
-                actual_final_accuracy = final_metrics.get('accuracy', st.session_state.best_accuracy)
+                
+                # Use early stopping restored accuracy if available, otherwise use training results
+                if hasattr(fl_manager, 'early_stopped') and fl_manager.early_stopped and hasattr(fl_manager, 'best_metric_value'):
+                    actual_final_accuracy = fl_manager.best_metric_value
+                    print(f"🔄 UI Final Display: Using early stopping accuracy {actual_final_accuracy:.4f}")
+                else:
+                    actual_final_accuracy = training_results.get('final_accuracy', final_metrics.get('accuracy', st.session_state.best_accuracy))
                 
                 st.session_state.results = {
-                    'accuracy': actual_final_accuracy,  # Use real FL final accuracy
+                    'accuracy': actual_final_accuracy,  # Use correct final accuracy
                     'f1_score': final_metrics.get('f1_score', actual_final_accuracy * 0.95),
                     'rounds_completed': len(st.session_state.training_metrics),
                     'converged': actual_final_accuracy >= 0.85,

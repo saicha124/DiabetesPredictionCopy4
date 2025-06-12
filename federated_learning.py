@@ -363,6 +363,17 @@ class FederatedLearningManager:
                         if self.best_model_state is not None:
                             self._restore_best_model()
                             print(f"✅ Best model from round {self.best_round} restored")
+                            
+                            # Re-evaluate the restored model to get accurate final metrics
+                            final_metrics = self._evaluate_global_model()
+                            if final_metrics:
+                                # Update the current accuracy to reflect restored model
+                                accuracy = final_metrics.get('accuracy', self.best_metric_value)
+                                loss = final_metrics.get('loss', 0)
+                                print(f"📊 Restored model evaluation - Accuracy: {accuracy:.4f}, Loss: {loss:.4f}")
+                                
+                                # Update the best accuracy to ensure consistency
+                                self.best_accuracy = accuracy
                         
                         # Update progress to 100% when early stopped
                         if hasattr(st, 'session_state'):
@@ -370,6 +381,8 @@ class FederatedLearningManager:
                                 st.session_state.training_progress.progress(1.0, text="100% - Training Complete (Early Stopping)")
                             if hasattr(st.session_state, 'training_status'):
                                 st.session_state.training_status.success(f"✅ Early stopping at round {self.current_round} - Best {self.early_stop_metric}: {self.best_metric_value:.4f}")
+                            if hasattr(st.session_state, 'accuracy_display'):
+                                st.session_state.accuracy_display.success(f"🎯 Final Accuracy: {self.best_metric_value:.1%} (Restored from Round {self.best_round})")
                         
                         self.early_stopped = True
                         self.convergence_reason = "early_stopping"
@@ -447,17 +460,43 @@ class FederatedLearningManager:
             total_time = sum([m['execution_time'] for m in self.training_history])
             target_reached = self.best_accuracy >= self.target_accuracy
             
+            # Determine final accuracy based on early stopping status
+            if self.early_stopped and self.best_metric_value is not None:
+                # Use the best metric value when early stopping occurred
+                final_accuracy = self.best_metric_value
+                final_loss = None
+                final_f1 = None
+                
+                # Try to get the metrics from the best round
+                for metric in self.training_history:
+                    if metric.get('round') == self.best_round:
+                        final_loss = metric.get('loss', 0)
+                        final_f1 = metric.get('f1_score', 0)
+                        break
+                
+                # Fallback to best round metrics if not found
+                if final_loss is None and self.training_history:
+                    final_loss = self.training_history[self.best_round - 1]['loss'] if self.best_round <= len(self.training_history) else self.training_history[-1]['loss']
+                    final_f1 = self.training_history[self.best_round - 1]['f1_score'] if self.best_round <= len(self.training_history) else self.training_history[-1]['f1_score']
+            else:
+                # Use last round metrics when no early stopping
+                final_accuracy = self.best_accuracy
+                final_loss = self.training_history[-1]['loss'] if self.training_history else 0
+                final_f1 = self.training_history[-1]['f1_score'] if self.training_history else 0
+            
             results = {
-                'accuracy': self.best_accuracy,
-                'final_accuracy': self.best_accuracy,
-                'final_loss': self.training_history[-1]['loss'] if self.training_history else 0,
-                'f1_score': self.training_history[-1]['f1_score'] if self.training_history else 0,
+                'accuracy': final_accuracy,
+                'final_accuracy': final_accuracy,
+                'final_loss': final_loss or 0,
+                'f1_score': final_f1 or 0,
                 'rounds_completed': self.current_round,
                 'total_time': total_time,
                 'training_history': self.training_history,
                 'target_reached': target_reached,
-                'early_stopped': target_reached,
-                'best_accuracy': self.best_accuracy
+                'early_stopped': self.early_stopped,
+                'best_accuracy': final_accuracy,
+                'best_round': self.best_round if hasattr(self, 'best_round') else self.current_round,
+                'convergence_reason': getattr(self, 'convergence_reason', 'completed')
             }
             
             return results
