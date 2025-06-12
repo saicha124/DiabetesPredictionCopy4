@@ -2007,7 +2007,7 @@ def main():
         
         st.markdown("---")
         
-        if st.session_state.training_started and hasattr(st.session_state, 'advanced_analytics'):
+        if st.session_state.training_completed and hasattr(st.session_state, 'advanced_analytics'):
             analytics = st.session_state.advanced_analytics
             
             # Create comprehensive medical facility dashboard
@@ -2652,7 +2652,7 @@ def main():
     with tab8:
         st.header("📊 Advanced Analytics Dashboard")
         
-        if st.session_state.training_completed and hasattr(st.session_state, 'fl_manager') and hasattr(st.session_state, 'training_metrics'):
+        if st.session_state.training_completed and hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
             # Create analytics sub-tabs
             analytics_tab1, analytics_tab2, analytics_tab3, analytics_tab4 = st.tabs([
                 "🔄 Confusion Matrix",
