@@ -299,7 +299,8 @@ class AdvancedClientAnalytics:
     
     def _create_performance_evolution(self):
         """Create performance evolution visualization"""
-        st.subheader("📈 Performance Evolution Over Time")
+        from translations import get_translation
+        st.subheader(f"📈 {get_translation('performance_evolution_over_time', st.session_state.language)}")
         
         # Prepare evolution data
         evolution_data = []
@@ -324,7 +325,7 @@ class AdvancedClientAnalytics:
         
         # Metric selector
         metric_options = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
-        selected_metric = st.selectbox("Select Metric to Track", metric_options, index=0)
+        selected_metric = st.selectbox(get_translation('select_metric_to_track', st.session_state.language), metric_options, index=0)
         
         col1, col2 = st.columns(2)
         

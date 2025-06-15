@@ -952,6 +952,8 @@ TRANSLATIONS = {
         "refresh_journey": "Actualiser Parcours",
         "view_current_stage": "Voir Étape Actuelle",
         "focus_mode": "Mode Focus",
+        "performance_evolution_over_time": "Évolution des Performances au Fil du Temps",
+        "select_metric_to_track": "Sélectionner la Métrique à Suivre",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",
