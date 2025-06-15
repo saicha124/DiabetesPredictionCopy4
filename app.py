@@ -101,22 +101,22 @@ def main():
             key="language_selector"
         )
         
-        # Update language in session state
-        if selected_language == "English":
-            st.session_state.language = 'en'
-        else:
-            st.session_state.language = 'fr'
+        # Update language in session state and trigger rerun
+        new_language = 'en' if selected_language == "English" else 'fr'
+        if new_language != st.session_state.language:
+            st.session_state.language = new_language
+            st.rerun()
         
         st.markdown("---")
-        st.header("🔧 System Configuration")
+        st.header("🔧 " + get_translation("system_configuration", st.session_state.language))
         
         # Data upload
-        uploaded_file = st.file_uploader("📁 Upload Patient Dataset", type=['csv'])
+        uploaded_file = st.file_uploader("📁 " + get_translation("upload_patient_dataset", st.session_state.language), type=['csv'])
         if uploaded_file is not None:
             data = pd.read_csv(uploaded_file)
             st.session_state.data = data
             st.session_state.data_loaded = True
-            st.success(f"✅ Dataset loaded: {data.shape[0]} patients, {data.shape[1]} features")
+            st.success("✅ " + get_translation("dataset_loaded", st.session_state.language, rows=data.shape[0], cols=data.shape[1]))
         
         # Always ensure data is loaded
         if not hasattr(st.session_state, 'data') or st.session_state.data is None:
@@ -124,7 +124,7 @@ def main():
                 data = pd.read_csv('diabetes.csv')
                 st.session_state.data = data
                 st.session_state.data_loaded = True
-                st.success(f"📊 Diabetes dataset loaded: {data.shape[0]} patients, {data.shape[1]} features")
+                st.success("📊 " + get_translation("diabetes_dataset_loaded", st.session_state.language, rows=data.shape[0], cols=data.shape[1]))
             except Exception as e:
                 st.error(f"Failed to load diabetes dataset: {str(e)}")
                 return

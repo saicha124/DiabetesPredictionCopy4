@@ -245,7 +245,15 @@ TRANSLATIONS = {
         # Language selector
         "language_selector": "Language",
         "english": "English",
-        "french": "Français"
+        "french": "Français",
+        
+        # System interface
+        "system_configuration": "System Configuration",
+        "upload_patient_dataset": "Upload Patient Dataset",
+        "dataset_loaded": "Dataset loaded: {rows} patients, {cols} features",
+        "diabetes_dataset_loaded": "Diabetes dataset loaded: {rows} patients, {cols} features",
+        "failed_to_load_dataset": "Failed to load diabetes dataset: {error}",
+        "tab_graph_viz": "Graph Visualization"
     },
     
     'fr': {
@@ -489,7 +497,15 @@ TRANSLATIONS = {
         # Language selector
         "language_selector": "Langue",
         "english": "English",
-        "french": "Français"
+        "french": "Français",
+        
+        # System interface
+        "system_configuration": "Configuration Système",
+        "upload_patient_dataset": "Télécharger Jeu de Données Patient",
+        "dataset_loaded": "Jeu de données chargé: {rows} patients, {cols} caractéristiques",
+        "diabetes_dataset_loaded": "Jeu de données diabète chargé: {rows} patients, {cols} caractéristiques",
+        "failed_to_load_dataset": "Échec du chargement du jeu de données diabète: {error}",
+        "tab_graph_viz": "Visualisation Graphique"
     }
 }
 
