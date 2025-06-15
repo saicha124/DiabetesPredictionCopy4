@@ -382,6 +382,8 @@ TRANSLATIONS = {
         "stage_metrics": "Stage Metrics",
         "completion": "Completion",
         "completed": "Completed",
+        "in_progress": "In Progress",
+        "pending": "Pending",
         
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
@@ -829,6 +831,8 @@ TRANSLATIONS = {
         "stage_metrics": "Métriques d'Étape",
         "completion": "Achèvement",
         "completed": "Terminé",
+        "in_progress": "En Cours",
+        "pending": "En Attente",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",

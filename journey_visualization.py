@@ -126,6 +126,7 @@ class InteractiveJourneyVisualizer:
                 current_round = len(session_state.get('training_metrics', []))
                 
                 # Calculate gradual progress based on current stage
+                base_progress = 0  # Initialize to fix LSP issue
                 if self.current_stage == 4:  # Training Initiation
                     # Progress from 0% to 30% based on rounds completed
                     base_progress = min(30, (current_round / max(1, total_rounds * 0.1)) * 30)
