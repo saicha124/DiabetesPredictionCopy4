@@ -1266,12 +1266,22 @@ def main():
             
             # Show available models preview
             st.subheader("🧠 " + get_translation("available_ai_models", st.session_state.language))
-            model_info = {
-                'Model Type': ['Deep Learning (Neural Network)', 'CNN (Convolutional)', 'SVM (Support Vector)', 'Logistic Regression', 'Random Forest'],
-                'Best Use Case': ['Complex patterns', 'Image-like data', 'High accuracy', 'Fast training', 'Feature importance'],
-                'Performance': ['Excellent', 'Very Good', 'Good', 'Good', 'Very Good'],
-                'Training Speed': ['Slow', 'Medium', 'Fast', 'Very Fast', 'Fast']
-            }
+            
+            if st.session_state.language == 'fr':
+                model_info = {
+                    'Type de Modèle': ['Apprentissage Profond (Réseau Neural)', 'CNN (Convolutionnel)', 'SVM (Vecteur Support)', 'Régression Logistique', 'Forêt Aléatoire'],
+                    'Meilleur Cas d\'Usage': ['Motifs complexes', 'Données type image', 'Haute précision', 'Entraînement rapide', 'Importance des caractéristiques'],
+                    'Performance': ['Excellente', 'Très Bonne', 'Bonne', 'Bonne', 'Très Bonne'],
+                    'Vitesse d\'Entraînement': ['Lente', 'Moyenne', 'Rapide', 'Très Rapide', 'Rapide']
+                }
+            else:
+                model_info = {
+                    'Model Type': ['Deep Learning (Neural Network)', 'CNN (Convolutional)', 'SVM (Support Vector)', 'Logistic Regression', 'Random Forest'],
+                    'Best Use Case': ['Complex patterns', 'Image-like data', 'High accuracy', 'Fast training', 'Feature importance'],
+                    'Performance': ['Excellent', 'Very Good', 'Good', 'Good', 'Very Good'],
+                    'Training Speed': ['Slow', 'Medium', 'Fast', 'Very Fast', 'Fast']
+                }
+            
             model_df = pd.DataFrame(model_info)
             st.dataframe(model_df, use_container_width=True)
 
