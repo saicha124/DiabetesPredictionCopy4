@@ -184,35 +184,52 @@ def main():
                 st.error(get_translation("failed_to_load_dataset", st.session_state.language, error=str(e)))
                 return
 
-    # Add tab selector dropdown
-    tab_names = [
-        get_translation("tab_training", st.session_state.language),
-        get_translation("tab_monitoring", st.session_state.language), 
-        get_translation("tab_visualization", st.session_state.language),
-        get_translation("tab_analytics", st.session_state.language),
-        get_translation("tab_facility", st.session_state.language),
-        get_translation("tab_risk", st.session_state.language),
-        get_translation("tab_graph_viz", st.session_state.language),
-        get_translation("tab_advanced_analytics", st.session_state.language)
-    ]
+    # Initialize current tab index in session state
+    if 'current_tab_index' not in st.session_state:
+        st.session_state.current_tab_index = 0
     
-    if st.session_state.language == 'fr':
-        selected_tab_name = st.selectbox("🔗 Naviguer vers l'onglet:", tab_names, key="tab_navigator")
-    else:
-        selected_tab_name = st.selectbox("🔗 Navigate to tab:", tab_names, key="tab_navigator")
+    # Tab navigation with arrows
+    col1, col2, col3 = st.columns([1, 6, 1])
     
-    # Get the index of selected tab
-    selected_tab_index = tab_names.index(selected_tab_name)
+    with col1:
+        if st.button("◀ Previous", key="prev_tab"):
+            if st.session_state.current_tab_index > 0:
+                st.session_state.current_tab_index -= 1
+            st.rerun()
     
-    # Add JavaScript to click the selected tab
+    with col2:
+        tab_names = [
+            get_translation("tab_training", st.session_state.language),
+            get_translation("tab_monitoring", st.session_state.language), 
+            get_translation("tab_visualization", st.session_state.language),
+            get_translation("tab_analytics", st.session_state.language),
+            get_translation("tab_facility", st.session_state.language),
+            get_translation("tab_risk", st.session_state.language),
+            get_translation("tab_graph_viz", st.session_state.language),
+            get_translation("tab_advanced_analytics", st.session_state.language)
+        ]
+        
+        current_tab_name = tab_names[st.session_state.current_tab_index]
+        if st.session_state.language == 'fr':
+            st.markdown(f"**Onglet actuel:** {current_tab_name}")
+        else:
+            st.markdown(f"**Current tab:** {current_tab_name}")
+    
+    with col3:
+        if st.button("Next ▶", key="next_tab"):
+            if st.session_state.current_tab_index < len(tab_names) - 1:
+                st.session_state.current_tab_index += 1
+            st.rerun()
+    
+    # Add JavaScript to automatically click the current tab
     st.markdown(f"""
     <script>
         setTimeout(function() {{
             const tabs = document.querySelectorAll('[data-baseweb="tab"]');
-            if (tabs.length > {selected_tab_index}) {{
-                tabs[{selected_tab_index}].click();
+            if (tabs.length > {st.session_state.current_tab_index}) {{
+                tabs[{st.session_state.current_tab_index}].click();
             }}
-        }}, 500);
+        }}, 100);
     </script>
     """, unsafe_allow_html=True)
 
