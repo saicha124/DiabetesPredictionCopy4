@@ -604,7 +604,8 @@ class AdvancedClientAnalytics:
     
     def _create_convergence_analysis(self):
         """Create convergence analysis dashboard"""
-        st.subheader("🎯 Convergence Analysis")
+        from translations import get_translation
+        st.subheader(f"🎯 {get_translation('convergence_analysis', st.session_state.language)}")
         
         if not self.convergence_metrics:
             st.warning("No convergence data available")
@@ -653,11 +654,11 @@ class AdvancedClientAnalytics:
             st.plotly_chart(fig_scatter, use_container_width=True)
         
         # Convergence trends
-        st.subheader("📈 Convergence Trends")
+        st.subheader(f"📈 {get_translation('convergence_trends', st.session_state.language)}")
         
         # Select facility for detailed trend analysis
-        facility_options = [f"Medical Station {i + 1}" for i in self.convergence_metrics.keys()]
-        selected_facility = st.selectbox("Select Facility for Trend Analysis", facility_options)
+        facility_options = [f"{get_translation('medical_station', st.session_state.language)} {i + 1}" for i in self.convergence_metrics.keys()]
+        selected_facility = st.selectbox(get_translation('select_facility_trend_analysis', st.session_state.language), facility_options)
         client_id = int(selected_facility.split()[-1]) - 1
         
         if client_id in self.convergence_metrics:
@@ -708,24 +709,24 @@ class AdvancedClientAnalytics:
                     st.plotly_chart(fig_f1_trend, use_container_width=True)
             
             # Convergence summary
-            st.subheader(f"🎯 {selected_facility} Convergence Summary")
+            st.subheader(f"🎯 {selected_facility} {get_translation('convergence_summary', st.session_state.language)}")
             
             col1, col2, col3 = st.columns(3)
             
             with col1:
                 score = conv_metrics.get('convergence_score', 0)
-                st.metric("Convergence Score", f"{score:.3f}")
-                status = "Converged" if score > 0.8 else "Converging" if score > 0.5 else "Unstable"
-                st.write(f"Status: **{status}**")
+                st.metric(get_translation('convergence_score', st.session_state.language), f"{score:.3f}")
+                status = "Converged" if score > 0.8 else get_translation('status_converging', st.session_state.language) if score > 0.5 else "Unstable"
+                st.write(f"{status}")
             
             with col2:
                 stability = conv_metrics.get('stability_score', 0)
-                st.metric("Stability Score", f"{stability:.3f}")
-                stability_level = "High" if stability > 0.8 else "Medium" if stability > 0.6 else "Low"
-                st.write(f"Stability: **{stability_level}**")
+                st.metric(get_translation('stability_score', st.session_state.language), f"{stability:.3f}")
+                stability_level = get_translation('stability_high', st.session_state.language) if stability > 0.8 else "Medium" if stability > 0.6 else "Low"
+                st.write(f"{stability_level}")
             
             with col3:
                 improvement = conv_metrics.get('improvement_rate', 0)
-                st.metric("Improvement Rate", f"{improvement:.3f}")
+                st.metric(get_translation('improvement_rate', st.session_state.language), f"{improvement:.3f}")
                 improvement_trend = "Improving" if improvement > 0.05 else "Stable" if improvement > -0.02 else "Declining"
                 st.write(f"Trend: **{improvement_trend}**")
