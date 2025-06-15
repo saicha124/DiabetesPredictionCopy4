@@ -498,12 +498,12 @@ def main():
                     if len(X) == 0 or len(y) == 0:
                         raise ValueError("Preprocessed data is empty")
                     
-                    st.info(f"Data preprocessed: {len(X)} samples, {X.shape[1]} features")
+                    st.info(get_translation("data_preprocessed", st.session_state.language, samples=len(X), features=X.shape[1]))
                     
                     # Create authentic medical facility cohorts with progress
                     data_progress.progress(0.80, text=f"80% - {get_translation('setting_up_clients', st.session_state.language)}")
                     try:
-                        st.info(f"Creating {num_clients} medical facility cohorts from real patient data")
+                        st.info(get_translation("creating_medical_cohorts", st.session_state.language, num_clients=num_clients))
                         
                         # Use authenticated medical data fetcher to create realistic facility distributions
                         fetcher = RealMedicalDataFetcher()
@@ -701,13 +701,13 @@ def main():
                     else:
                         st.warning(f"Client {i} is invalid: {type(client)}")
                 
-                st.info(f"Found {valid_clients} valid clients out of {len(client_data)} total")
+                st.info(get_translation("found_valid_clients", st.session_state.language, valid=valid_clients, total=len(client_data)))
                 
                 if valid_clients == 0:
                     st.error("No valid clients found with proper data structure")
                     raise ValueError("No valid clients available for training")
                 
-                st.success(f"Starting training with {valid_clients} valid clients")
+                st.success(get_translation("starting_training_clients", st.session_state.language, clients=valid_clients))
                 
                 # Initialize real-time progress tracking
                 progress_container = st.container()
@@ -1187,7 +1187,7 @@ def main():
                 st.info("Training in progress... Waiting for first round results.")
         
         elif st.session_state.training_completed:
-            st.success("🎉 Training Completed Successfully!")
+            st.success("🎉 " + get_translation("training_completed_successfully", st.session_state.language))
             
             # Final results summary
             if hasattr(st.session_state, 'results'):
@@ -1195,7 +1195,7 @@ def main():
                 
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
-                    st.metric("Final Accuracy", f"{results.get('accuracy', 0):.3f}")
+                    st.metric(get_translation("final_accuracy", st.session_state.language), f"{results.get('accuracy', 0):.3f}")
                 with col2:
                     st.metric("Rounds Completed", results.get('rounds_completed', 0))
                 with col3:

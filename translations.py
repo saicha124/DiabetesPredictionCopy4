@@ -388,6 +388,10 @@ TRANSLATIONS = {
         "training_stopped": "Training stopped.",
         "resetting_parameters": "Resetting all configuration parameters...",
         "parameters_reset_success": "Parameters reset successfully! You can now start a new training session.",
+        "data_preprocessed": "Data preprocessed: {samples} samples, {features} features",
+        "creating_medical_cohorts": "Creating {num_clients} medical facility cohorts from real patient data",
+        "found_valid_clients": "Found {valid} valid clients out of {total} total",
+        "starting_training_clients": "Starting training with {clients} valid clients",
         
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
@@ -841,6 +845,10 @@ TRANSLATIONS = {
         "training_stopped": "Formation arrêtée.",
         "resetting_parameters": "Réinitialisation de tous les paramètres de configuration...",
         "parameters_reset_success": "Paramètres réinitialisés avec succès! Vous pouvez maintenant commencer une nouvelle session d'entraînement.",
+        "data_preprocessed": "Données prétraitées: {samples} échantillons, {features} caractéristiques",
+        "creating_medical_cohorts": "Création de {num_clients} cohortes d'établissements médicaux à partir de données patients réelles",
+        "found_valid_clients": "Trouvé {valid} clients valides sur {total} au total",
+        "starting_training_clients": "Démarrage de l'entraînement avec {clients} clients valides",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",
