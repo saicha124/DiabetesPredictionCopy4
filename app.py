@@ -905,7 +905,7 @@ def main():
                 st.error(f"Training failed: {str(e)}")
 
     with tab2:
-        st.header("🏥 Medical Station Monitoring")
+        st.header("🏥 " + get_translation("medical_station_monitoring", st.session_state.language))
         
         # Add reset button for new training sessions
         if st.session_state.training_completed or (hasattr(st.session_state, 'results') and st.session_state.results):
@@ -1029,7 +1029,7 @@ def main():
                 
                 # Privacy status
                 if hasattr(st.session_state, 'enable_dp') and st.session_state.enable_dp:
-                    st.subheader("🔒 Differential Privacy Status")
+                    st.subheader("🔒 " + get_translation("differential_privacy_status", st.session_state.language))
                     
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
@@ -1065,7 +1065,7 @@ def main():
                 
                 # Secret sharing status
                 if hasattr(st.session_state, 'training_ss_enabled') and st.session_state.training_ss_enabled:
-                    st.subheader("🔐 Secret Sharing Status")
+                    st.subheader("🔐 " + get_translation("secret_sharing_status", st.session_state.language))
                     if hasattr(st.session_state, 'training_ss_manager'):
                         ss_metrics = st.session_state.training_ss_manager.get_security_metrics()
                         
@@ -1086,7 +1086,7 @@ def main():
                             st.info(f"Collusion Resistance: < {ss_metrics['collusion_resistance']} nodes")
                 
                 # Live client progress table
-                st.subheader("👥 Client Performance This Round")
+                st.subheader("👥 " + get_translation("client_performance_this_round", st.session_state.language))
                 if 'client_metrics' in latest_metrics:
                     client_data = []
                     for client_id, metrics in latest_metrics['client_metrics'].items():
@@ -1105,7 +1105,7 @@ def main():
                 
                 # Real-time training chart
                 if len(st.session_state.training_metrics) > 1:
-                    st.subheader("📈 Training Progress")
+                    st.subheader("📈 " + get_translation("training_progress", st.session_state.language))
                     
                     rounds = [m['round'] for m in st.session_state.training_metrics]
                     accuracies = [m['accuracy'] for m in st.session_state.training_metrics]
@@ -1149,7 +1149,7 @@ def main():
                 
                 # Client performance evolution
                 if len(st.session_state.training_metrics) > 2:
-                    st.subheader("🏥 Individual Client Learning Curves")
+                    st.subheader("🏥 " + get_translation("individual_client_learning_curves", st.session_state.language))
                     
                     fig_clients = go.Figure()
                     colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
@@ -1204,7 +1204,7 @@ def main():
             
             # Complete training visualization
             if st.session_state.training_metrics:
-                st.subheader("📊 Complete Training Analysis")
+                st.subheader("📊 " + get_translation("complete_training_analysis", st.session_state.language))
                 
                 rounds = [m['round'] for m in st.session_state.training_metrics]
                 accuracies = [m['accuracy'] for m in st.session_state.training_metrics]
@@ -1232,7 +1232,7 @@ def main():
                 with col2:
                     # Model performance comparison
                     if hasattr(st.session_state, 'results') and 'client_details' in st.session_state.results:
-                        st.subheader("🏥 Final Client Summary")
+                        st.subheader("🏥 " + get_translation("final_client_summary", st.session_state.language))
                         
                         final_round = max(st.session_state.results['client_details'].keys())
                         final_client_data = st.session_state.results['client_details'][final_round]
@@ -1253,7 +1253,7 @@ def main():
             st.warning("Please start training from the Training Control tab first.")
             
             # Show available models preview
-            st.subheader("🧠 Available AI Models")
+            st.subheader("🧠 " + get_translation("available_ai_models", st.session_state.language))
             model_info = {
                 'Model Type': ['Deep Learning (Neural Network)', 'CNN (Convolutional)', 'SVM (Support Vector)', 'Logistic Regression', 'Random Forest'],
                 'Best Use Case': ['Complex patterns', 'Image-like data', 'High accuracy', 'Fast training', 'Feature importance'],
@@ -1264,7 +1264,7 @@ def main():
             st.dataframe(model_df, use_container_width=True)
 
     with tab3:
-        st.header("🗺️ Interactive Learning Journey Visualization")
+        st.header("🗺️ " + get_translation("interactive_learning_journey_visualization", st.session_state.language))
         
         # Initialize and update journey visualizer
         journey_viz = st.session_state.journey_visualizer
