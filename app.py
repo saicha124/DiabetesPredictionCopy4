@@ -184,18 +184,12 @@ def main():
                 st.error(get_translation("failed_to_load_dataset", st.session_state.language, error=str(e)))
                 return
 
-    # Initialize current tab index in session state
-    if 'current_tab_index' not in st.session_state:
-        st.session_state.current_tab_index = 0
-    
     # Tab navigation with arrows
     col1, col2, col3 = st.columns([1, 6, 1])
     
     with col1:
-        if st.button("◀ Previous", key="prev_tab"):
-            if st.session_state.current_tab_index > 0:
-                st.session_state.current_tab_index -= 1
-            st.rerun()
+        if st.button("◀ Précédent" if st.session_state.language == 'fr' else "◀ Previous", key="prev_tab"):
+            pass
     
     with col2:
         tab_names = [
@@ -209,27 +203,41 @@ def main():
             get_translation("tab_advanced_analytics", st.session_state.language)
         ]
         
-        current_tab_name = tab_names[st.session_state.current_tab_index]
         if st.session_state.language == 'fr':
-            st.markdown(f"**Onglet actuel:** {current_tab_name}")
+            st.markdown("**Utilisez les flèches pour naviguer entre les onglets**")
         else:
-            st.markdown(f"**Current tab:** {current_tab_name}")
+            st.markdown("**Use arrows to navigate between tabs**")
     
     with col3:
-        if st.button("Next ▶", key="next_tab"):
-            if st.session_state.current_tab_index < len(tab_names) - 1:
-                st.session_state.current_tab_index += 1
-            st.rerun()
-    
-    # Add JavaScript to automatically click the current tab
-    st.markdown(f"""
+        if st.button("Suivant ▶" if st.session_state.language == 'fr' else "Next ▶", key="next_tab"):
+            pass
+
+    # Main tabs with JavaScript navigation
+    st.markdown("""
     <script>
-        setTimeout(function() {{
-            const tabs = document.querySelectorAll('[data-baseweb="tab"]');
-            if (tabs.length > {st.session_state.current_tab_index}) {{
-                tabs[{st.session_state.current_tab_index}].click();
-            }}
-        }}, 100);
+    let currentTabIndex = 0;
+    const maxTabs = 8;
+    
+    document.addEventListener('click', function(e) {
+        if (e.target.textContent.includes('◀') || e.target.textContent.includes('Précédent') || e.target.textContent.includes('Previous')) {
+            if (currentTabIndex > 0) {
+                currentTabIndex--;
+                setTimeout(() => {
+                    const tabs = document.querySelectorAll('[data-baseweb="tab"]');
+                    if (tabs[currentTabIndex]) tabs[currentTabIndex].click();
+                }, 100);
+            }
+        }
+        if (e.target.textContent.includes('▶') || e.target.textContent.includes('Suivant') || e.target.textContent.includes('Next')) {
+            if (currentTabIndex < maxTabs - 1) {
+                currentTabIndex++;
+                setTimeout(() => {
+                    const tabs = document.querySelectorAll('[data-baseweb="tab"]');
+                    if (tabs[currentTabIndex]) tabs[currentTabIndex].click();
+                }, 100);
+            }
+        }
+    });
     </script>
     """, unsafe_allow_html=True)
 
