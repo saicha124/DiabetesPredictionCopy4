@@ -399,6 +399,10 @@ TRANSLATIONS = {
         "target_not_reached": "⏳ Target Not Reached",
         "created_authentic_cohorts": "Created {count} authentic medical facility cohorts",
         "authentic_medical_facility_distribution": "Authentic Medical Facility Distribution",
+        "clinical_interpretation": "Clinical Interpretation",
+        "low_diabetes_risk": "Low diabetes risk",
+        "continue_healthy_lifestyle": "Continue healthy lifestyle",
+        "risk_factors_analysis": "Risk Factors Analysis",
         
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
@@ -863,6 +867,10 @@ TRANSLATIONS = {
         "target_not_reached": "⏳ Objectif Non Atteint",
         "created_authentic_cohorts": "Créé {count} cohortes d'établissements médicaux authentiques",
         "authentic_medical_facility_distribution": "Distribution d'Établissements Médicaux Authentiques",
+        "clinical_interpretation": "Interprétation Clinique",
+        "low_diabetes_risk": "Faible risque de diabète",
+        "continue_healthy_lifestyle": "Continuer un mode de vie sain",
+        "risk_factors_analysis": "Analyse des Facteurs de Risque",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",

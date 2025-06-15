@@ -2228,12 +2228,12 @@ def main():
                             risk_level = "Low Risk"
                             risk_color = "🟢"
                         
-                        st.metric("Risk Level", f"{risk_color} {risk_level}")
-                        st.metric("Risk Score", f"{risk_score:.3f}")
-                        st.metric("Model Confidence", f"{confidence:.3f}")
+                        st.metric(get_translation("risk_level", st.session_state.language), f"{risk_color} {risk_level}")
+                        st.metric(get_translation("risk_score", st.session_state.language), f"{risk_score:.3f}")
+                        st.metric(get_translation("model_confidence", st.session_state.language), f"{confidence:.3f}")
                         
                         # Clinical interpretation
-                        st.subheader("🏥 Clinical Interpretation")
+                        st.subheader("🏥 " + get_translation("clinical_interpretation", st.session_state.language))
                         if risk_score >= 0.7:
                             st.error("**High diabetes risk detected**")
                             st.write("• Immediate medical consultation recommended")
@@ -2245,13 +2245,13 @@ def main():
                             st.write("• Lifestyle modifications beneficial")
                             st.write("• Annual screening advised")
                         else:
-                            st.success("**Low diabetes risk**")
-                            st.write("• Continue healthy lifestyle")
+                            st.success("**" + get_translation("low_diabetes_risk", st.session_state.language) + "**")
+                            st.write("• " + get_translation("continue_healthy_lifestyle", st.session_state.language))
                             st.write("• Routine screening as per guidelines")
                             st.write("• Monitor risk factors periodically")
                     
                     with col2:
-                        st.subheader("📋 Risk Factors Analysis")
+                        st.subheader("📋 " + get_translation("risk_factors_analysis", st.session_state.language))
                         
                         # Identify risk and protective factors
                         risk_factors = []
