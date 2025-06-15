@@ -476,6 +476,7 @@ TRANSLATIONS = {
         "tab_explainer": "🩺 Explicateur de Prédiction de Risque Patient",
         "tab_facility": "🏥 Analytiques Avancées Établissement Médical",
         "tab_risk": "🩺 Évaluation Risque Patient Individuel",
+        "tab_graph_viz": "🔗 Visualisation Réseau",
         "tab_advanced_analytics": "📊 Analytiques Avancées",
         
         # Training controls
