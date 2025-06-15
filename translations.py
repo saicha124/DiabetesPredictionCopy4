@@ -337,6 +337,9 @@ TRANSLATIONS = {
         "model_performance_grading": "Model performance grading",
         "training_rounds_completed": "Training rounds completed",
         "global_model_available": "Global model available",
+        "federated_learning_journey_map": "Federated Learning Journey Map",
+        "stage_explorer": "Stage Explorer",
+        "select_stage_explore": "Select a stage to explore:",
         
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
@@ -739,6 +742,9 @@ TRANSLATIONS = {
         "model_performance_grading": "Notation de performance du modèle",
         "training_rounds_completed": "Rondes d'entraînement terminées",
         "global_model_available": "Modèle global disponible",
+        "federated_learning_journey_map": "Carte du Parcours d'Apprentissage Fédéré",
+        "stage_explorer": "Explorateur d'Étapes",
+        "select_stage_explore": "Sélectionnez une étape à explorer:",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",

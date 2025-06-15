@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import time
 from typing import Dict, List, Any, Tuple
+from translations import get_translation
 
 class InteractiveJourneyVisualizer:
     """Interactive visualization of the federated learning user journey"""
@@ -122,7 +123,7 @@ class InteractiveJourneyVisualizer:
     
     def create_journey_map(self):
         """Create the main interactive journey map"""
-        st.subheader("🗺️ Federated Learning Journey Map")
+        st.subheader(f"🗺️ {get_translation('federated_learning_journey_map', st.session_state.language)}")
         
         # Create journey flow diagram
         fig = self._create_journey_flow()
@@ -236,11 +237,11 @@ class InteractiveJourneyVisualizer:
     
     def _create_stage_explorer(self):
         """Create interactive stage explorer"""
-        st.subheader("🔍 Stage Explorer")
+        st.subheader(f"🔍 {get_translation('stage_explorer', st.session_state.language)}")
         
         # Stage selector
         selected_stage = st.selectbox(
-            "Select a stage to explore:",
+            get_translation('select_stage_explore', st.session_state.language),
             self.journey_stages,
             index=self.current_stage
         )
@@ -563,7 +564,7 @@ class InteractiveJourneyVisualizer:
     
     def create_progress_summary(self):
         """Create overall progress summary"""
-        st.subheader("📈 Journey Progress Summary")
+        st.subheader(f"📈 {get_translation('journey_progress_summary', st.session_state.language)}")
         
         # Calculate overall progress
         total_progress = sum(self.stage_progress.values()) / len(self.stage_progress)
