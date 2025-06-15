@@ -108,6 +108,57 @@ def main():
             st.rerun()
         
         st.markdown("---")
+        
+        # Add tab navigation in sidebar
+        if st.session_state.language == 'fr':
+            st.subheader("🧭 Navigation Rapide")
+            selected_tab = st.selectbox(
+                "Aller à l'onglet:",
+                ["Configuration", "Entraînement FL", "Surveillance Médicale", "Parcours de Formation", 
+                 "Analytiques", "Station Médicale", "Évaluation des Risques", 
+                 "Visualisation Graphique", "Analytiques Avancées"],
+                index=0
+            )
+        else:
+            st.subheader("🧭 Quick Navigation")
+            selected_tab = st.selectbox(
+                "Go to tab:",
+                ["Configuration", "FL Training", "Medical Surveillance", "Training Journey", 
+                 "Analytics", "Medical Station", "Risk Assessment", 
+                 "Graph Visualization", "Advanced Analytics"],
+                index=0
+            )
+        
+        # Store selected tab in session state
+        st.session_state.selected_tab = selected_tab
+        
+        # Add JavaScript to automatically click the selected tab
+        if selected_tab != "Configuration":
+            tab_mapping = {
+                "Entraînement FL": 0, "FL Training": 0,
+                "Surveillance Médicale": 1, "Medical Surveillance": 1,
+                "Parcours de Formation": 2, "Training Journey": 2,
+                "Analytiques": 3, "Analytics": 3,
+                "Station Médicale": 4, "Medical Station": 4,
+                "Évaluation des Risques": 5, "Risk Assessment": 5,
+                "Visualisation Graphique": 6, "Graph Visualization": 6,
+                "Analytiques Avancées": 7, "Advanced Analytics": 7
+            }
+            
+            if selected_tab in tab_mapping:
+                tab_index = tab_mapping[selected_tab]
+                st.markdown(f"""
+                <script>
+                    setTimeout(function() {{
+                        const tabs = document.querySelectorAll('[data-testid="stTabs"] button');
+                        if (tabs.length > {tab_index}) {{
+                            tabs[{tab_index}].click();
+                        }}
+                    }}, 100);
+                </script>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("---")
         st.header("🔧 " + get_translation("system_configuration", st.session_state.language))
         
         # Data upload
