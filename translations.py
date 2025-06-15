@@ -335,6 +335,8 @@ TRANSLATIONS = {
         "multi_metric_evolution": "Multi-metric training evolution",
         "configuration_impact": "Configuration impact analysis",
         "model_performance_grading": "Model performance grading",
+        "training_rounds_completed": "Training rounds completed",
+        "global_model_available": "Global model available",
         
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
@@ -735,6 +737,8 @@ TRANSLATIONS = {
         "multi_metric_evolution": "Évolution d'entraînement multi-métrique",
         "configuration_impact": "Analyse d'impact de configuration",
         "model_performance_grading": "Notation de performance du modèle",
+        "training_rounds_completed": "Rondes d'entraînement terminées",
+        "global_model_available": "Modèle global disponible",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",

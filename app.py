@@ -1271,17 +1271,17 @@ def main():
         journey_viz.initialize_journey(st.session_state)
         
         # Debug information for journey status
-        with st.expander("🔧 Journey Status Debug", expanded=False):
-            st.write(f"Training completed: {st.session_state.get('training_completed', False)}")
-            st.write(f"Training started: {st.session_state.get('training_started', False)}")
-            st.write(f"Has results: {hasattr(st.session_state, 'results') and st.session_state.results is not None}")
-            st.write(f"Has training metrics: {hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics is not None}")
+        with st.expander(f"🔧 {get_translation('journey_status_debug', st.session_state.language)}", expanded=False):
+            st.write(f"{get_translation('training_completed', st.session_state.language)}: {st.session_state.get('training_completed', False)}")
+            st.write(f"{get_translation('training_started', st.session_state.language)}: {st.session_state.get('training_started', False)}")
+            st.write(f"{get_translation('has_results', st.session_state.language)}: {hasattr(st.session_state, 'results') and st.session_state.results is not None}")
+            st.write(f"{get_translation('has_training_metrics', st.session_state.language)}: {hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics is not None}")
             if hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
-                st.write(f"Training rounds completed: {len(st.session_state.training_metrics)}")
-            st.write(f"Current detected stage: {journey_viz.current_stage} ({journey_viz.journey_stages[journey_viz.current_stage]})")
-            st.write(f"FL Manager available: {hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager is not None}")
+                st.write(f"{get_translation('training_rounds_completed', st.session_state.language)}: {len(st.session_state.training_metrics)}")
+            st.write(f"{get_translation('current_detected_stage', st.session_state.language)}: {journey_viz.current_stage} ({journey_viz.journey_stages[journey_viz.current_stage]})")
+            st.write(f"{get_translation('fl_manager_available', st.session_state.language)}: {hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager is not None}")
             if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
-                st.write(f"Global model available: {hasattr(st.session_state.fl_manager, 'global_model') and st.session_state.fl_manager.global_model is not None}")
+                st.write(f"{get_translation('global_model_available', st.session_state.language)}: {hasattr(st.session_state.fl_manager, 'global_model') and st.session_state.fl_manager.global_model is not None}")
         
         # Create journey progress summary
         journey_viz.create_progress_summary()
