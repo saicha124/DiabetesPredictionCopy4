@@ -1368,30 +1368,52 @@ def main():
             with tab_predict:
                 st.subheader(get_translation("patient_information", st.session_state.language))
                 
+                # Direct French labels to override caching
+                if st.session_state.language == 'fr':
+                    preg_label = "Nombre de Grossesses"
+                    glucose_label = "Niveau de Glucose (mg/dL)"
+                    bp_label = "Pression Artérielle (mm Hg)" 
+                    skin_label = "Épaisseur de Peau (mm)"
+                    insulin_label = "Insuline (μU/mL)"
+                    bmi_label = "IMC (kg/m²)"
+                    dpf_label = "Fonction Pedigree Diabète"
+                    age_label = "Âge (années)"
+                    form_title = "Entrez les informations du patient"
+                else:
+                    preg_label = "Number of Pregnancies"
+                    glucose_label = "Glucose Level (mg/dL)"
+                    bp_label = "Blood Pressure (mm Hg)"
+                    skin_label = "Skin Thickness (mm)"
+                    insulin_label = "Insulin (μU/mL)"
+                    bmi_label = "BMI (kg/m²)"
+                    dpf_label = "Diabetes Pedigree Function"
+                    age_label = "Age (years)"
+                    form_title = "Enter patient information"
+                
                 # Patient input form with enhanced validation
                 with st.form(f"patient_assessment_{st.session_state.language}"):
-                    st.markdown(f"**{get_translation('enter_patient_information', st.session_state.language)}**")
+                    st.markdown(f"**{form_title}**")
                     
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        pregnancies = st.number_input(get_translation("pregnancies", st.session_state.language), min_value=0, max_value=20, value=1, 
+                        pregnancies = st.number_input(preg_label, min_value=0, max_value=20, value=1, 
                                                     help=get_translation("help_pregnancies", st.session_state.language), key=f"pregnancies_{st.session_state.language}")
-                        glucose = st.number_input(get_translation("glucose_level", st.session_state.language), min_value=0.0, max_value=300.0, value=120.0,
+                        glucose = st.number_input(glucose_label, min_value=0.0, max_value=300.0, value=120.0,
                                                 help=get_translation("help_glucose", st.session_state.language), key=f"glucose_{st.session_state.language}")
-                        blood_pressure = st.number_input(get_translation("blood_pressure", st.session_state.language), min_value=0.0, max_value=200.0, value=80.0,
+                        blood_pressure = st.number_input(bp_label, min_value=0.0, max_value=200.0, value=80.0,
                                                         help=get_translation("help_blood_pressure", st.session_state.language), key=f"bp_{st.session_state.language}")
-                        skin_thickness = st.number_input(get_translation("skin_thickness", st.session_state.language), min_value=0.0, max_value=100.0, value=20.0,
+                        skin_thickness = st.number_input(skin_label, min_value=0.0, max_value=100.0, value=20.0,
                                                         help=get_translation("help_skin_thickness", st.session_state.language), key=f"skin_{st.session_state.language}")
                     
                     with col2:
-                        insulin = st.number_input(get_translation("insulin", st.session_state.language), min_value=0.0, max_value=1000.0, value=80.0,
+                        insulin = st.number_input(insulin_label, min_value=0.0, max_value=1000.0, value=80.0,
                                                 help=get_translation("help_insulin", st.session_state.language), key=f"insulin_{st.session_state.language}")
-                        bmi = st.number_input(get_translation("bmi", st.session_state.language), min_value=0.0, max_value=100.0, value=25.0,
+                        bmi = st.number_input(bmi_label, min_value=0.0, max_value=100.0, value=25.0,
                                             help=get_translation("help_bmi", st.session_state.language), key=f"bmi_{st.session_state.language}")
-                        dpf = st.number_input(get_translation("diabetes_pedigree", st.session_state.language), min_value=0.0, max_value=5.0, value=0.5,
+                        dpf = st.number_input(dpf_label, min_value=0.0, max_value=5.0, value=0.5,
                                             help=get_translation("help_diabetes_pedigree", st.session_state.language), key=f"dpf_{st.session_state.language}")
-                        age = st.number_input(get_translation("age", st.session_state.language), min_value=0, max_value=120, value=30, key=f"age_{st.session_state.language}")
+                        age = st.number_input(age_label, min_value=0, max_value=120, value=30, key=f"age_{st.session_state.language}")
                     
                     submitted = st.form_submit_button("🔍 " + get_translation("analyze_risk", st.session_state.language), use_container_width=True)
                     
