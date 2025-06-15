@@ -184,66 +184,13 @@ def main():
                 st.error(get_translation("failed_to_load_dataset", st.session_state.language, error=str(e)))
                 return
 
-    # Tab navigation with arrows
-    col1, col2, col3 = st.columns([1, 6, 1])
+    # Initialize current tab index
+    if 'current_tab_index' not in st.session_state:
+        st.session_state.current_tab_index = 0
     
-    with col1:
-        if st.button("◀ Précédent" if st.session_state.language == 'fr' else "◀ Previous", key="prev_tab"):
-            pass
-    
-    with col2:
-        tab_names = [
-            get_translation("tab_training", st.session_state.language),
-            get_translation("tab_monitoring", st.session_state.language), 
-            get_translation("tab_visualization", st.session_state.language),
-            get_translation("tab_analytics", st.session_state.language),
-            get_translation("tab_facility", st.session_state.language),
-            get_translation("tab_risk", st.session_state.language),
-            get_translation("tab_graph_viz", st.session_state.language),
-            get_translation("tab_advanced_analytics", st.session_state.language)
-        ]
-        
-        if st.session_state.language == 'fr':
-            st.markdown("**Utilisez les flèches pour naviguer entre les onglets**")
-        else:
-            st.markdown("**Use arrows to navigate between tabs**")
-    
-    with col3:
-        if st.button("Suivant ▶" if st.session_state.language == 'fr' else "Next ▶", key="next_tab"):
-            pass
-
-    # Main tabs with JavaScript navigation
-    st.markdown("""
-    <script>
-    let currentTabIndex = 0;
-    const maxTabs = 8;
-    
-    document.addEventListener('click', function(e) {
-        if (e.target.textContent.includes('◀') || e.target.textContent.includes('Précédent') || e.target.textContent.includes('Previous')) {
-            if (currentTabIndex > 0) {
-                currentTabIndex--;
-                setTimeout(() => {
-                    const tabs = document.querySelectorAll('[data-baseweb="tab"]');
-                    if (tabs[currentTabIndex]) tabs[currentTabIndex].click();
-                }, 100);
-            }
-        }
-        if (e.target.textContent.includes('▶') || e.target.textContent.includes('Suivant') || e.target.textContent.includes('Next')) {
-            if (currentTabIndex < maxTabs - 1) {
-                currentTabIndex++;
-                setTimeout(() => {
-                    const tabs = document.querySelectorAll('[data-baseweb="tab"]');
-                    if (tabs[currentTabIndex]) tabs[currentTabIndex].click();
-                }, 100);
-            }
-        }
-    });
-    </script>
-    """, unsafe_allow_html=True)
-
-    # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        get_translation("tab_training", st.session_state.language), 
+    # Tab names array
+    tab_names = [
+        get_translation("tab_training", st.session_state.language),
         get_translation("tab_monitoring", st.session_state.language), 
         get_translation("tab_visualization", st.session_state.language),
         get_translation("tab_analytics", st.session_state.language),
@@ -251,9 +198,33 @@ def main():
         get_translation("tab_risk", st.session_state.language),
         get_translation("tab_graph_viz", st.session_state.language),
         get_translation("tab_advanced_analytics", st.session_state.language)
-    ])
+    ]
+    
+    # Tab navigation with arrows
+    col1, col2, col3 = st.columns([1, 6, 1])
+    
+    with col1:
+        if st.button("◀ Précédent" if st.session_state.language == 'fr' else "◀ Previous", key="prev_tab"):
+            if st.session_state.current_tab_index > 0:
+                st.session_state.current_tab_index -= 1
+                st.rerun()
+    
+    with col2:
+        current_tab_name = tab_names[st.session_state.current_tab_index]
+        if st.session_state.language == 'fr':
+            st.markdown(f"**Onglet actuel:** {current_tab_name} ({st.session_state.current_tab_index + 1}/8)")
+        else:
+            st.markdown(f"**Current tab:** {current_tab_name} ({st.session_state.current_tab_index + 1}/8)")
+    
+    with col3:
+        if st.button("Suivant ▶" if st.session_state.language == 'fr' else "Next ▶", key="next_tab"):
+            if st.session_state.current_tab_index < len(tab_names) - 1:
+                st.session_state.current_tab_index += 1
+                st.rerun()
 
-    with tab1:
+    # Display content based on current tab index
+    if st.session_state.current_tab_index == 0:
+        # Tab 1: Training
         st.header("🎛️ " + get_translation("tab_training", st.session_state.language))
         
         if st.session_state.data_loaded:
@@ -1024,7 +995,8 @@ def main():
                 st.session_state.training_in_progress = False
                 st.error(f"Training failed: {str(e)}")
 
-    with tab2:
+    elif st.session_state.current_tab_index == 1:
+        # Tab 2: Monitoring
         st.header("🏥 " + get_translation("medical_station_monitoring", st.session_state.language))
         
         # Add reset button for new training sessions
@@ -1393,7 +1365,8 @@ def main():
             model_df = pd.DataFrame(model_info)
             st.dataframe(model_df, use_container_width=True)
 
-    with tab3:
+    elif st.session_state.current_tab_index == 2:
+        # Tab 3: Visualization
         st.header("🗺️ " + get_translation("interactive_learning_journey_visualization", st.session_state.language))
         
         # Initialize and update journey visualizer
@@ -1431,7 +1404,8 @@ def main():
         # Interactive controls
         journey_viz.create_interactive_controls()
 
-    with tab4:
+    elif st.session_state.current_tab_index == 3:
+        # Tab 4: Analytics
         st.header("📊 Performance Analysis")
         
         if st.session_state.training_completed and st.session_state.training_metrics:
@@ -1472,7 +1446,8 @@ def main():
         else:
             st.info(get_translation("complete_training_see_performance", st.session_state.language))
 
-    with tab5:
+    elif st.session_state.current_tab_index == 4:
+        # Tab 5: Risk Prediction
         st.header(f"🩺 {get_translation('patient_risk_prediction_explainer', st.session_state.language)}")
         
         if st.session_state.training_completed and hasattr(st.session_state, 'fl_manager'):
