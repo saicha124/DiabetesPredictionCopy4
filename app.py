@@ -571,9 +571,11 @@ def main():
                                     raise ValueError(f"Client {i} has empty {key}")
                         
                         # Data processing complete - but training will continue
-                        data_progress.progress(0.90, text="90% - Data processing complete, starting training...")
+                        progress_text = f"90% - {get_translation('data_processing_complete_starting_training', st.session_state.language)}"
+                        data_progress.progress(0.90, text=progress_text)
                         time.sleep(0.3)
-                        data_status.info(f"🔄 Data ready - federated learning training in progress...")
+                        status_text = f"🔄 {get_translation('data_ready_federated_learning_in_progress', st.session_state.language)}"
+                        data_status.info(status_text)
                         
                         # Store progress elements in session state for completion later
                         st.session_state.data_progress = data_progress
@@ -1406,7 +1408,8 @@ def main():
                         # Use the converged final global model for prediction
                         if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager and hasattr(st.session_state.fl_manager, 'global_model'):
                             try:
-                                st.info("✅ Using converged global federated model from completed training")
+                                model_info_text = f"✅ {get_translation('using_converged_global_federated_model', st.session_state.language)}"
+                                st.info(model_info_text)
                                 global_model = st.session_state.fl_manager.global_model
                                 
                                 # Preprocess patient data using the same preprocessing pipeline
@@ -1436,14 +1439,18 @@ def main():
                                 if hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
                                     final_accuracy = st.session_state.training_metrics[-1].get('accuracy', 0)
                                     total_rounds = len(st.session_state.training_metrics)
-                                    st.success(f"Model converged after {total_rounds} rounds with {final_accuracy:.3f} accuracy")
+                                    convergence_text = get_translation("model_converged_after_rounds", st.session_state.language, 
+                                                                  rounds=total_rounds, accuracy=final_accuracy)
+                                st.success(convergence_text)
                                 
                                 # Make prediction using the actual converged federated model
                                 if hasattr(global_model, 'predict_proba') and global_model.predict_proba is not None:
                                     risk_probabilities = global_model.predict_proba(processed_features)[0]
                                     risk_score = risk_probabilities[1]  # Probability of diabetes class
                                     confidence = max(risk_probabilities)
-                                    st.info(f"Model prediction probability: {risk_score:.3f}")
+                                    probability_text = get_translation("model_prediction_probability", st.session_state.language, 
+                                                                       probability=f"{risk_score:.3f}")
+                                    st.info(probability_text)
                                 elif hasattr(global_model, 'predict') and global_model.predict is not None:
                                     prediction = global_model.predict(processed_features)[0]
                                     risk_score = float(prediction)
