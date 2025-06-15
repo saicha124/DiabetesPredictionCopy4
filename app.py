@@ -2568,8 +2568,11 @@ def main():
                 
                 st.plotly_chart(fig, use_container_width=True)
                 
-            elif viz_type == "Hierarchical FL Architecture":
-                st.subheader("🏗️ Hierarchical Federated Learning Architecture")
+            elif viz_type in ["Hierarchical FL Architecture", "Architecture FL Hiérarchique"]:
+                if st.session_state.language == 'fr':
+                    st.subheader("🏗️ Architecture d'Apprentissage Fédéré Hiérarchique")
+                else:
+                    st.subheader("🏗️ Hierarchical Federated Learning Architecture")
                 
                 # Create hierarchical diagram
                 fig = go.Figure()
@@ -2650,8 +2653,11 @@ def main():
                 
                 st.plotly_chart(fig, use_container_width=True)
                 
-            elif viz_type == "Data Flow Diagram":
-                st.subheader("🔄 Data Flow in Federated Learning")
+            elif viz_type in ["Data Flow Diagram", "Diagramme de Flux de Données"]:
+                if st.session_state.language == 'fr':
+                    st.subheader("🔄 Flux de Données en Apprentissage Fédéré")
+                else:
+                    st.subheader("🔄 Data Flow in Federated Learning")
                 
                 # Create Sankey diagram for data flow
                 fig = go.Figure(data=[go.Sankey(
@@ -2680,8 +2686,11 @@ def main():
                 
                 st.plotly_chart(fig, use_container_width=True)
                 
-            elif viz_type == "Performance Network":
-                st.subheader("📈 Performance Network Visualization")
+            elif viz_type in ["Performance Network", "Réseau de Performance"]:
+                if st.session_state.language == 'fr':
+                    st.subheader("📈 Visualisation du Réseau de Performance")
+                else:
+                    st.subheader("📈 Performance Network Visualization")
                 
                 if st.session_state.training_completed and hasattr(st.session_state, 'training_metrics'):
                     # Create performance-based network
@@ -3049,7 +3058,10 @@ def main():
                             st.success("🎯 Optimal configuration achieved!")
             
             with analytics_tab3:
-                st.subheader("🌫️ Accuracy vs Number of Fog Nodes")
+                if st.session_state.language == 'fr':
+                    st.subheader("🌫️ Précision vs Nombre de Nœuds Fog")
+                else:
+                    st.subheader("🌫️ Accuracy vs Number of Fog Nodes")
                 
                 # Simulate different fog node scenarios
                 fog_scenarios = [1, 2, 3, 4, 5, 6]
@@ -3093,13 +3105,22 @@ def main():
                     marker=dict(size=15, color='red', symbol='star')
                 ))
                 
-                fig_fog.update_layout(
-                    title="Global Model Accuracy vs Number of Fog Nodes",
-                    xaxis_title="Number of Fog Nodes",
-                    yaxis_title="Global Model Accuracy",
-                    height=500,
-                    showlegend=True
-                )
+                if st.session_state.language == 'fr':
+                    fig_fog.update_layout(
+                        title="Précision du Modèle Global vs Nombre de Nœuds Fog",
+                        xaxis_title="Nombre de Nœuds Fog",
+                        yaxis_title="Précision du Modèle Global",
+                        height=500,
+                        showlegend=True
+                    )
+                else:
+                    fig_fog.update_layout(
+                        title="Global Model Accuracy vs Number of Fog Nodes",
+                        xaxis_title="Number of Fog Nodes",
+                        yaxis_title="Global Model Accuracy",
+                        height=500,
+                        showlegend=True
+                    )
                 
                 st.plotly_chart(fig_fog, use_container_width=True)
                 
@@ -3107,25 +3128,46 @@ def main():
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.subheader("🌫️ Fog Layer Benefits")
-                    st.write("• **1 fog node**: Centralized aggregation")
-                    st.write("• **2-3 fog nodes**: Regional specialization")
-                    st.write("• **4+ fog nodes**: Fine-grained locality")
-                    st.write("• **Hierarchical**: Reduces communication to global server")
+                    if st.session_state.language == 'fr':
+                        st.subheader("🌫️ Avantages de la Couche Fog")
+                        st.write("• **1 nœud fog**: Agrégation centralisée")
+                        st.write("• **2-3 nœuds fog**: Spécialisation régionale")
+                        st.write("• **4+ nœuds fog**: Localité fine")
+                        st.write("• **Hiérarchique**: Réduit la communication vers le serveur global")
+                    else:
+                        st.subheader("🌫️ Fog Layer Benefits")
+                        st.write("• **1 fog node**: Centralized aggregation")
+                        st.write("• **2-3 fog nodes**: Regional specialization")
+                        st.write("• **4+ fog nodes**: Fine-grained locality")
+                        st.write("• **Hierarchical**: Reduces communication to global server")
                 
                 with col2:
-                    st.subheader("⚖️ Trade-offs")
-                    optimal_fog = fog_scenarios[np.argmax(accuracies_fog)]
-                    st.metric("Optimal Fog Nodes", f"{optimal_fog} nodes")
-                    
-                    st.write("**Benefits of more fog nodes:**")
-                    st.write("• Better geographical distribution")
-                    st.write("• Reduced communication latency")
-                    st.write("• Improved fault tolerance")
-                    
-                    st.write("**Costs:**")
-                    st.write("• Increased infrastructure complexity")
-                    st.write("• More coordination overhead")
+                    if st.session_state.language == 'fr':
+                        st.subheader("⚖️ Compromis")
+                        optimal_fog = fog_scenarios[np.argmax(accuracies_fog)]
+                        st.metric("Nœuds Fog Optimaux", f"{optimal_fog} nœuds")
+                        
+                        st.write("**Avantages de plus de nœuds fog:**")
+                        st.write("• Meilleure distribution géographique")
+                        st.write("• Latence de communication réduite")
+                        st.write("• Tolérance aux pannes améliorée")
+                        
+                        st.write("**Coûts:**")
+                        st.write("• Complexité d'infrastructure augmentée")
+                        st.write("• Plus de surcharge de coordination")
+                    else:
+                        st.subheader("⚖️ Trade-offs")
+                        optimal_fog = fog_scenarios[np.argmax(accuracies_fog)]
+                        st.metric("Optimal Fog Nodes", f"{optimal_fog} nodes")
+                        
+                        st.write("**Benefits of more fog nodes:**")
+                        st.write("• Better geographical distribution")
+                        st.write("• Reduced communication latency")
+                        st.write("• Improved fault tolerance")
+                        
+                        st.write("**Costs:**")
+                        st.write("• Increased infrastructure complexity")
+                        st.write("• More coordination overhead")
             
             with analytics_tab4:
                 st.subheader("📈 Comprehensive Performance Comparison")
