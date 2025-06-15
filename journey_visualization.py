@@ -352,12 +352,15 @@ class InteractiveJourneyVisualizer:
     
     def _data_loading_details(self):
         """Details for data loading stage"""
+        from translations import get_translation
         if st.session_state.get('data_loaded', False):
-            st.success("✅ Diabetes dataset successfully loaded")
+            st.success(f"✅ {get_translation('diabetes_dataset_successfully_loaded', st.session_state.language)}")
             if hasattr(st.session_state, 'training_data') and st.session_state.training_data is not None:
                 data = st.session_state.training_data
-                st.write(f"📊 Dataset: {data.shape[0]} patients, {data.shape[1]} features")
-                st.write("🔍 Features include glucose levels, BMI, age, and other medical indicators")
+                dataset_text = get_translation('dataset_patients_features', st.session_state.language, 
+                                             patients=data.shape[0], features=data.shape[1])
+                st.write(f"📊 {dataset_text}")
+                st.write(f"🔍 {get_translation('features_include_medical_indicators', st.session_state.language)}")
         else:
             st.warning("⏳ Waiting for data to be loaded")
             st.write("📋 Next steps:")
@@ -366,20 +369,21 @@ class InteractiveJourneyVisualizer:
     
     def _configuration_details(self):
         """Details for configuration stage"""
+        from translations import get_translation
         config_status = {
-            "Medical Stations": st.session_state.get('num_clients'),
-            "Training Rounds": st.session_state.get('max_rounds'),
-            "Model Type": st.session_state.get('model_type'),
-            "Differential Privacy": st.session_state.get('enable_dp'),
-            "Fog Computing": st.session_state.get('enable_fog')
+            get_translation('medical_stations', st.session_state.language): st.session_state.get('num_clients'),
+            get_translation('training_rounds', st.session_state.language): st.session_state.get('max_rounds'),
+            get_translation('model_type', st.session_state.language): st.session_state.get('model_type'),
+            get_translation('differential_privacy', st.session_state.language): st.session_state.get('enable_dp'),
+            get_translation('fog_computing', st.session_state.language): st.session_state.get('enable_fog')
         }
         
-        st.write("📋 Configuration Status:")
+        st.write(f"📋 {get_translation('configuration_status', st.session_state.language)}")
         for key, value in config_status.items():
             if value is not None:
                 st.write(f"✅ {key}: {value}")
             else:
-                st.write(f"⏳ {key}: Not configured")
+                st.write(f"⏳ {key}: {get_translation('not_configured', st.session_state.language)}")
     
     def _client_setup_details(self):
         """Details for client setup stage"""
@@ -424,17 +428,18 @@ class InteractiveJourneyVisualizer:
     
     def _fog_aggregation_details(self):
         """Details for fog aggregation stage"""
+        from translations import get_translation
         if st.session_state.get('enable_fog'):
             num_fog_nodes = st.session_state.get('num_fog_nodes', 3)
             fog_method = st.session_state.get('fog_method', 'FedAvg')
-            st.success(f"✅ {num_fog_nodes} fog nodes active")
-            st.write(f"⚡ Aggregation method: {fog_method}")
-            st.write("🌫️ Hierarchical processing:")
-            st.write("• Local client training")
-            st.write("• Fog-level aggregation")
-            st.write("• Global model update")
+            st.success(f"✅ {num_fog_nodes} {get_translation('fog_nodes_active', st.session_state.language)}")
+            st.write(f"⚡ {get_translation('aggregation_method', st.session_state.language)}: {fog_method}")
+            st.write(f"🌫️ {get_translation('hierarchical_processing', st.session_state.language)}")
+            st.write(f"• {get_translation('local_client_training', st.session_state.language)}")
+            st.write(f"• {get_translation('fog_level_aggregation', st.session_state.language)}")
+            st.write(f"• {get_translation('global_model_update', st.session_state.language)}")
         else:
-            st.info("ℹ️ Direct client-server aggregation")
+            st.info(f"ℹ️ {get_translation('direct_client_server_aggregation', st.session_state.language)}")
     
     def _global_convergence_details(self):
         """Details for global convergence stage"""
@@ -576,17 +581,20 @@ class InteractiveJourneyVisualizer:
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("🔄 Refresh Journey", help="Update journey status"):
+            refresh_text = f"🔄 {get_translation('refresh_journey', st.session_state.language)}"
+            if st.button(refresh_text, help="Update journey status"):
                 self.initialize_journey(st.session_state)
                 st.rerun()
         
         with col2:
-            if st.button("📊 View Current Stage", help="Jump to current active stage"):
+            view_stage_text = f"📊 {get_translation('view_current_stage', st.session_state.language)}"
+            if st.button(view_stage_text, help="Jump to current active stage"):
                 st.session_state.selected_journey_stage = self.current_stage
                 st.rerun()
         
         with col3:
-            if st.button("🎯 Focus Mode", help="Highlight next actions"):
+            focus_mode_text = f"🎯 {get_translation('focus_mode', st.session_state.language)}"
+            if st.button(focus_mode_text, help="Highlight next actions"):
                 self._show_next_actions()
     
     def _show_next_actions(self):
