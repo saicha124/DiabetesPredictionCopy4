@@ -405,9 +405,9 @@ def main():
                     st.success(get_translation("training_stopped", st.session_state.language))
             
             with col3:
-                if st.button("🔄 Reset All"):
+                if st.button(get_translation("reset_training", st.session_state.language)):
                     # Display confirmation message
-                    st.warning("Resetting all configuration parameters...")
+                    st.warning(get_translation("resetting_parameters", st.session_state.language))
                     
                     # Store data temporarily
                     temp_data = st.session_state.get('data', None)
@@ -426,7 +426,7 @@ def main():
                     init_session_state()
                     
                     # Show success message and rerun without page reload
-                    st.success("Parameters reset successfully! You can now start a new training session.")
+                    st.success(get_translation("parameters_reset_success", st.session_state.language))
                     st.rerun()
 
     # Progressive training execution with real-time updates
