@@ -925,6 +925,7 @@ TRANSLATIONS = {
         "high_blood_pressure": "Hypertension artérielle",
         "high_insulin_levels": "Niveaux d'insuline élevés",
         "protective_factors": "Facteurs Protecteurs:",
+        "training_round": "Ronde d'Entraînement",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",

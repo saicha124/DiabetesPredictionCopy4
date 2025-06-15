@@ -981,7 +981,7 @@ def main():
             progress = current_round / max_rounds if max_rounds > 0 else 0
             
             # Main training progress bar
-            progress_text = f"{get_translation('training_progress', st.session_state.language)}: {get_translation('round', st.session_state.language)} {current_round}/{max_rounds}"
+            progress_text = f"{get_translation('training_progress', st.session_state.language)}: {get_translation('training_round', st.session_state.language)} {current_round}/{max_rounds}"
             training_progress = st.progress(progress, text=progress_text)
             
             # Add visual progress indicator
@@ -1001,7 +1001,7 @@ def main():
             # Training status with detailed progress
             col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
-                st.write(f"**🔄 {get_translation('round', st.session_state.language)} {current_round}/{max_rounds}** - Model: {model_type.replace('_', ' ').title()}")
+                st.write(f"**🔄 {get_translation('training_round', st.session_state.language)} {current_round}/{max_rounds}** - Model: {model_type.replace('_', ' ').title()}")
             with col2:
                 if current_round > 0:
                     st.metric(get_translation("global_accuracy", st.session_state.language), f"{st.session_state.get('global_model_accuracy', 0):.3f}")
