@@ -48,6 +48,8 @@ def init_session_state():
         st.session_state.best_accuracy = 0.0
     if 'current_round' not in st.session_state:
         st.session_state.current_round = 0
+    if 'language' not in st.session_state:
+        st.session_state.language = 'en'
 
 def main():
     init_session_state()
@@ -57,6 +59,22 @@ def main():
 
     # Sidebar
     with st.sidebar:
+        # Language selector
+        st.subheader("🌐 Language / Langue")
+        language_options = {
+            "English": "en",
+            "Français": "fr"
+        }
+        selected_language = st.selectbox(
+            "Select Language / Sélectionner la langue:",
+            options=list(language_options.keys()),
+            index=0 if st.session_state.language == 'en' else 1
+        )
+        
+        if language_options[selected_language] != st.session_state.language:
+            st.session_state.language = language_options[selected_language]
+            st.rerun()
+        
         st.header("🔧 System Configuration")
         
         # Data upload
@@ -442,49 +460,74 @@ def main():
         if st.session_state.training_completed:
             st.subheader("Individual Risk Assessment")
             
-            # Patient input form
-            with st.form("patient_assessment"):
+            # Direct French labels to override caching
+            if st.session_state.language == 'fr':
+                preg_label = "Nombre de Grossesses"
+                glucose_label = "Niveau de Glucose (mg/dL)"
+                bp_label = "Pression Artérielle (mm Hg)" 
+                skin_label = "Épaisseur de Peau (mm)"
+                insulin_label = "Insuline (μU/mL)"
+                bmi_label = "IMC (kg/m²)"
+                dpf_label = "Fonction Pedigree Diabète"
+                age_label = "Âge (années)"
+                form_title = "Évaluation du Risque Patient Individuel"
+                analyze_button = "Analyser le Risque"
+            else:
+                preg_label = "Number of Pregnancies"
+                glucose_label = "Glucose Level (mg/dL)"
+                bp_label = "Blood Pressure (mm Hg)"
+                skin_label = "Skin Thickness (mm)"
+                insulin_label = "Insulin (μU/mL)"
+                bmi_label = "BMI (kg/m²)"
+                dpf_label = "Diabetes Pedigree Function"
+                age_label = "Age (years)"
+                form_title = "Individual Risk Assessment"
+                analyze_button = "Analyze Risk"
+            
+            st.subheader(form_title)
+            
+            # Patient input form without form wrapper to avoid caching
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                pregnancies = st.number_input(preg_label, min_value=0, max_value=20, value=1, key=f"pregnancies_{st.session_state.language}")
+                glucose = st.number_input(glucose_label, min_value=0.0, max_value=300.0, value=120.0, key=f"glucose_{st.session_state.language}")
+                blood_pressure = st.number_input(bp_label, min_value=0.0, max_value=200.0, value=80.0, key=f"bp_{st.session_state.language}")
+                skin_thickness = st.number_input(skin_label, min_value=0.0, max_value=100.0, value=20.0, key=f"skin_{st.session_state.language}")
+            
+            with col2:
+                insulin = st.number_input(insulin_label, min_value=0.0, max_value=1000.0, value=80.0, key=f"insulin_{st.session_state.language}")
+                bmi = st.number_input(bmi_label, min_value=0.0, max_value=100.0, value=25.0, key=f"bmi_{st.session_state.language}")
+                dpf = st.number_input(dpf_label, min_value=0.0, max_value=5.0, value=0.5, key=f"dpf_{st.session_state.language}")
+                age = st.number_input(age_label, min_value=0, max_value=120, value=30, key=f"age_{st.session_state.language}")
+            
+            submitted = st.button(f"🔍 {analyze_button}", use_container_width=True, type="primary")
+            
+            if submitted:
+                # Create patient data
+                patient_data = pd.DataFrame({
+                    'Pregnancies': [pregnancies],
+                    'Glucose': [glucose],
+                    'BloodPressure': [blood_pressure],
+                    'SkinThickness': [skin_thickness],
+                    'Insulin': [insulin],
+                    'BMI': [bmi],
+                    'DiabetesPedigreeFunction': [dpf],
+                    'Age': [age]
+                })
+                
+                # Simulate prediction (in real implementation, use trained model)
+                risk_score = min(1.0, max(0.0, (glucose - 80) / 140 + (bmi - 20) / 40 + age / 100))
+                
+                # Display results
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    pregnancies = st.number_input("Pregnancies", min_value=0, max_value=20, value=1)
-                    glucose = st.number_input("Glucose Level", min_value=0.0, max_value=300.0, value=120.0)
-                    blood_pressure = st.number_input("Blood Pressure", min_value=0.0, max_value=200.0, value=80.0)
-                    skin_thickness = st.number_input("Skin Thickness", min_value=0.0, max_value=100.0, value=20.0)
-                
-                with col2:
-                    insulin = st.number_input("Insulin", min_value=0.0, max_value=1000.0, value=80.0)
-                    bmi = st.number_input("BMI", min_value=0.0, max_value=100.0, value=25.0)
-                    dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=5.0, value=0.5)
-                    age = st.number_input("Age", min_value=0, max_value=120, value=30)
-                
-                submitted = st.form_submit_button("Assess Risk")
-                
-                if submitted:
-                    # Create patient data
-                    patient_data = pd.DataFrame({
-                        'Pregnancies': [pregnancies],
-                        'Glucose': [glucose],
-                        'BloodPressure': [blood_pressure],
-                        'SkinThickness': [skin_thickness],
-                        'Insulin': [insulin],
-                        'BMI': [bmi],
-                        'DiabetesPedigreeFunction': [dpf],
-                        'Age': [age]
-                    })
+                    st.subheader("Risk Assessment Results")
                     
-                    # Simulate prediction (in real implementation, use trained model)
-                    risk_score = min(1.0, max(0.0, (glucose - 80) / 140 + (bmi - 20) / 40 + age / 100))
-                    
-                    # Display results
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.subheader("Risk Assessment Results")
-                        
-                        if risk_score < 0.3:
-                            st.success(f"Low Risk: {risk_score:.1%}")
-                            risk_level = "Low"
+                    if risk_score < 0.3:
+                        st.success(f"Low Risk: {risk_score:.1%}")
+                        risk_level = "Low"
                         elif risk_score < 0.7:
                             st.warning(f"Moderate Risk: {risk_score:.1%}")
                             risk_level = "Moderate"
