@@ -384,12 +384,14 @@ class InteractiveJourneyVisualizer:
     def _client_setup_details(self):
         """Details for client setup stage"""
         if st.session_state.get('processed_data'):
+            from translations import get_translation
             num_clients = len(st.session_state.processed_data)
-            st.success(f"✅ {num_clients} medical facilities configured")
-            st.write("🏥 Each facility has:")
-            st.write("• Private patient data partition")
-            st.write("• Local model training capability")
-            st.write("• Secure communication protocols")
+            facilities_text = get_translation("medical_facilities_configured_success", st.session_state.language)
+            st.success(f"✅ {num_clients} {facilities_text}")
+            st.write(f"🏥 {get_translation('each_facility_has', st.session_state.language)}")
+            st.write(f"• {get_translation('private_patient_data_partition', st.session_state.language)}")
+            st.write(f"• {get_translation('local_model_training_capability', st.session_state.language)}")
+            st.write(f"• {get_translation('secure_communication_protocols', st.session_state.language)}")
         else:
             st.warning("⏳ Client setup pending")
     
