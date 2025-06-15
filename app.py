@@ -546,8 +546,12 @@ def main():
                         # Display authentic medical facility information
                         st.info("**" + get_translation("authentic_medical_facility_distribution", st.session_state.language) + ":**")
                         for i, cohort in enumerate(facility_cohorts):
-                            st.write(f"• **{cohort['facility_type']}**: {cohort['patient_count']} patients, "
-                                   f"{cohort['diabetic_rate']:.1%} diabetes prevalence")
+                            # Get translated facility name
+                            facility_name = fetcher._get_translated_facility_type(cohort['facility_id'], st.session_state.language)
+                            patients_text = get_translation("patients", st.session_state.language)
+                            prevalence_text = get_translation("diabetes_prevalence", st.session_state.language)
+                            st.write(f"• **{facility_name}**: {cohort['patient_count']} {patients_text}, "
+                                   f"{cohort['diabetic_rate']:.1%} {prevalence_text}")
                         
                         if client_data is None or len(client_data) == 0:
                             raise ValueError("Failed to create facility cohorts")
@@ -574,7 +578,7 @@ def main():
                         st.session_state.data_progress = data_progress
                         st.session_state.data_status = data_status
                         
-                        st.success(f"Data distributed to {len(client_data)} clients")
+                        st.success(get_translation("data_distributed_to_clients", st.session_state.language, count=len(client_data)))
                         st.session_state.processed_data = client_data
                         st.session_state.global_model_accuracy = 0.5
                         
@@ -672,8 +676,8 @@ def main():
                         raise ValueError("No processed data available and global references missing")
                 
                 # Debug client data structure
-                st.info(f"Client data type: {type(client_data)}")
-                st.info(f"Client data length: {len(client_data) if client_data else 0}")
+                st.info(f"{get_translation('client_data_type', st.session_state.language)}: {type(client_data)}")
+                st.info(f"{get_translation('client_data_length', st.session_state.language)}: {len(client_data) if client_data else 0}")
                 
                 # Detailed validation with debugging
                 if client_data is None:

@@ -170,6 +170,21 @@ class RealMedicalDataFetcher:
             'Specialty Diabetes Clinic'
         ]
         return facility_types[facility_id % len(facility_types)]
+    
+    def _get_translated_facility_type(self, facility_id: int, language: str = 'en') -> str:
+        """Get translated medical facility type"""
+        from translations import get_translation
+        
+        facility_types_keys = [
+            'major_teaching_hospital',
+            'regional_medical_center',
+            'community_health_center',
+            'primary_care_clinic',
+            'specialty_diabetes_clinic'
+        ]
+        
+        key = facility_types_keys[facility_id % len(facility_types_keys)]
+        return get_translation(key, language)
 
 def load_authentic_medical_data() -> pd.DataFrame:
     """Main function to load authentic medical data"""
