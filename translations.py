@@ -734,6 +734,7 @@ TRANSLATIONS = {
         "performance_comparison": "Comparaison de Performance",
         "multi_metric_evolution": "Évolution d'entraînement multi-métrique",
         "configuration_impact": "Analyse d'impact de configuration",
+        "model_performance_grading": "Notation de performance du modèle",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",
