@@ -340,6 +340,11 @@ TRANSLATIONS = {
         "federated_learning_journey_map": "Federated Learning Journey Map",
         "stage_explorer": "Stage Explorer",
         "select_stage_explore": "Select a stage to explore:",
+        "completed_stages": "Completed Stages",
+        "overall_progress": "Overall Progress",
+        "current_stage": "Current Stage",
+        "remaining": "Remaining",
+        "good_start_keep_going": "Good start! Keep going to unlock more features",
         
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
@@ -745,6 +750,11 @@ TRANSLATIONS = {
         "federated_learning_journey_map": "Carte du Parcours d'Apprentissage Fédéré",
         "stage_explorer": "Explorateur d'Étapes",
         "select_stage_explore": "Sélectionnez une étape à explorer:",
+        "completed_stages": "Étapes Terminées",
+        "overall_progress": "Progrès Global",
+        "current_stage": "Étape Actuelle",
+        "remaining": "Restantes",
+        "good_start_keep_going": "Bon début! Continuez pour débloquer plus de fonctionnalités",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",

@@ -574,18 +574,18 @@ class InteractiveJourneyVisualizer:
         
         with col1:
             completed_stages = sum(1 for p in self.stage_progress.values() if p == 100)
-            st.metric("Completed Stages", f"{completed_stages}/{len(self.journey_stages)}")
+            st.metric(get_translation("completed_stages", st.session_state.language), f"{completed_stages}/{len(self.journey_stages)}")
         
         with col2:
-            st.metric("Overall Progress", f"{total_progress:.1f}%")
+            st.metric(get_translation("overall_progress", st.session_state.language), f"{total_progress:.1f}%")
         
         with col3:
             current_stage_name = self.journey_stages[self.current_stage]
-            st.metric("Current Stage", current_stage_name)
+            st.metric(get_translation("current_stage", st.session_state.language), current_stage_name)
         
         with col4:
             remaining_stages = len(self.journey_stages) - self.current_stage - 1
-            st.metric("Remaining", remaining_stages)
+            st.metric(get_translation("remaining", st.session_state.language), remaining_stages)
         
         # Overall progress bar
         st.progress(total_progress / 100)
@@ -598,6 +598,6 @@ class InteractiveJourneyVisualizer:
         elif total_progress > 50:
             st.info("🚀 Great progress! You're halfway through the journey")
         elif total_progress > 25:
-            st.info("📈 Good start! Keep going to unlock more features")
+            st.info(f"📈 {get_translation('good_start_keep_going', st.session_state.language)}")
         else:
             st.info("🌟 Welcome to federated learning! Your journey is just beginning")
