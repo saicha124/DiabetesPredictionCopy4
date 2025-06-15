@@ -431,18 +431,18 @@ class InteractiveJourneyVisualizer:
     def _results_analysis_details(self):
         """Details for results analysis stage"""
         if st.session_state.get('training_completed'):
-            st.success("✅ Analysis complete")
-            st.write("📋 Available insights:")
-            st.write("• Client performance comparison")
-            st.write("• Privacy-utility trade-offs")
-            st.write("• Deployment recommendations")
-            st.write("• Risk prediction capabilities")
+            st.success(f"✅ {get_translation('analysis_complete', st.session_state.language)}")
+            st.write(f"📋 {get_translation('available_insights', st.session_state.language)}:")
+            st.write(f"• {get_translation('client_performance_comparison', st.session_state.language)}")
+            st.write(f"• {get_translation('privacy_utility_tradeoffs', st.session_state.language)}")
+            st.write(f"• {get_translation('deployment_recommendations', st.session_state.language)}")
+            st.write(f"• {get_translation('risk_prediction_capabilities', st.session_state.language)}")
         else:
             st.warning("⏳ Analysis pending training completion")
     
     def create_timeline_view(self):
         """Create timeline view of the journey"""
-        st.subheader("📅 Journey Timeline")
+        st.subheader(f"📅 {get_translation('journey_timeline', st.session_state.language)}")
         
         # Create timeline data
         timeline_data = []
@@ -529,7 +529,7 @@ class InteractiveJourneyVisualizer:
     
     def create_interactive_controls(self):
         """Create interactive controls for journey navigation"""
-        st.subheader("🎮 Interactive Controls")
+        st.subheader(f"🎮 {get_translation('interactive_controls', st.session_state.language)}")
         
         col1, col2, col3 = st.columns(3)
         
@@ -592,7 +592,7 @@ class InteractiveJourneyVisualizer:
         
         # Journey completion status
         if total_progress == 100:
-            st.success("🎉 Congratulations! You've completed the full federated learning journey!")
+            st.success(f"🎉 {get_translation('congratulations_journey_complete', st.session_state.language)}")
         elif total_progress > 75:
             st.info("🏁 You're in the final stages of the federated learning journey")
         elif total_progress > 50:
