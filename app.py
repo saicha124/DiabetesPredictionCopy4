@@ -167,7 +167,7 @@ def main():
                 col1_es, col2_es = st.columns(2)
                 
                 with col1_es:
-                    enable_early_stopping = st.checkbox("Enable Early Stopping", value=True,
+                    enable_early_stopping = st.checkbox(get_translation("enable_early_stopping", st.session_state.language), value=True,
                                                        help="Stop training when validation metric stops improving")
                     
                     patience = st.slider(get_translation("patience_rounds", st.session_state.language), min_value=3, max_value=20, value=5,
@@ -188,7 +188,7 @@ def main():
                     st.info(get_translation("training_stop_condition", st.session_state.language, 
                                           improvement=f"{min_improvement:.3f}", patience=patience))
                 else:
-                    st.warning("Early stopping disabled - training will run for full duration")
+                    st.warning(get_translation("early_stopping_disabled", st.session_state.language))
                 
                 # Store values in session state
                 st.session_state.num_clients = num_clients
@@ -271,7 +271,7 @@ def main():
                 if distribution_strategy == "Geographic":
                     strategy_params['correlation_strength'] = st.slider("Correlation Strength", 0.1, 1.0, 0.8, 0.1, key="correlation_slider")
                 
-                st.subheader("🔐 Training-Level Secret Sharing")
+                st.subheader("🔐 " + get_translation("training_level_secret_sharing", st.session_state.language))
                 enable_training_ss = st.checkbox("Enable Secret Sharing in Training", value=True, key="enable_ss_check")
                 if enable_training_ss:
                     if enable_fog:
@@ -710,7 +710,7 @@ def main():
                 # Initialize real-time progress tracking
                 progress_container = st.container()
                 with progress_container:
-                    st.subheader("🔄 Federated Learning Training Progress")
+                    st.subheader("🔄 " + get_translation("federated_learning_training_progress", st.session_state.language))
                     
                     # Create progress elements for training
                     training_progress = st.progress(0.0, text="0% - Initializing federated learning...")
@@ -2315,8 +2315,8 @@ def main():
                         fig_gauge.update_layout(height=300)
                         st.plotly_chart(fig_gauge, use_container_width=True)
         else:
-            st.warning("Please complete federated learning training to use the risk assessment tool.")
-            st.info("The risk assessment uses the trained global model for accurate predictions.")
+            st.warning(get_translation("complete_federated_training", st.session_state.language))
+            st.info(get_translation("risk_assessment_uses_trained_model", st.session_state.language))
 
     with tab7:
         st.header("🌐 Graph Visualization")

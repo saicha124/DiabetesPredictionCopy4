@@ -265,7 +265,23 @@ TRANSLATIONS = {
         "patience_rounds": "Patience (rounds)",
         "early_stop_metric": "Early Stop Metric",
         "minimum_improvement": "Minimum Improvement",
-        "training_stop_condition": "Training will stop if accuracy doesn't improve by {improvement} for {patience} consecutive rounds"
+        "training_stop_condition": "Training will stop if accuracy doesn't improve by {improvement} for {patience} consecutive rounds",
+        "enable_early_stopping": "Enable Early Stopping",
+        "early_stopping_disabled": "Early stopping disabled - training will run for full duration",
+        
+        # Additional Interface Elements
+        "training_level_secret_sharing": "Training-Level Secret Sharing",
+        "federated_learning_training_progress": "Federated Learning Training Progress",
+        "medical_station_monitoring": "Medical Station Monitoring",
+        "differential_privacy_status": "Differential Privacy Status",
+        "secret_sharing_status": "Secret Sharing Status",
+        "client_performance_this_round": "Client Performance This Round",
+        "training_progress": "Training Progress",
+        "individual_client_learning_curves": "Individual Client Learning Curves",
+        "complete_training_analysis": "Complete Training Analysis",
+        "final_client_summary": "Final Client Summary",
+        "available_ai_models": "Available AI Models",
+        "interactive_learning_journey_visualization": "Interactive Learning Journey Visualization"
     },
     
     'fr': {
@@ -529,7 +545,23 @@ TRANSLATIONS = {
         "patience_rounds": "Patience (rondes)",
         "early_stop_metric": "Métrique d'Arrêt Précoce",
         "minimum_improvement": "Amélioration Minimale",
-        "training_stop_condition": "L'entraînement s'arrêtera si la précision ne s'améliore pas de {improvement} pendant {patience} rondes consécutives"
+        "training_stop_condition": "L'entraînement s'arrêtera si la précision ne s'améliore pas de {improvement} pendant {patience} rondes consécutives",
+        "enable_early_stopping": "Activer l'Arrêt Précoce",
+        "early_stopping_disabled": "Arrêt précoce désactivé - l'entraînement durera toute la durée",
+        
+        # Additional Interface Elements
+        "training_level_secret_sharing": "Partage de Secrets Niveau Formation",
+        "federated_learning_training_progress": "Progrès Formation Apprentissage Fédéré",
+        "medical_station_monitoring": "Surveillance Station Médicale",
+        "differential_privacy_status": "Statut Confidentialité Différentielle",
+        "secret_sharing_status": "Statut Partage de Secrets",
+        "client_performance_this_round": "Performance Client Cette Ronde",
+        "training_progress": "Progrès Formation",
+        "individual_client_learning_curves": "Courbes Apprentissage Client Individuelles",
+        "complete_training_analysis": "Analyse Complète Formation",
+        "final_client_summary": "Résumé Client Final",
+        "available_ai_models": "Modèles IA Disponibles",
+        "interactive_learning_journey_visualization": "Visualisation Interactive Parcours Apprentissage"
     }
 }
 
