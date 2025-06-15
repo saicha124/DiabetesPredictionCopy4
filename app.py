@@ -365,7 +365,7 @@ def main():
         else:
             st.header("📊 Advanced Analytics Dashboard")
         
-        if st.session_state.training_completed and hasattr(st.session_state, 'advanced_analytics'):
+        if st.session_state.training_completed and st.session_state.advanced_analytics:
             st.session_state.advanced_analytics.create_medical_facility_dashboard()
         else:
             if st.session_state.language == 'fr':
