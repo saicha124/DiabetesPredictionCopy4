@@ -3197,13 +3197,19 @@ def main():
                         st.write("• More coordination overhead")
             
             with analytics_tab4:
-                st.subheader("📈 Comprehensive Performance Comparison")
+                if st.session_state.language == 'fr':
+                    st.subheader("📈 Comparaison de Performance Complète")
+                else:
+                    st.subheader("📈 Comprehensive Performance Comparison")
                 
                 # Create comprehensive performance dashboard
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.subheader("🎯 Training Progress Evolution")
+                    if st.session_state.language == 'fr':
+                        st.subheader("🎯 Évolution du Progrès d'Entraînement")
+                    else:
+                        st.subheader("🎯 Training Progress Evolution")
                     
                     if st.session_state.training_metrics:
                         rounds = [m['round'] for m in st.session_state.training_metrics]
@@ -3238,41 +3244,72 @@ def main():
                             yaxis='y2'
                         ))
                         
-                        fig_multi.update_layout(
-                            title="Training Metrics Evolution",
-                            xaxis_title="Training Round",
-                            yaxis=dict(title="Accuracy / F1-Score", side="left"),
-                            yaxis2=dict(title="Loss", side="right", overlaying="y"),
-                            height=400
-                        )
+                        if st.session_state.language == 'fr':
+                            fig_multi.update_layout(
+                                title="Évolution des Métriques d'Entraînement",
+                                xaxis_title="Tour d'Entraînement",
+                                yaxis=dict(title="Précision / Score F1", side="left"),
+                                yaxis2=dict(title="Perte", side="right", overlaying="y"),
+                                height=400
+                            )
+                        else:
+                            fig_multi.update_layout(
+                                title="Training Metrics Evolution",
+                                xaxis_title="Training Round",
+                                yaxis=dict(title="Accuracy / F1-Score", side="left"),
+                                yaxis2=dict(title="Loss", side="right", overlaying="y"),
+                                height=400
+                            )
                         
                         st.plotly_chart(fig_multi, use_container_width=True)
                 
                 with col2:
-                    st.subheader("🏆 Model Performance Summary")
+                    if st.session_state.language == 'fr':
+                        st.subheader("🏆 Résumé de Performance du Modèle")
+                    else:
+                        st.subheader("🏆 Model Performance Summary")
                     
                     if st.session_state.training_metrics:
                         latest_metrics = st.session_state.training_metrics[-1]
                         best_accuracy = max([m['accuracy'] for m in st.session_state.training_metrics])
                         
                         # Performance metrics cards
-                        st.metric(
-                            "Final Accuracy",
-                            f"{latest_metrics['accuracy']:.1%}",
-                            f"{(latest_metrics['accuracy'] - 0.5):.1%}"
-                        )
-                        
-                        st.metric(
-                            "Best Accuracy Achieved",
-                            f"{best_accuracy:.1%}",
-                            f"{(best_accuracy - latest_metrics['accuracy']):.1%}"
-                        )
-                        
-                        st.metric(
-                            "Training Rounds",
-                            f"{len(st.session_state.training_metrics)}",
-                            f"-{st.session_state.max_rounds - len(st.session_state.training_metrics)}"
-                        )
+                        if st.session_state.language == 'fr':
+                            st.metric(
+                                "Précision Finale",
+                                f"{latest_metrics['accuracy']:.1%}",
+                                f"{(latest_metrics['accuracy'] - 0.5):.1%}"
+                            )
+                            
+                            st.metric(
+                                "Meilleure Précision Atteinte",
+                                f"{best_accuracy:.1%}",
+                                f"{(best_accuracy - latest_metrics['accuracy']):.1%}"
+                            )
+                            
+                            st.metric(
+                                "Tours d'Entraînement",
+                                f"{len(st.session_state.training_metrics)}",
+                                f"-{st.session_state.max_rounds - len(st.session_state.training_metrics)}"
+                            )
+                        else:
+                            st.metric(
+                                "Final Accuracy",
+                                f"{latest_metrics['accuracy']:.1%}",
+                                f"{(latest_metrics['accuracy'] - 0.5):.1%}"
+                            )
+                            
+                            st.metric(
+                                "Best Accuracy Achieved",
+                                f"{best_accuracy:.1%}",
+                                f"{(best_accuracy - latest_metrics['accuracy']):.1%}"
+                            )
+                            
+                            st.metric(
+                                "Training Rounds",
+                                f"{len(st.session_state.training_metrics)}",
+                                f"-{st.session_state.max_rounds - len(st.session_state.training_metrics)}"
+                            )
                         
                         # Performance grade
                         if best_accuracy >= 0.90:
@@ -3291,45 +3328,87 @@ def main():
                             grade = "C"
                             color = "error"
                         
-                        if color == "success":
-                            st.success(f"🏆 Model Performance Grade: **{grade}**")
-                        elif color == "warning":
-                            st.warning(f"⚠️ Model Performance Grade: **{grade}**")
+                        if st.session_state.language == 'fr':
+                            if color == "success":
+                                st.success(f"🏆 Note de Performance du Modèle: **{grade}**")
+                            elif color == "warning":
+                                st.warning(f"⚠️ Note de Performance du Modèle: **{grade}**")
+                            else:
+                                st.error(f"📉 Note de Performance du Modèle: **{grade}**")
                         else:
-                            st.error(f"📉 Model Performance Grade: **{grade}**")
+                            if color == "success":
+                                st.success(f"🏆 Model Performance Grade: **{grade}**")
+                            elif color == "warning":
+                                st.warning(f"⚠️ Model Performance Grade: **{grade}**")
+                            else:
+                                st.error(f"📉 Model Performance Grade: **{grade}**")
                 
                 # Configuration comparison table
-                st.subheader("⚙️ Current Configuration Summary")
+                if st.session_state.language == 'fr':
+                    st.subheader("⚙️ Résumé de Configuration Actuelle")
+                else:
+                    st.subheader("⚙️ Current Configuration Summary")
                 
-                config_data = {
-                    'Parameter': [
-                        'Number of Medical Facilities',
-                        'Number of Fog Nodes', 
-                        'Maximum Training Rounds',
-                        'Distribution Strategy',
-                        'Differential Privacy',
-                        'Aggregation Algorithm',
-                        'Model Type'
-                    ],
-                    'Current Value': [
-                        str(st.session_state.get('num_clients', 5)),
-                        str(st.session_state.get('num_fog_nodes', 3)),
-                        str(st.session_state.get('max_rounds', 20)),
-                        str(st.session_state.get('distribution_strategy', 'IID')),
-                        'Enabled' if st.session_state.get('enable_dp', True) else 'Disabled',
-                        'FedAvg',
-                        str(st.session_state.get('model_type', 'Logistic Regression'))
-                    ],
-                    'Impact on Accuracy': [
-                        'High - More diversity',
-                        'Medium - Better aggregation',
-                        'Medium - More training time',
-                        'High - Data distribution',
-                        'Low - Privacy vs accuracy',
-                        'Medium - Aggregation method',
-                        'High - Model complexity'
-                    ]
-                }
+                if st.session_state.language == 'fr':
+                    config_data = {
+                        'Paramètre': [
+                            'Nombre d\'Établissements Médicaux',
+                            'Nombre de Nœuds Fog', 
+                            'Tours d\'Entraînement Maximaux',
+                            'Stratégie de Distribution',
+                            'Confidentialité Différentielle',
+                            'Algorithme d\'Agrégation',
+                            'Type de Modèle'
+                        ],
+                        'Valeur Actuelle': [
+                            str(st.session_state.get('num_clients', 5)),
+                            str(st.session_state.get('num_fog_nodes', 3)),
+                            str(st.session_state.get('max_rounds', 20)),
+                            str(st.session_state.get('distribution_strategy', 'IID')),
+                            'Activé' if st.session_state.get('enable_dp', True) else 'Désactivé',
+                            'FedAvg',
+                            str(st.session_state.get('model_type', 'Régression Logistique'))
+                        ],
+                        'Impact sur la Précision': [
+                            'Élevé - Plus de diversité',
+                            'Moyen - Meilleure agrégation',
+                            'Moyen - Plus de temps d\'entraînement',
+                            'Élevé - Distribution des données',
+                            'Faible - Confidentialité vs précision',
+                            'Moyen - Méthode d\'agrégation',
+                            'Élevé - Complexité du modèle'
+                        ]
+                    }
+                else:
+                    config_data = {
+                        'Parameter': [
+                            'Number of Medical Facilities',
+                            'Number of Fog Nodes', 
+                            'Maximum Training Rounds',
+                            'Distribution Strategy',
+                            'Differential Privacy',
+                            'Aggregation Algorithm',
+                            'Model Type'
+                        ],
+                        'Current Value': [
+                            str(st.session_state.get('num_clients', 5)),
+                            str(st.session_state.get('num_fog_nodes', 3)),
+                            str(st.session_state.get('max_rounds', 20)),
+                            str(st.session_state.get('distribution_strategy', 'IID')),
+                            'Enabled' if st.session_state.get('enable_dp', True) else 'Disabled',
+                            'FedAvg',
+                            str(st.session_state.get('model_type', 'Logistic Regression'))
+                        ],
+                        'Impact on Accuracy': [
+                            'High - More diversity',
+                            'Medium - Better aggregation',
+                            'Medium - More training time',
+                            'High - Data distribution',
+                            'Low - Privacy vs accuracy',
+                            'Medium - Aggregation method',
+                            'High - Model complexity'
+                        ]
+                    }
                 
                 config_df = pd.DataFrame(config_data)
                 st.dataframe(config_df, use_container_width=True)
