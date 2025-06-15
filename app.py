@@ -1376,21 +1376,21 @@ def main():
                     
                     with col1:
                         pregnancies = st.number_input(get_translation("pregnancies", st.session_state.language), min_value=0, max_value=20, value=1, 
-                                                    help="Number of times pregnant")
-                        glucose = st.number_input(get_translation("glucose", st.session_state.language), min_value=0.0, max_value=300.0, value=120.0,
-                                                help="Plasma glucose concentration after 2 hours in oral glucose tolerance test")
+                                                    help=get_translation("help_pregnancies", st.session_state.language))
+                        glucose = st.number_input(get_translation("glucose_level", st.session_state.language), min_value=0.0, max_value=300.0, value=120.0,
+                                                help=get_translation("help_glucose", st.session_state.language))
                         blood_pressure = st.number_input(get_translation("blood_pressure", st.session_state.language), min_value=0.0, max_value=200.0, value=80.0,
-                                                        help="Diastolic blood pressure")
+                                                        help=get_translation("help_blood_pressure", st.session_state.language))
                         skin_thickness = st.number_input(get_translation("skin_thickness", st.session_state.language), min_value=0.0, max_value=100.0, value=20.0,
-                                                        help="Triceps skin fold thickness")
+                                                        help=get_translation("help_skin_thickness", st.session_state.language))
                     
                     with col2:
                         insulin = st.number_input(get_translation("insulin", st.session_state.language), min_value=0.0, max_value=1000.0, value=80.0,
-                                                help="2-Hour serum insulin")
+                                                help=get_translation("help_insulin", st.session_state.language))
                         bmi = st.number_input(get_translation("bmi", st.session_state.language), min_value=0.0, max_value=100.0, value=25.0,
-                                            help="Body mass index")
+                                            help=get_translation("help_bmi", st.session_state.language))
                         dpf = st.number_input(get_translation("diabetes_pedigree", st.session_state.language), min_value=0.0, max_value=5.0, value=0.5,
-                                            help="Diabetes pedigree function (genetic influence)")
+                                            help=get_translation("help_diabetes_pedigree", st.session_state.language))
                         age = st.number_input(get_translation("age", st.session_state.language), min_value=0, max_value=120, value=30)
                     
                     submitted = st.form_submit_button("🔍 " + get_translation("analyze_risk", st.session_state.language), use_container_width=True)
