@@ -2376,31 +2376,54 @@ def main():
             st.info(get_translation("risk_assessment_uses_trained_model", st.session_state.language))
 
     with tab7:
-        st.header("🌐 Graph Visualization")
+        if st.session_state.language == 'fr':
+            st.header("🌐 Visualisation Graphique")
+        else:
+            st.header("🌐 Graph Visualization")
         
         # Visualization options
         col1, col2 = st.columns([1, 3])
         
         with col1:
-            st.subheader("📊 Visualization Options")
-            
-            viz_type = st.selectbox(
-                "Select Visualization Type",
-                ["Network Topology", "Hierarchical FL Architecture", "Data Flow Diagram", "Performance Network"]
-            )
-            
-            if st.session_state.training_completed:
-                show_metrics = st.checkbox("Show Performance Metrics", value=True)
-                show_data_flow = st.checkbox("Show Data Flow", value=True)
-                show_fog_nodes = st.checkbox("Show Fog Nodes", value=True)
+            if st.session_state.language == 'fr':
+                st.subheader("📊 Options de Visualisation")
+                
+                viz_type = st.selectbox(
+                    "Sélectionner le Type de Visualisation",
+                    ["Topologie Réseau", "Architecture FL Hiérarchique", "Diagramme de Flux de Données", "Réseau de Performance"]
+                )
+                
+                if st.session_state.training_completed:
+                    show_metrics = st.checkbox("Afficher les Métriques de Performance", value=True)
+                    show_data_flow = st.checkbox("Afficher le Flux de Données", value=True)
+                    show_fog_nodes = st.checkbox("Afficher les Nœuds Fog", value=True)
+                else:
+                    show_metrics = False
+                    show_data_flow = True
+                    show_fog_nodes = True
             else:
-                show_metrics = False
-                show_data_flow = True
-                show_fog_nodes = True
+                st.subheader("📊 Visualization Options")
+                
+                viz_type = st.selectbox(
+                    "Select Visualization Type",
+                    ["Network Topology", "Hierarchical FL Architecture", "Data Flow Diagram", "Performance Network"]
+                )
+                
+                if st.session_state.training_completed:
+                    show_metrics = st.checkbox("Show Performance Metrics", value=True)
+                    show_data_flow = st.checkbox("Show Data Flow", value=True)
+                    show_fog_nodes = st.checkbox("Show Fog Nodes", value=True)
+                else:
+                    show_metrics = False
+                    show_data_flow = True
+                    show_fog_nodes = True
         
         with col2:
-            if viz_type == "Network Topology":
-                st.subheader("🔗 Federated Learning Network Topology")
+            if viz_type in ["Network Topology", "Topologie Réseau"]:
+                if st.session_state.language == 'fr':
+                    st.subheader("🔗 Topologie du Réseau d'Apprentissage Fédéré")
+                else:
+                    st.subheader("🔗 Federated Learning Network Topology")
                 
                 # Create network graph using plotly
                 import networkx as nx
@@ -2760,19 +2783,33 @@ def main():
                 """)
 
     with tab8:
-        st.header("📊 Advanced Analytics Dashboard")
+        if st.session_state.language == 'fr':
+            st.header("📊 Tableau de Bord Analytique Avancé")
+        else:
+            st.header("📊 Advanced Analytics Dashboard")
         
         if st.session_state.training_completed and hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
             # Create analytics sub-tabs
-            analytics_tab1, analytics_tab2, analytics_tab3, analytics_tab4 = st.tabs([
-                "🔄 Confusion Matrix",
-                "👥 Accuracy vs Clients", 
-                "🌫️ Accuracy vs Fog Nodes",
-                "📈 Performance Comparison"
-            ])
+            if st.session_state.language == 'fr':
+                analytics_tab1, analytics_tab2, analytics_tab3, analytics_tab4 = st.tabs([
+                    "🔄 Matrice de Confusion",
+                    "👥 Précision vs Clients", 
+                    "🌫️ Précision vs Nœuds Fog",
+                    "📈 Comparaison Performance"
+                ])
+            else:
+                analytics_tab1, analytics_tab2, analytics_tab3, analytics_tab4 = st.tabs([
+                    "🔄 Confusion Matrix",
+                    "👥 Accuracy vs Clients", 
+                    "🌫️ Accuracy vs Fog Nodes",
+                    "📈 Performance Comparison"
+                ])
             
             with analytics_tab1:
-                st.subheader("🔄 Confusion Matrix Analysis")
+                if st.session_state.language == 'fr':
+                    st.subheader("🔄 Analyse de la Matrice de Confusion")
+                else:
+                    st.subheader("🔄 Confusion Matrix Analysis")
                 
                 try:
                     # Get confusion matrix from federated learning manager
@@ -2781,10 +2818,23 @@ def main():
                         latest_cm = st.session_state.fl_manager.confusion_matrices[-1]
                         
                         # Create confusion matrix heatmap
+                        if st.session_state.language == 'fr':
+                            x_labels = ['Pas de Diabète', 'Diabète']
+                            y_labels = ['Pas de Diabète', 'Diabète']
+                            cm_title = "Matrice de Confusion du Modèle Global"
+                            x_axis_title = "Prédit"
+                            y_axis_title = "Réel"
+                        else:
+                            x_labels = ['No Diabetes', 'Diabetes']
+                            y_labels = ['No Diabetes', 'Diabetes']
+                            cm_title = "Global Model Confusion Matrix"
+                            x_axis_title = "Predicted"
+                            y_axis_title = "Actual"
+                        
                         fig_cm = go.Figure(data=go.Heatmap(
                             z=latest_cm,
-                            x=['No Diabetes', 'Diabetes'],
-                            y=['No Diabetes', 'Diabetes'],
+                            x=x_labels,
+                            y=y_labels,
                             colorscale='Blues',
                             text=latest_cm,
                             texttemplate="%{text}",
@@ -2793,9 +2843,9 @@ def main():
                         ))
                         
                         fig_cm.update_layout(
-                            title="Global Model Confusion Matrix",
-                            xaxis_title="Predicted",
-                            yaxis_title="Actual",
+                            title=cm_title,
+                            xaxis_title=x_axis_title,
+                            yaxis_title=y_axis_title,
                             height=500,
                             width=500
                         )
@@ -2806,7 +2856,10 @@ def main():
                             st.plotly_chart(fig_cm, use_container_width=True)
                         
                         with col2:
-                            st.subheader("📊 Classification Metrics")
+                            if st.session_state.language == 'fr':
+                                st.subheader("📊 Métriques de Classification")
+                            else:
+                                st.subheader("📊 Classification Metrics")
                             
                             # Calculate metrics from confusion matrix
                             tn, fp, fn, tp = latest_cm.ravel()
@@ -2817,24 +2870,45 @@ def main():
                             specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
                             accuracy = (tp + tn) / (tp + tn + fp + fn)
                             
-                            st.metric("Accuracy", f"{accuracy:.3f}")
-                            st.metric("Precision", f"{precision:.3f}")
-                            st.metric("Recall (Sensitivity)", f"{recall:.3f}")
-                            st.metric("Specificity", f"{specificity:.3f}")
-                            st.metric("F1-Score", f"{f1_score:.3f}")
+                            if st.session_state.language == 'fr':
+                                st.metric("Précision", f"{accuracy:.3f}")
+                                st.metric("Précision (Positif)", f"{precision:.3f}")
+                                st.metric("Rappel (Sensibilité)", f"{recall:.3f}")
+                                st.metric("Spécificité", f"{specificity:.3f}")
+                                st.metric("Score F1", f"{f1_score:.3f}")
+                                
+                                # Clinical interpretation
+                                st.subheader("🩺 Interprétation Clinique")
+                            else:
+                                st.metric("Accuracy", f"{accuracy:.3f}")
+                                st.metric("Precision", f"{precision:.3f}")
+                                st.metric("Recall (Sensitivity)", f"{recall:.3f}")
+                                st.metric("Specificity", f"{specificity:.3f}")
+                                st.metric("F1-Score", f"{f1_score:.3f}")
+                                
+                                # Clinical interpretation
+                                st.subheader("🩺 Clinical Interpretation")
                             
-                            # Clinical interpretation
-                            st.subheader("🩺 Clinical Interpretation")
-                            
-                            st.write(f"**True Positives (TP)**: {tp} - Correctly identified diabetes cases")
-                            st.write(f"**True Negatives (TN)**: {tn} - Correctly identified non-diabetes cases")
-                            st.write(f"**False Positives (FP)**: {fp} - Incorrectly flagged as diabetes")
-                            st.write(f"**False Negatives (FN)**: {fn} - Missed diabetes cases")
-                            
-                            if fn > 0:
-                                st.warning(f"⚠️ {fn} diabetes cases were missed - consider lowering prediction threshold")
-                            if fp > 0:
-                                st.info(f"ℹ️ {fp} patients were flagged for additional screening")
+                            if st.session_state.language == 'fr':
+                                st.write(f"**Vrais Positifs (VP)**: {tp} - Cas de diabète correctement identifiés")
+                                st.write(f"**Vrais Négatifs (VN)**: {tn} - Cas non-diabétiques correctement identifiés")
+                                st.write(f"**Faux Positifs (FP)**: {fp} - Incorrectement signalés comme diabétiques")
+                                st.write(f"**Faux Négatifs (FN)**: {fn} - Cas de diabète manqués")
+                                
+                                if fn > 0:
+                                    st.warning(f"⚠️ {fn} cas de diabète ont été manqués - considérer abaisser le seuil de prédiction")
+                                if fp > 0:
+                                    st.info(f"ℹ️ {fp} patients ont été signalés pour dépistage supplémentaire")
+                            else:
+                                st.write(f"**True Positives (TP)**: {tp} - Correctly identified diabetes cases")
+                                st.write(f"**True Negatives (TN)**: {tn} - Correctly identified non-diabetes cases")
+                                st.write(f"**False Positives (FP)**: {fp} - Incorrectly flagged as diabetes")
+                                st.write(f"**False Negatives (FN)**: {fn} - Missed diabetes cases")
+                                
+                                if fn > 0:
+                                    st.warning(f"⚠️ {fn} diabetes cases were missed - consider lowering prediction threshold")
+                                if fp > 0:
+                                    st.info(f"ℹ️ {fp} patients were flagged for additional screening")
                     
                     else:
                         st.warning("No confusion matrix data available. Complete training to see analysis.")
