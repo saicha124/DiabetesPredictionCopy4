@@ -2642,8 +2642,13 @@ def main():
                             hoverinfo='skip'
                         ))
                 
+                if st.session_state.language == 'fr':
+                    chart_title = "Architecture d'Apprentissage Fédéré Hiérarchique"
+                else:
+                    chart_title = "Hierarchical Federated Learning Architecture"
+                
                 fig.update_layout(
-                    title="Hierarchical Federated Learning Architecture",
+                    title=chart_title,
                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-4, 4]),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0.5, 3.5]),
                     height=500,
@@ -2678,8 +2683,13 @@ def main():
                     )
                 )])
                 
+                if st.session_state.language == 'fr':
+                    chart_title = "Flux de Données: Modèles Locaux → Agrégation Fog → Modèle Global"
+                else:
+                    chart_title = "Data Flow: Local Models → Fog Aggregation → Global Model"
+                
                 fig.update_layout(
-                    title_text="Data Flow: Local Models → Fog Aggregation → Global Model",
+                    title_text=chart_title,
                     font_size=10,
                     height=400
                 )
@@ -2748,8 +2758,13 @@ def main():
                             hoverinfo='skip'
                         ))
                     
+                    if st.session_state.language == 'fr':
+                        chart_title = "Vue Réseau Basée sur la Performance<br><sub>La taille des nœuds et l'épaisseur des connexions représentent la performance</sub>"
+                    else:
+                        chart_title = "Performance-Based Network View<br><sub>Node size and connection thickness represent performance</sub>"
+                    
                     fig.update_layout(
-                        title="Performance-Based Network View<br><sub>Node size and connection thickness represent performance</sub>",
+                        title=chart_title,
                         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                         height=600,
@@ -2761,14 +2776,26 @@ def main():
                     # Performance legend
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.metric("🔴 Poor Performance", "< 0.80")
+                        if st.session_state.language == 'fr':
+                            st.metric("🔴 Performance Faible", "< 0.80")
+                        else:
+                            st.metric("🔴 Poor Performance", "< 0.80")
                     with col2:
-                        st.metric("🟡 Good Performance", "0.80 - 0.85")
+                        if st.session_state.language == 'fr':
+                            st.metric("🟡 Bonne Performance", "0.80 - 0.85")
+                        else:
+                            st.metric("🟡 Good Performance", "0.80 - 0.85")
                     with col3:
-                        st.metric("🟢 Excellent Performance", "> 0.85")
+                        if st.session_state.language == 'fr':
+                            st.metric("🟢 Performance Excellente", "> 0.85")
+                        else:
+                            st.metric("🟢 Excellent Performance", "> 0.85")
                         
                 else:
-                    st.info("Complete federated learning training to view performance network visualization.")
+                    if st.session_state.language == 'fr':
+                        st.info("Complétez l'entraînement d'apprentissage fédéré pour voir la visualisation du réseau de performance.")
+                    else:
+                        st.info("Complete federated learning training to view performance network visualization.")
         
         # Additional graph information
         if viz_type == "Network Topology":
