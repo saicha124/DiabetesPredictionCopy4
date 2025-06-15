@@ -272,19 +272,19 @@ def main():
                     strategy_params['correlation_strength'] = st.slider("Correlation Strength", 0.1, 1.0, 0.8, 0.1, key="correlation_slider")
                 
                 st.subheader("🔐 " + get_translation("training_level_secret_sharing", st.session_state.language))
-                enable_training_ss = st.checkbox("Enable Secret Sharing in Training", value=True, key="enable_ss_check")
+                enable_training_ss = st.checkbox(get_translation("enable_secret_sharing_training", st.session_state.language), value=True, key="enable_ss_check")
                 if enable_training_ss:
                     if enable_fog:
-                        ss_threshold = st.slider("Secret Sharing Threshold", 
+                        ss_threshold = st.slider(get_translation("secret_sharing_threshold", st.session_state.language), 
                                                min_value=2, 
                                                max_value=num_fog_nodes, 
                                                value=max(2, int(0.67 * num_fog_nodes)),
                                                help=f"Number of fog nodes required to reconstruct weights (max: {num_fog_nodes})",
                                                key="ss_threshold_slider")
-                        st.info(f"Using {num_fog_nodes} fog nodes for secret sharing distribution")
-                        st.success(f"Secret sharing: {ss_threshold}/{num_fog_nodes} threshold scheme")
+                        st.info(get_translation("using_fog_nodes_secret_sharing", st.session_state.language, nodes=num_fog_nodes))
+                        st.success(get_translation("secret_sharing_threshold_scheme", st.session_state.language, threshold=ss_threshold, total=num_fog_nodes))
                     else:
-                        st.warning("Enable Fog Nodes to use secret sharing")
+                        st.warning(get_translation("enable_fog_nodes_use_secret_sharing", st.session_state.language))
                         enable_training_ss = False
                         ss_threshold = 3  # Default value when disabled
                 else:
@@ -1873,7 +1873,7 @@ def main():
                 ])
                 
                 with corr_tab1:
-                    st.subheader("Feature Correlation Heatmap")
+                    st.subheader(get_translation("feature_correlation_heatmap", st.session_state.language))
                     
                     # Calculate correlation matrix
                     correlation_matrix = diabetes_data.corr()

@@ -304,7 +304,9 @@ TRANSLATIONS = {
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
         "using_fog_nodes_secret_sharing": "Using {nodes} fog nodes for secret sharing distribution",
-        "secret_sharing_threshold_scheme": "Secret sharing: {threshold}/{total} threshold scheme"
+        "secret_sharing_threshold_scheme": "Secret sharing: {threshold}/{total} threshold scheme",
+        "enable_secret_sharing_training": "Enable Secret Sharing in Training",
+        "enable_fog_nodes_use_secret_sharing": "Enable Fog Nodes to use secret sharing"
     },
     
     'fr': {
@@ -607,7 +609,9 @@ TRANSLATIONS = {
         # Secret Sharing
         "secret_sharing_threshold": "Seuil de Partage de Secrets",
         "using_fog_nodes_secret_sharing": "Utilisation de {nodes} nœuds fog pour la distribution de partage de secrets",
-        "secret_sharing_threshold_scheme": "Partage de secrets: schéma de seuil {threshold}/{total}"
+        "secret_sharing_threshold_scheme": "Partage de secrets: schéma de seuil {threshold}/{total}",
+        "enable_secret_sharing_training": "Activer le Partage de Secrets dans l'Entraînement",
+        "enable_fog_nodes_use_secret_sharing": "Activez les Nœuds Fog pour utiliser le partage de secrets"
     }
 }
 
