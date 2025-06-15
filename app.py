@@ -20,7 +20,7 @@ from differential_privacy import DifferentialPrivacyManager
 from data_distribution import get_distribution_strategy
 from client_simulator import ClientSimulator
 from journey_visualization import InteractiveJourneyVisualizer
-from performance_optimizer import PerformanceOptimizer
+from performance_optimizer import FederatedLearningOptimizer
 from real_medical_data_fetcher import RealMedicalDataFetcher, load_authentic_medical_data
 from advanced_client_analytics import AdvancedClientAnalytics
 from client_visualization import ClientPerformanceVisualizer
@@ -28,7 +28,7 @@ from client_visualization import ClientPerformanceVisualizer
 
 def create_performance_optimizer():
     """Create and return a performance optimizer instance"""
-    return PerformanceOptimizer()
+    return FederatedLearningOptimizer()
 
 
 def init_session_state():
