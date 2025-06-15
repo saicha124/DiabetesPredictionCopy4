@@ -184,35 +184,48 @@ def main():
                 st.error(get_translation("failed_to_load_dataset", st.session_state.language, error=str(e)))
                 return
 
-    # Add CSS for scrollable tabs
+    # Add CSS for tab navigation with arrows
     st.markdown("""
     <style>
-    /* Make tabs scrollable horizontally */
+    .tab-navigation {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .nav-arrow {
+        background: #f0f2f6;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s;
+    }
+    
+    .nav-arrow:hover {
+        background: #e5e7eb;
+        border-color: #9ca3af;
+    }
+    
+    .nav-arrow:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .tab-container {
+        position: relative;
+        overflow: hidden;
+        flex: 1;
+    }
+    
     .stTabs [data-baseweb="tab-list"] {
         gap: 2px;
-        overflow-x: auto;
+        overflow-x: hidden;
         white-space: nowrap;
-        max-width: 100%;
-        scrollbar-width: thin;
-        scrollbar-color: #888 #f1f1f1;
-    }
-    
-    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
-        height: 8px;
-    }
-    
-    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-    
-    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-    }
-    
-    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb:hover {
-        background: #555;
+        transition: transform 0.3s ease;
+        scroll-behavior: smooth;
     }
     
     .stTabs [data-baseweb="tab"] {
@@ -222,6 +235,31 @@ def main():
     }
     </style>
     """, unsafe_allow_html=True)
+    
+    # Add tab navigation arrows
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 8, 1])
+    
+    with nav_col1:
+        if st.button("◀", key="tab_left", help="Previous tabs"):
+            st.markdown("""
+            <script>
+            const tabList = document.querySelector('[data-baseweb="tab-list"]');
+            if (tabList) {
+                tabList.scrollBy({left: -200, behavior: 'smooth'});
+            }
+            </script>
+            """, unsafe_allow_html=True)
+    
+    with nav_col3:
+        if st.button("▶", key="tab_right", help="Next tabs"):
+            st.markdown("""
+            <script>
+            const tabList = document.querySelector('[data-baseweb="tab-list"]');
+            if (tabList) {
+                tabList.scrollBy({left: 200, behavior: 'smooth'});
+            }
+            </script>
+            """, unsafe_allow_html=True)
 
     # Main tabs
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
