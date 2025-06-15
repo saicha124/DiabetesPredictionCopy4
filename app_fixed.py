@@ -19,7 +19,7 @@ from data_preprocessing import DataPreprocessor
 from differential_privacy import DifferentialPrivacyManager
 from data_distribution import get_distribution_strategy
 from client_simulator import ClientSimulator
-from journey_visualization import InteractiveJourneyVisualizer
+from journey_visualization import JourneyVisualizer
 from performance_optimizer import PerformanceOptimizer
 from real_medical_data_fetcher import RealMedicalDataFetcher, load_authentic_medical_data
 from advanced_client_analytics import AdvancedClientAnalytics
@@ -48,7 +48,7 @@ def init_session_state():
     if 'global_model_accuracy' not in st.session_state:
         st.session_state.global_model_accuracy = 0.0
     if 'journey_visualizer' not in st.session_state:
-        st.session_state.journey_visualizer = InteractiveJourneyVisualizer()
+        st.session_state.journey_visualizer = JourneyVisualizer()
     if 'analytics_engine' not in st.session_state:
         st.session_state.analytics_engine = AdvancedClientAnalytics()
     if 'client_visualizer' not in st.session_state:
