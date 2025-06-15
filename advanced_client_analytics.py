@@ -515,7 +515,8 @@ class AdvancedClientAnalytics:
     
     def _create_anomaly_detection_panel(self):
         """Create anomaly detection and outlier analysis panel"""
-        st.subheader("🚨 Anomaly Detection & Outlier Analysis")
+        from translations import get_translation
+        st.subheader(f"🚨 {get_translation('anomaly_detection_outlier_analysis', st.session_state.language)}")
         
         # Run anomaly detection
         anomaly_results = self.detect_anomalies()
@@ -555,7 +556,7 @@ class AdvancedClientAnalytics:
         
         # Display performance outliers
         if anomaly_results['performance_outliers']:
-            st.subheader("📊 Performance Outliers")
+            st.subheader(f"📊 {get_translation('performance_outliers', st.session_state.language)}")
             
             outlier_data = []
             for outlier in anomaly_results['performance_outliers']:
@@ -570,7 +571,7 @@ class AdvancedClientAnalytics:
             st.dataframe(df_outliers, use_container_width=True)
         
         # Facility performance ranking
-        st.subheader("🏆 Facility Performance Ranking")
+        st.subheader(f"🏆 {get_translation('facility_performance_ranking', st.session_state.language)}")
         
         ranking_data = []
         for client_id, history in self.client_metrics_history.items():

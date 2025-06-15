@@ -1359,14 +1359,18 @@ def main():
         
         if st.session_state.training_completed and hasattr(st.session_state, 'fl_manager'):
             # Create three main sections
-            tab_predict, tab_explain, tab_compare = st.tabs(["🔍 Risk Prediction", "📊 Feature Analysis", "📈 Population Comparison"])
+            tab_predict, tab_explain, tab_compare = st.tabs([
+                f"🔍 {get_translation('risk_prediction', st.session_state.language)}", 
+                f"📊 {get_translation('feature_analysis', st.session_state.language)}", 
+                f"📈 {get_translation('population_comparison', st.session_state.language)}"
+            ])
             
             with tab_predict:
                 st.subheader(get_translation("patient_information", st.session_state.language))
                 
                 # Patient input form with enhanced validation
                 with st.form("patient_assessment"):
-                    st.markdown("**Enter patient information for diabetes risk assessment:**")
+                    st.markdown(f"**{get_translation('enter_patient_information', st.session_state.language)}**")
                     
                     col1, col2 = st.columns(2)
                     
@@ -2119,14 +2123,14 @@ def main():
                 """)
 
     with tab6:
-        st.header("🩺 Individual Patient Risk Assessment")
+        st.header(f"🩺 {get_translation('individual_patient_risk_assessment', st.session_state.language)}")
         
         if st.session_state.training_completed:
-            st.subheader("🔍 Patient Risk Analysis")
+            st.subheader(f"🔍 {get_translation('patient_risk_analysis', st.session_state.language)}")
             
             # Patient input form
             with st.form("patient_risk_assessment_form"):
-                st.markdown("### " + get_translation("patient_information"))
+                st.markdown("### " + get_translation("patient_information", st.session_state.language))
                 
                 col1, col2 = st.columns(2)
                 
