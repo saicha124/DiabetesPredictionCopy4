@@ -126,7 +126,7 @@ def main():
                 st.session_state.data_loaded = True
                 st.success("📊 " + get_translation("diabetes_dataset_loaded", st.session_state.language, rows=data.shape[0], cols=data.shape[1]))
             except Exception as e:
-                st.error(f"Failed to load diabetes dataset: {str(e)}")
+                st.error(get_translation("failed_to_load_dataset", st.session_state.language, error=str(e)))
                 return
 
     # Main tabs
@@ -138,7 +138,7 @@ def main():
         get_translation("tab_facility", st.session_state.language),
         get_translation("tab_risk", st.session_state.language),
         get_translation("tab_graph_viz", st.session_state.language),
-        "📊 Advanced Analytics"
+        get_translation("tab_advanced_analytics", st.session_state.language)
     ])
 
     with tab1:

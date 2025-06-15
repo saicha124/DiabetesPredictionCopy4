@@ -17,6 +17,7 @@ TRANSLATIONS = {
         "tab_explainer": "🩺 Patient Risk Prediction Explainer",
         "tab_facility": "🏥 Advanced Medical Facility Analytics",
         "tab_risk": "🩺 Individual Patient Risk Assessment",
+        "tab_advanced_analytics": "📊 Advanced Analytics",
         
         # Training controls
         "model_type": "Model Type",
@@ -269,6 +270,7 @@ TRANSLATIONS = {
         "tab_explainer": "🩺 Explicateur de Prédiction de Risque Patient",
         "tab_facility": "🏥 Analytiques Avancées Établissement Médical",
         "tab_risk": "🩺 Évaluation Risque Patient Individuel",
+        "tab_advanced_analytics": "📊 Analytiques Avancées",
         
         # Training controls
         "model_type": "Type de Modèle",
