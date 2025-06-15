@@ -13,6 +13,33 @@ class InteractiveJourneyVisualizer:
     """Interactive visualization of the federated learning user journey"""
     
     def __init__(self):
+        # Stage names will be translated dynamically
+        self.journey_stage_keys = [
+            "data_loading",
+            "configuration", 
+            "client_setup",
+            "privacy_setup",
+            "training_initiation",
+            "fog_aggregation",
+            "global_convergence",
+            "model_evaluation",
+            "results_analysis"
+        ]
+        
+        # Description keys will be translated dynamically
+        self.stage_description_keys = {
+            "data_loading": "stage_desc_data_loading",
+            "configuration": "stage_desc_configuration",
+            "client_setup": "stage_desc_client_setup",
+            "privacy_setup": "stage_desc_privacy_setup",
+            "training_initiation": "stage_desc_training_initiation",
+            "fog_aggregation": "stage_desc_fog_aggregation",
+            "global_convergence": "stage_desc_global_convergence",
+            "model_evaluation": "stage_desc_model_evaluation",
+            "results_analysis": "stage_desc_results_analysis"
+        }
+        
+        # Keep backward compatibility with English fallbacks
         self.journey_stages = [
             "Data Loading",
             "Configuration", 
@@ -239,12 +266,15 @@ class InteractiveJourneyVisualizer:
         """Create interactive stage explorer"""
         st.subheader(f"🔍 {get_translation('stage_explorer', st.session_state.language)}")
         
-        # Stage selector
-        selected_stage = st.selectbox(
+        # Stage selector with translated names
+        translated_stages = [get_translation(key, st.session_state.language) for key in self.journey_stage_keys]
+        selected_stage_index = st.selectbox(
             get_translation('select_stage_explore', st.session_state.language),
-            self.journey_stages,
+            range(len(translated_stages)),
+            format_func=lambda x: translated_stages[x],
             index=self.current_stage
         )
+        selected_stage = self.journey_stages[selected_stage_index]
         
         # Stage details
         col1, col2 = st.columns([2, 1])
@@ -257,14 +287,22 @@ class InteractiveJourneyVisualizer:
     
     def _display_stage_details(self, stage: str):
         """Display detailed information for a selected stage"""
-        st.markdown(f"### {stage}")
-        st.write(self.stage_descriptions[stage])
+        # Get translated stage name and description
+        stage_index = self.journey_stages.index(stage) if stage in self.journey_stages else 0
+        stage_key = self.journey_stage_keys[stage_index]
+        desc_key = self.stage_description_keys[stage_key]
+        
+        translated_stage = get_translation(stage_key, st.session_state.language)
+        translated_desc = get_translation(desc_key, st.session_state.language)
+        
+        st.markdown(f"### {translated_stage}")
+        st.write(translated_desc)
         
         progress = self.stage_progress.get(stage, 0)
         
         # Progress bar
         st.progress(progress / 100)
-        st.write(f"Progress: {progress:.1f}%")
+        st.write(f"{get_translation('progress', st.session_state.language)}: {progress:.1f}%")
         
         # Stage-specific content
         if stage == "Data Loading":
@@ -288,7 +326,7 @@ class InteractiveJourneyVisualizer:
     
     def _display_stage_metrics(self, stage: str):
         """Display metrics for the selected stage"""
-        st.markdown("#### Stage Metrics")
+        st.markdown(f"#### {get_translation('stage_metrics', st.session_state.language)}")
         
         # Mock metrics based on stage
         if stage in ["Training Initiation", "Fog Aggregation", "Global Convergence"]:
@@ -302,14 +340,14 @@ class InteractiveJourneyVisualizer:
         else:
             # Generic progress metrics
             progress = self.stage_progress.get(stage, 0)
-            st.metric("Completion", f"{progress:.1f}%")
+            st.metric(get_translation('completion', st.session_state.language), f"{progress:.1f}%")
             
             if progress == 100:
-                st.success("✅ Completed")
+                st.success(f"✅ {get_translation('completed', st.session_state.language)}")
             elif progress > 0:
-                st.warning("🟡 In Progress")
+                st.warning(f"🟡 {get_translation('in_progress', st.session_state.language)}")
             else:
-                st.info("⏳ Pending")
+                st.info(f"⏳ {get_translation('client_setup_pending', st.session_state.language)}")
     
     def _data_loading_details(self):
         """Details for data loading stage"""

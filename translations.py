@@ -355,6 +355,34 @@ TRANSLATIONS = {
         "interactive_controls": "Interactive Controls",
         "congratulations_journey_complete": "Congratulations! You've completed the full federated learning journey!",
         
+        # Journey Stage Names
+        "data_loading": "Data Loading",
+        "configuration": "Configuration",
+        "client_setup": "Client Setup",
+        "privacy_setup": "Privacy Setup", 
+        "training_initiation": "Training Initiation",
+        "fog_aggregation": "Fog Aggregation",
+        "global_convergence": "Global Convergence",
+        "model_evaluation": "Model Evaluation",
+        "results_analysis": "Results Analysis",
+        
+        # Journey Stage Descriptions
+        "stage_desc_data_loading": "Medical data is securely loaded and validated",
+        "stage_desc_configuration": "Training parameters and model architecture selected",
+        "stage_desc_client_setup": "Medical facilities configured with local data partitions",
+        "stage_desc_privacy_setup": "Differential privacy mechanisms initialized",
+        "stage_desc_training_initiation": "Federated learning begins across all clients",
+        "stage_desc_fog_aggregation": "Hierarchical aggregation at fog computing nodes",
+        "stage_desc_global_convergence": "Model parameters converge to optimal solution",
+        "stage_desc_model_evaluation": "Performance metrics calculated and validated",
+        "stage_desc_results_analysis": "Comprehensive analysis and insights generated",
+        
+        # Stage Status Messages
+        "client_setup_pending": "Client setup pending",
+        "stage_metrics": "Stage Metrics",
+        "completion": "Completion",
+        "completed": "Completed",
+        
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
         "using_fog_nodes_secret_sharing": "Using {nodes} fog nodes for secret sharing distribution",
@@ -773,6 +801,34 @@ TRANSLATIONS = {
         "journey_timeline": "Chronologie du Parcours",
         "interactive_controls": "Contrôles Interactifs",
         "congratulations_journey_complete": "Félicitations! Vous avez terminé le parcours complet d'apprentissage fédéré!",
+        
+        # Journey Stage Names
+        "data_loading": "Chargement des Données",
+        "configuration": "Configuration",
+        "client_setup": "Configuration Client",
+        "privacy_setup": "Configuration Confidentialité",
+        "training_initiation": "Lancement Formation",
+        "fog_aggregation": "Agrégation Fog",
+        "global_convergence": "Convergence Globale",
+        "model_evaluation": "Évaluation Modèle",
+        "results_analysis": "Analyse Résultats",
+        
+        # Journey Stage Descriptions
+        "stage_desc_data_loading": "Les données médicales sont chargées et validées de manière sécurisée",
+        "stage_desc_configuration": "Paramètres d'entraînement et architecture du modèle sélectionnés",
+        "stage_desc_client_setup": "Établissements médicaux configurés avec partitions de données locales",
+        "stage_desc_privacy_setup": "Mécanismes de confidentialité différentielle initialisés",
+        "stage_desc_training_initiation": "L'apprentissage fédéré commence sur tous les clients",
+        "stage_desc_fog_aggregation": "Agrégation hiérarchique aux nœuds de calcul fog",
+        "stage_desc_global_convergence": "Les paramètres du modèle convergent vers la solution optimale",
+        "stage_desc_model_evaluation": "Métriques de performance calculées et validées",
+        "stage_desc_results_analysis": "Analyse complète et génération d'insights",
+        
+        # Stage Status Messages
+        "client_setup_pending": "Configuration client en attente",
+        "stage_metrics": "Métriques d'Étape",
+        "completion": "Achèvement",
+        "completed": "Terminé",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",
