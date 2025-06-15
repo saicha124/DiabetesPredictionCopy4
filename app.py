@@ -212,30 +212,65 @@ def main():
         if st.button("Suivant ▶" if st.session_state.language == 'fr' else "Next ▶", key="next_tab"):
             pass
 
-    # Main tabs with JavaScript navigation
+    # Add JavaScript for tab navigation
     st.markdown("""
     <script>
-    let currentTabIndex = 0;
-    const maxTabs = 8;
+    // Initialize or get current tab index
+    if (!window.currentTabIndex) {
+        window.currentTabIndex = 0;
+    }
     
-    document.addEventListener('click', function(e) {
-        if (e.target.textContent.includes('◀') || e.target.textContent.includes('Précédent') || e.target.textContent.includes('Previous')) {
-            if (currentTabIndex > 0) {
-                currentTabIndex--;
-                setTimeout(() => {
-                    const tabs = document.querySelectorAll('[data-baseweb="tab"]');
-                    if (tabs[currentTabIndex]) tabs[currentTabIndex].click();
-                }, 100);
+    // Function to get the currently active tab index
+    function getCurrentActiveTab() {
+        const tabs = document.querySelectorAll('[data-baseweb="tab"]');
+        for (let i = 0; i < tabs.length; i++) {
+            if (tabs[i].getAttribute('aria-selected') === 'true') {
+                window.currentTabIndex = i;
+                return i;
             }
         }
-        if (e.target.textContent.includes('▶') || e.target.textContent.includes('Suivant') || e.target.textContent.includes('Next')) {
-            if (currentTabIndex < maxTabs - 1) {
-                currentTabIndex++;
-                setTimeout(() => {
-                    const tabs = document.querySelectorAll('[data-baseweb="tab"]');
-                    if (tabs[currentTabIndex]) tabs[currentTabIndex].click();
-                }, 100);
-            }
+        return 0;
+    }
+    
+    // Function to navigate tabs
+    function navigateTab(direction) {
+        const tabs = document.querySelectorAll('[data-baseweb="tab"]');
+        const currentActive = getCurrentActiveTab();
+        
+        let newIndex;
+        if (direction === 'prev' && currentActive > 0) {
+            newIndex = currentActive - 1;
+        } else if (direction === 'next' && currentActive < tabs.length - 1) {
+            newIndex = currentActive + 1;
+        } else {
+            return; // No navigation needed
+        }
+        
+        if (tabs[newIndex]) {
+            tabs[newIndex].click();
+            window.currentTabIndex = newIndex;
+        }
+    }
+    
+    // Add event listeners
+    document.addEventListener('click', function(e) {
+        const buttonText = e.target.textContent || '';
+        
+        if (buttonText.includes('◀') || buttonText.includes('Précédent') || buttonText.includes('Previous')) {
+            e.preventDefault();
+            setTimeout(() => navigateTab('prev'), 50);
+        }
+        
+        if (buttonText.includes('▶') || buttonText.includes('Suivant') || buttonText.includes('Next')) {
+            e.preventDefault();
+            setTimeout(() => navigateTab('next'), 50);
+        }
+    });
+    
+    // Track tab clicks to update current index
+    document.addEventListener('click', function(e) {
+        if (e.target.getAttribute('data-baseweb') === 'tab') {
+            setTimeout(getCurrentActiveTab, 100);
         }
     });
     </script>
