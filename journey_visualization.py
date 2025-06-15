@@ -438,6 +438,7 @@ class InteractiveJourneyVisualizer:
     
     def _global_convergence_details(self):
         """Details for global convergence stage"""
+        from translations import get_translation
         if st.session_state.get('training_metrics'):
             metrics = st.session_state.training_metrics
             if len(metrics) > 3:
@@ -445,15 +446,15 @@ class InteractiveJourneyVisualizer:
                 convergence_trend = np.diff(recent_accuracies)
                 
                 if all(abs(trend) < 0.01 for trend in convergence_trend):
-                    st.success("✅ Model converging")
-                    st.write("📈 Stable performance achieved")
+                    st.success(f"✅ {get_translation('model_converging', st.session_state.language)}")
+                    st.write(f"📈 {get_translation('stable_performance_achieved', st.session_state.language)}")
                 else:
-                    st.info("🔄 Optimization in progress")
-                    st.write("📈 Performance still improving")
+                    st.info(f"🔄 {get_translation('optimization_in_progress', st.session_state.language)}")
+                    st.write(f"📈 {get_translation('performance_still_improving', st.session_state.language)}")
             else:
-                st.info("🔄 Collecting convergence data")
+                st.info(f"🔄 {get_translation('collecting_convergence_data', st.session_state.language)}")
         else:
-            st.warning("⏳ Awaiting training data")
+            st.warning(f"⏳ {get_translation('awaiting_training_data', st.session_state.language)}")
     
     def _model_evaluation_details(self):
         """Details for model evaluation stage"""
