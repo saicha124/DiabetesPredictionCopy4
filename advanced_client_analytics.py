@@ -402,15 +402,16 @@ class AdvancedClientAnalytics:
     
     def _create_confusion_matrix_analysis(self):
         """Create comprehensive confusion matrix analysis"""
-        st.subheader("🔍 Confusion Matrix Analysis")
+        from translations import get_translation
+        st.subheader(f"🔍 {get_translation('confusion_matrix_analysis', st.session_state.language)}")
         
         # Client selector for detailed analysis
-        client_options = [f"Medical Station {i + 1}" for i in self.client_metrics_history.keys()]
+        client_options = [f"{get_translation('medical_station', st.session_state.language)} {i + 1}" for i in self.client_metrics_history.keys()]
         if not client_options:
             st.warning("No client data available for confusion matrix analysis")
             return
         
-        selected_client_name = st.selectbox("Select Medical Facility for Detailed Analysis", client_options)
+        selected_client_name = st.selectbox(get_translation('select_medical_facility_detailed_analysis', st.session_state.language), client_options)
         client_id = int(selected_client_name.split()[-1]) - 1
         
         if client_id not in self.client_metrics_history:
@@ -423,13 +424,13 @@ class AdvancedClientAnalytics:
             return
         
         # Round selector
-        round_options = [f"Round {m['round']}" for m in history]
+        round_options = [f"{get_translation('round', st.session_state.language)} {m['round']}" for m in history]
         if not round_options:
             st.warning("No training rounds available for analysis")
             return
             
         default_index = len(round_options) - 1 if round_options else 0
-        selected_round_name = st.selectbox("Select Training Round", round_options, index=default_index)
+        selected_round_name = st.selectbox(get_translation('select_training_round', st.session_state.language), round_options, index=default_index)
         round_idx = int(selected_round_name.split()[-1])
         
         # Find corresponding metrics
@@ -454,8 +455,8 @@ class AdvancedClientAnalytics:
                 text_auto=True,
                 title=f"Confusion Matrix - {selected_client_name}, {selected_round_name}",
                 labels=dict(x="Predicted", y="Actual", color="Count"),
-                x=['No Diabetes', 'Diabetes'],
-                y=['No Diabetes', 'Diabetes'],
+                x=[get_translation('no_diabetes', st.session_state.language), get_translation('diabetes', st.session_state.language)],
+                y=[get_translation('no_diabetes', st.session_state.language), get_translation('diabetes', st.session_state.language)],
                 color_continuous_scale='Blues'
             )
             fig_cm.update_layout(height=400)
@@ -463,28 +464,28 @@ class AdvancedClientAnalytics:
         
         with col2:
             # Classification metrics
-            st.subheader("Classification Metrics")
+            st.subheader(get_translation('classification_metrics', st.session_state.language))
             
             class_report = selected_metrics['classification_report']
             
             # Display per-class metrics
             for class_label in ['0', '1']:  # No diabetes, Diabetes
                 if class_label in class_report:
-                    class_name = 'No Diabetes' if class_label == '0' else 'Diabetes'
+                    class_name = get_translation('no_diabetes', st.session_state.language) if class_label == '0' else get_translation('diabetes', st.session_state.language)
                     st.markdown(f"**{class_name}:**")
                     
                     metrics_data = class_report[class_label]
                     col_a, col_b, col_c = st.columns(3)
                     
                     with col_a:
-                        st.metric("Precision", f"{metrics_data['precision']:.3f}")
+                        st.metric(get_translation('precision', st.session_state.language), f"{metrics_data['precision']:.3f}")
                     with col_b:
-                        st.metric("Recall", f"{metrics_data['recall']:.3f}")
+                        st.metric(get_translation('recall', st.session_state.language), f"{metrics_data['recall']:.3f}")
                     with col_c:
-                        st.metric("F1-Score", f"{metrics_data['f1-score']:.3f}")
+                        st.metric(get_translation('f1_score', st.session_state.language), f"{metrics_data['f1-score']:.3f}")
         
         # Additional analysis
-        st.subheader("Performance Insights")
+        st.subheader(get_translation('performance_insights', st.session_state.language))
         
         # Calculate derived metrics
         tn, fp, fn, tp = cm.ravel() if cm.size == 4 else (0, 0, 0, 0)
@@ -497,13 +498,13 @@ class AdvancedClientAnalytics:
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.metric("Sensitivity (Recall)", f"{sensitivity:.3f}")
+            st.metric(get_translation('sensitivity_recall', st.session_state.language), f"{sensitivity:.3f}")
         with col2:
-            st.metric("Specificity", f"{specificity:.3f}")
+            st.metric(get_translation('specificity', st.session_state.language), f"{specificity:.3f}")
         with col3:
-            st.metric("PPV (Precision)", f"{ppv:.3f}")
+            st.metric(get_translation('ppv_precision', st.session_state.language), f"{ppv:.3f}")
         with col4:
-            st.metric("NPV", f"{npv:.3f}")
+            st.metric(get_translation('npv', st.session_state.language), f"{npv:.3f}")
         
         # Performance interpretation
         performance_level = "Excellent" if selected_metrics['accuracy'] > 0.9 else \
