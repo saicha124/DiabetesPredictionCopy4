@@ -184,82 +184,37 @@ def main():
                 st.error(get_translation("failed_to_load_dataset", st.session_state.language, error=str(e)))
                 return
 
-    # Add CSS for tab navigation with arrows
-    st.markdown("""
-    <style>
-    .tab-navigation {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
+    # Add tab selector dropdown
+    tab_names = [
+        get_translation("tab_training", st.session_state.language),
+        get_translation("tab_monitoring", st.session_state.language), 
+        get_translation("tab_visualization", st.session_state.language),
+        get_translation("tab_analytics", st.session_state.language),
+        get_translation("tab_facility", st.session_state.language),
+        get_translation("tab_risk", st.session_state.language),
+        get_translation("tab_graph_viz", st.session_state.language),
+        get_translation("tab_advanced_analytics", st.session_state.language)
+    ]
     
-    .nav-arrow {
-        background: #f0f2f6;
-        border: 1px solid #d1d5db;
-        border-radius: 4px;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: all 0.2s;
-    }
+    if st.session_state.language == 'fr':
+        selected_tab_name = st.selectbox("🔗 Naviguer vers l'onglet:", tab_names, key="tab_navigator")
+    else:
+        selected_tab_name = st.selectbox("🔗 Navigate to tab:", tab_names, key="tab_navigator")
     
-    .nav-arrow:hover {
-        background: #e5e7eb;
-        border-color: #9ca3af;
-    }
+    # Get the index of selected tab
+    selected_tab_index = tab_names.index(selected_tab_name)
     
-    .nav-arrow:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    
-    .tab-container {
-        position: relative;
-        overflow: hidden;
-        flex: 1;
-    }
-    
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
-        overflow-x: hidden;
-        white-space: nowrap;
-        transition: transform 0.3s ease;
-        scroll-behavior: smooth;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        flex-shrink: 0;
-        min-width: max-content;
-        padding: 8px 12px;
-    }
-    </style>
+    # Add JavaScript to click the selected tab
+    st.markdown(f"""
+    <script>
+        setTimeout(function() {{
+            const tabs = document.querySelectorAll('[data-baseweb="tab"]');
+            if (tabs.length > {selected_tab_index}) {{
+                tabs[{selected_tab_index}].click();
+            }}
+        }}, 500);
+    </script>
     """, unsafe_allow_html=True)
-    
-    # Add tab navigation arrows
-    nav_col1, nav_col2, nav_col3 = st.columns([1, 8, 1])
-    
-    with nav_col1:
-        if st.button("◀", key="tab_left", help="Previous tabs"):
-            st.markdown("""
-            <script>
-            const tabList = document.querySelector('[data-baseweb="tab-list"]');
-            if (tabList) {
-                tabList.scrollBy({left: -200, behavior: 'smooth'});
-            }
-            </script>
-            """, unsafe_allow_html=True)
-    
-    with nav_col3:
-        if st.button("▶", key="tab_right", help="Next tabs"):
-            st.markdown("""
-            <script>
-            const tabList = document.querySelector('[data-baseweb="tab-list"]');
-            if (tabList) {
-                tabList.scrollBy({left: 200, behavior: 'smooth'});
-            }
-            </script>
-            """, unsafe_allow_html=True)
 
     # Main tabs
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
