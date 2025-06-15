@@ -1340,7 +1340,7 @@ def main():
                 st.metric("Improvement", f"{improvement:.3f}")
         
         else:
-            st.info("Complete training to see performance analysis")
+            st.info(get_translation("complete_training_see_performance", st.session_state.language))
 
     with tab5:
         st.header("🩺 Patient Risk Prediction Explainer")
