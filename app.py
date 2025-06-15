@@ -2236,13 +2236,13 @@ def main():
                         
                         # Risk level determination
                         if risk_score >= 0.7:
-                            risk_level = "High Risk"
+                            risk_level = get_translation("high_risk", st.session_state.language)
                             risk_color = "🔴"
                         elif risk_score >= 0.4:
-                            risk_level = "Moderate Risk"
+                            risk_level = get_translation("moderate_risk", st.session_state.language)
                             risk_color = "🟡"
                         else:
-                            risk_level = "Low Risk"
+                            risk_level = get_translation("low_risk", st.session_state.language)
                             risk_color = "🟢"
                         
                         st.metric(get_translation("risk_level", st.session_state.language), f"{risk_color} {risk_level}")

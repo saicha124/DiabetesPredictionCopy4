@@ -414,6 +414,9 @@ TRANSLATIONS = {
         "strong_family_history": "Strong family history",
         "high_blood_pressure": "High blood pressure",
         "high_insulin_levels": "High insulin levels",
+        "low_risk": "Low Risk",
+        "moderate_risk": "Moderate Risk", 
+        "high_risk": "High Risk",
         
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
@@ -903,6 +906,9 @@ TRANSLATIONS = {
         "strong_family_history": "Antécédents familiaux forts",
         "high_blood_pressure": "Hypertension artérielle",
         "high_insulin_levels": "Niveaux d'insuline élevés",
+        "low_risk": "Risque Faible",
+        "moderate_risk": "Risque Modéré", 
+        "high_risk": "Risque Élevé",
         "major_teaching_hospital": "Hôpital Universitaire Principal",
         "regional_medical_center": "Centre Médical Régional",
         "community_health_center": "Centre de Santé Communautaire",
