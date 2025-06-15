@@ -2940,7 +2940,10 @@ def main():
                     st.error(f"Error displaying confusion matrix: {str(e)}")
             
             with analytics_tab2:
-                st.subheader("👥 Accuracy vs Number of Clients")
+                if st.session_state.language == 'fr':
+                    st.subheader("👥 Précision vs Nombre de Clients")
+                else:
+                    st.subheader("👥 Accuracy vs Number of Clients")
                 
                 # Simulate different client scenarios based on actual training data
                 client_scenarios = [3, 5, 7, 10, 15, 20]
@@ -2985,13 +2988,22 @@ def main():
                     marker=dict(size=15, color='red', symbol='star')
                 ))
                 
-                fig_clients.update_layout(
-                    title="Global Model Accuracy vs Number of Federated Clients",
-                    xaxis_title="Number of Medical Facilities (Clients)",
-                    yaxis_title="Global Model Accuracy",
-                    height=500,
-                    showlegend=True
-                )
+                if st.session_state.language == 'fr':
+                    fig_clients.update_layout(
+                        title="Précision du Modèle Global vs Nombre de Clients Fédérés",
+                        xaxis_title="Nombre d'Établissements Médicaux (Clients)",
+                        yaxis_title="Précision du Modèle Global",
+                        height=500,
+                        showlegend=True
+                    )
+                else:
+                    fig_clients.update_layout(
+                        title="Global Model Accuracy vs Number of Federated Clients",
+                        xaxis_title="Number of Medical Facilities (Clients)",
+                        yaxis_title="Global Model Accuracy",
+                        height=500,
+                        showlegend=True
+                    )
                 
                 st.plotly_chart(fig_clients, use_container_width=True)
                 
@@ -2999,23 +3011,42 @@ def main():
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.subheader("📈 Key Insights")
-                    st.write("• **3-5 clients**: Basic federated learning, limited diversity")
-                    st.write("• **5-10 clients**: Optimal balance of diversity and coordination")
-                    st.write("• **10+ clients**: Diminishing returns, increased communication overhead")
-                    st.write("• **Current setup**: Marked with red star")
+                    if st.session_state.language == 'fr':
+                        st.subheader("📈 Insights Clés")
+                        st.write("• **3-5 clients**: Apprentissage fédéré basique, diversité limitée")
+                        st.write("• **5-10 clients**: Équilibre optimal de diversité et coordination")
+                        st.write("• **10+ clients**: Rendements décroissants, surcharge de communication")
+                        st.write("• **Configuration actuelle**: Marquée avec étoile rouge")
+                    else:
+                        st.subheader("📈 Key Insights")
+                        st.write("• **3-5 clients**: Basic federated learning, limited diversity")
+                        st.write("• **5-10 clients**: Optimal balance of diversity and coordination")
+                        st.write("• **10+ clients**: Diminishing returns, increased communication overhead")
+                        st.write("• **Current setup**: Marked with red star")
                 
                 with col2:
-                    st.subheader("💡 Recommendations")
-                    optimal_clients = client_scenarios[np.argmax(accuracies_clients)]
-                    st.metric("Optimal Client Count", f"{optimal_clients} facilities")
-                    
-                    if current_clients < optimal_clients:
-                        st.info(f"💡 Consider adding {optimal_clients - current_clients} more medical facilities")
-                    elif current_clients > optimal_clients:
-                        st.info("✅ Current configuration is near optimal")
+                    if st.session_state.language == 'fr':
+                        st.subheader("💡 Recommandations")
+                        optimal_clients = client_scenarios[np.argmax(accuracies_clients)]
+                        st.metric("Nombre Optimal de Clients", f"{optimal_clients} établissements")
+                        
+                        if current_clients < optimal_clients:
+                            st.info(f"💡 Considérez ajouter {optimal_clients - current_clients} établissements médicaux supplémentaires")
+                        elif current_clients > optimal_clients:
+                            st.info("✅ La configuration actuelle est proche de l'optimale")
+                        else:
+                            st.success("🎯 Configuration optimale atteinte!")
                     else:
-                        st.success("🎯 Optimal configuration achieved!")
+                        st.subheader("💡 Recommendations")
+                        optimal_clients = client_scenarios[np.argmax(accuracies_clients)]
+                        st.metric("Optimal Client Count", f"{optimal_clients} facilities")
+                        
+                        if current_clients < optimal_clients:
+                            st.info(f"💡 Consider adding {optimal_clients - current_clients} more medical facilities")
+                        elif current_clients > optimal_clients:
+                            st.info("✅ Current configuration is near optimal")
+                        else:
+                            st.success("🎯 Optimal configuration achieved!")
             
             with analytics_tab3:
                 st.subheader("🌫️ Accuracy vs Number of Fog Nodes")
