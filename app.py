@@ -1376,10 +1376,11 @@ def main():
             ])
             
             with tab_predict:
-                st.subheader(get_translation("patient_information", st.session_state.language))
+                # Force complete re-render when language changes
+                lang_key = st.session_state.language
                 
-                # Direct French labels to override caching
-                if st.session_state.language == 'fr':
+                if lang_key == 'fr':
+                    st.subheader("🩺 Informations Patient")
                     preg_label = "Nombre de Grossesses"
                     glucose_label = "Niveau de Glucose (mg/dL)"
                     bp_label = "Pression Artérielle (mm Hg)" 
@@ -1389,7 +1390,9 @@ def main():
                     dpf_label = "Fonction Pedigree Diabète"
                     age_label = "Âge (années)"
                     form_title = "Entrez les informations du patient"
+                    analyze_button = "Analyser le Risque"
                 else:
+                    st.subheader(get_translation("patient_information", st.session_state.language))
                     preg_label = "Number of Pregnancies"
                     glucose_label = "Glucose Level (mg/dL)"
                     bp_label = "Blood Pressure (mm Hg)"
@@ -1399,6 +1402,7 @@ def main():
                     dpf_label = "Diabetes Pedigree Function"
                     age_label = "Age (years)"
                     form_title = "Enter patient information"
+                    analyze_button = get_translation("analyze_risk", st.session_state.language)
                 
                 # Patient input form with enhanced validation
                 with st.form(f"patient_assessment_{st.session_state.language}"):
@@ -1425,7 +1429,7 @@ def main():
                                             help=get_translation("help_diabetes_pedigree", st.session_state.language), key=f"dpf_{st.session_state.language}")
                         age = st.number_input(age_label, min_value=0, max_value=120, value=30, key=f"age_{st.session_state.language}")
                     
-                    submitted = st.form_submit_button("🔍 " + get_translation("analyze_risk", st.session_state.language), use_container_width=True)
+                    submitted = st.form_submit_button("🔍 " + analyze_button, use_container_width=True)
                     
                     if submitted:
                         # Show patient analysis progress
