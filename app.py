@@ -112,7 +112,9 @@ def main():
         
         # Data upload
         if st.session_state.language == 'fr':
-            st.info("💡 Glissez-déposez votre fichier CSV ici ou cliquez pour parcourir vos fichiers (limite 200MB)")
+            st.markdown("### 📁 Téléchargement du Jeu de Données Patient")
+            st.info("💡 **Instructions:** Glissez-déposez votre fichier CSV dans la zone ci-dessous ou cliquez sur 'Browse files' pour sélectionner un fichier (limite 200MB par fichier)")
+            st.caption("*Note: L'interface de téléchargement affiche du texte en anglais mais fonctionne normalement*")
         uploaded_file = st.file_uploader("📁 " + get_translation("upload_patient_dataset", st.session_state.language), type=['csv'])
         if uploaded_file is not None:
             data = pd.read_csv(uploaded_file)
