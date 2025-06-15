@@ -281,7 +281,30 @@ TRANSLATIONS = {
         "complete_training_analysis": "Complete Training Analysis",
         "final_client_summary": "Final Client Summary",
         "available_ai_models": "Available AI Models",
-        "interactive_learning_journey_visualization": "Interactive Learning Journey Visualization"
+        "interactive_learning_journey_visualization": "Interactive Learning Journey Visualization",
+        
+        # Patient Risk Prediction Explainer
+        "complete_training_enable_explainer": "Complete federated learning training to enable the Patient Risk Prediction Explainer",
+        "explainer_capabilities_preview": "Explainer Capabilities Preview",
+        "realtime_risk_prediction": "Real-time Risk Prediction: Uses trained federated model for accurate diabetes risk assessment",
+        "feature_importance_analysis": "Feature Importance Analysis: SHAP-like explanations showing which factors contribute most to risk",
+        "clinical_decision_support": "Clinical Decision Support: Evidence-based recommendations for healthcare providers",
+        "population_comparison": "Population Comparison: Compare individual patients against population distributions",
+        "interactive_exploration": "Interactive Exploration: Deep-dive into specific risk factors and their clinical significance",
+        "comprehensive_reports": "Comprehensive Reports: Detailed analysis suitable for medical documentation",
+        "start_training_unlock_features": "Start training in the Training Control tab to unlock all explainer features.",
+        
+        # Medical Facility Analytics
+        "feature_correlation_analysis": "Feature Correlation Analysis",
+        "correlation_matrix": "Correlation Matrix",
+        "feature_relationships": "Feature Relationships",
+        "clinical_insights": "Clinical Insights",
+        "feature_correlation_heatmap": "Feature Correlation Heatmap",
+        
+        # Secret Sharing
+        "secret_sharing_threshold": "Secret Sharing Threshold",
+        "using_fog_nodes_secret_sharing": "Using {nodes} fog nodes for secret sharing distribution",
+        "secret_sharing_threshold_scheme": "Secret sharing: {threshold}/{total} threshold scheme"
     },
     
     'fr': {
@@ -561,7 +584,30 @@ TRANSLATIONS = {
         "complete_training_analysis": "Analyse Complète Formation",
         "final_client_summary": "Résumé Client Final",
         "available_ai_models": "Modèles IA Disponibles",
-        "interactive_learning_journey_visualization": "Visualisation Interactive Parcours Apprentissage"
+        "interactive_learning_journey_visualization": "Visualisation Interactive Parcours Apprentissage",
+        
+        # Patient Risk Prediction Explainer
+        "complete_training_enable_explainer": "Complétez l'entraînement d'apprentissage fédéré pour activer l'Explicateur de Prédiction de Risque Patient",
+        "explainer_capabilities_preview": "Aperçu des Capacités de l'Explicateur",
+        "realtime_risk_prediction": "Prédiction de Risque en Temps Réel: Utilise le modèle fédéré entraîné pour une évaluation précise du risque de diabète",
+        "feature_importance_analysis": "Analyse d'Importance des Caractéristiques: Explications de type SHAP montrant quels facteurs contribuent le plus au risque",
+        "clinical_decision_support": "Support de Décision Clinique: Recommandations basées sur des preuves pour les professionnels de santé",
+        "population_comparison": "Comparaison de Population: Comparer les patients individuels aux distributions de population",
+        "interactive_exploration": "Exploration Interactive: Approfondir les facteurs de risque spécifiques et leur signification clinique",
+        "comprehensive_reports": "Rapports Complets: Analyse détaillée adaptée à la documentation médicale",
+        "start_training_unlock_features": "Démarrez l'entraînement dans l'onglet Contrôle d'Entraînement pour débloquer toutes les fonctionnalités de l'explicateur.",
+        
+        # Medical Facility Analytics
+        "feature_correlation_analysis": "Analyse de Corrélation des Caractéristiques",
+        "correlation_matrix": "Matrice de Corrélation",
+        "feature_relationships": "Relations entre Caractéristiques",
+        "clinical_insights": "Insights Cliniques",
+        "feature_correlation_heatmap": "Carte de Chaleur de Corrélation des Caractéristiques",
+        
+        # Secret Sharing
+        "secret_sharing_threshold": "Seuil de Partage de Secrets",
+        "using_fog_nodes_secret_sharing": "Utilisation de {nodes} nœuds fog pour la distribution de partage de secrets",
+        "secret_sharing_threshold_scheme": "Partage de secrets: schéma de seuil {threshold}/{total}"
     }
 }
 

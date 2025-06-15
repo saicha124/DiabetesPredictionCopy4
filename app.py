@@ -1833,31 +1833,31 @@ def main():
                     st.info("Enter patient data in the Risk Prediction tab to see population comparison")
         
         else:
-            st.info("Complete federated learning training to enable the Patient Risk Prediction Explainer")
+            st.info(get_translation("complete_training_enable_explainer", st.session_state.language))
             
             # Show preview of capabilities
-            st.subheader("🔮 Explainer Capabilities Preview")
+            st.subheader("🔮 " + get_translation("explainer_capabilities_preview", st.session_state.language))
             
             capabilities = [
-                "🎯 **Real-time Risk Prediction**: Uses trained federated model for accurate diabetes risk assessment",
-                "📊 **Feature Importance Analysis**: SHAP-like explanations showing which factors contribute most to risk",
-                "🏥 **Clinical Decision Support**: Evidence-based recommendations for healthcare providers",
-                "📈 **Population Comparison**: Compare individual patients against population distributions",
-                "🔍 **Interactive Exploration**: Deep-dive into specific risk factors and their clinical significance",
-                "📋 **Comprehensive Reports**: Detailed analysis suitable for medical documentation"
+                "🎯 **" + get_translation("realtime_risk_prediction", st.session_state.language) + "**",
+                "📊 **" + get_translation("feature_importance_analysis", st.session_state.language) + "**",
+                "🏥 **" + get_translation("clinical_decision_support", st.session_state.language) + "**",
+                "📈 **" + get_translation("population_comparison", st.session_state.language) + "**",
+                "🔍 **" + get_translation("interactive_exploration", st.session_state.language) + "**",
+                "📋 **" + get_translation("comprehensive_reports", st.session_state.language) + "**"
             ]
             
             for capability in capabilities:
                 st.write(capability)
             
             st.markdown("---")
-            st.write("**Start training in the Training Control tab to unlock all explainer features.**")
+            st.write("**" + get_translation("start_training_unlock_features", st.session_state.language) + "**")
 
     with tab5:
-        st.header("🏥 Advanced Medical Facility Analytics")
+        st.header("🏥 " + get_translation("tab_facility", st.session_state.language))
         
         # Add correlation matrix analysis
-        st.subheader("📊 Feature Correlation Analysis")
+        st.subheader("📊 " + get_translation("feature_correlation_analysis", st.session_state.language))
         
         # Load and analyze diabetes dataset
         try:
@@ -1867,9 +1867,9 @@ def main():
                 
                 # Create tabs for different analysis types
                 corr_tab1, corr_tab2, corr_tab3 = st.tabs([
-                    "Correlation Matrix", 
-                    "Feature Relationships", 
-                    "Clinical Insights"
+                    get_translation("correlation_matrix", st.session_state.language), 
+                    get_translation("feature_relationships", st.session_state.language), 
+                    get_translation("clinical_insights", st.session_state.language)
                 ])
                 
                 with corr_tab1:
