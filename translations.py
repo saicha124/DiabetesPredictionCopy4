@@ -254,7 +254,18 @@ TRANSLATIONS = {
         "dataset_loaded": "Dataset loaded: {rows} patients, {cols} features",
         "diabetes_dataset_loaded": "Diabetes dataset loaded: {rows} patients, {cols} features",
         "failed_to_load_dataset": "Failed to load diabetes dataset: {error}",
-        "tab_graph_viz": "Graph Visualization"
+        "tab_graph_viz": "Graph Visualization",
+        
+        # Risk Assessment messages
+        "complete_federated_training": "Please complete federated learning training to use the risk assessment tool.",
+        "risk_assessment_uses_trained_model": "The risk assessment uses the trained global model for accurate predictions.",
+        
+        # Early Stopping Configuration
+        "early_stopping_configuration": "Early Stopping Configuration",
+        "patience_rounds": "Patience (rounds)",
+        "early_stop_metric": "Early Stop Metric",
+        "minimum_improvement": "Minimum Improvement",
+        "training_stop_condition": "Training will stop if accuracy doesn't improve by {improvement} for {patience} consecutive rounds"
     },
     
     'fr': {
@@ -507,7 +518,18 @@ TRANSLATIONS = {
         "dataset_loaded": "Jeu de données chargé: {rows} patients, {cols} caractéristiques",
         "diabetes_dataset_loaded": "Jeu de données diabète chargé: {rows} patients, {cols} caractéristiques",
         "failed_to_load_dataset": "Échec du chargement du jeu de données diabète: {error}",
-        "tab_graph_viz": "Visualisation Graphique"
+        "tab_graph_viz": "Visualisation Graphique",
+        
+        # Risk Assessment messages
+        "complete_federated_training": "Veuillez compléter l'entraînement d'apprentissage fédéré pour utiliser l'outil d'évaluation des risques.",
+        "risk_assessment_uses_trained_model": "L'évaluation des risques utilise le modèle global entraîné pour des prédictions précises.",
+        
+        # Early Stopping Configuration
+        "early_stopping_configuration": "Configuration d'Arrêt Précoce",
+        "patience_rounds": "Patience (rondes)",
+        "early_stop_metric": "Métrique d'Arrêt Précoce",
+        "minimum_improvement": "Amélioration Minimale",
+        "training_stop_condition": "L'entraînement s'arrêtera si la précision ne s'améliore pas de {improvement} pendant {patience} rondes consécutives"
     }
 }
 

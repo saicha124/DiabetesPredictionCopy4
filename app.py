@@ -162,7 +162,7 @@ def main():
                 max_rounds = st.slider(get_translation("max_training_rounds", st.session_state.language), 10, 150, default_rounds)
                 
                 # Early stopping configuration
-                st.subheader("🛑 Early Stopping Configuration")
+                st.subheader("🛑 " + get_translation("early_stopping_configuration", st.session_state.language))
                 
                 col1_es, col2_es = st.columns(2)
                 
@@ -170,22 +170,23 @@ def main():
                     enable_early_stopping = st.checkbox("Enable Early Stopping", value=True,
                                                        help="Stop training when validation metric stops improving")
                     
-                    patience = st.slider("Patience (rounds)", min_value=3, max_value=20, value=5,
+                    patience = st.slider(get_translation("patience_rounds", st.session_state.language), min_value=3, max_value=20, value=5,
                                        help="Number of rounds to wait without improvement before stopping")
                 
                 with col2_es:
-                    early_stop_metric = st.selectbox("Early Stop Metric", 
+                    early_stop_metric = st.selectbox(get_translation("early_stop_metric", st.session_state.language), 
                                                     ["accuracy", "loss", "f1_score"], 
                                                     index=0,
                                                     help="Metric to monitor for early stopping")
                     
-                    min_improvement = st.number_input("Minimum Improvement", 
+                    min_improvement = st.number_input(get_translation("minimum_improvement", st.session_state.language), 
                                                     min_value=0.001, max_value=0.1, 
                                                     value=0.001, step=0.001, format="%.3f",
                                                     help="Minimum improvement required to reset patience counter")
                 
                 if enable_early_stopping:
-                    st.info(f"Training will stop if {early_stop_metric} doesn't improve by {min_improvement:.3f} for {patience} consecutive rounds")
+                    st.info(get_translation("training_stop_condition", st.session_state.language, 
+                                          improvement=f"{min_improvement:.3f}", patience=patience))
                 else:
                     st.warning("Early stopping disabled - training will run for full duration")
                 
