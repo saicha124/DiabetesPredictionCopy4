@@ -3119,26 +3119,26 @@ def main():
                 - {get_translation("clinical_interpretation", st.session_state.language)}
                 """)
                 
-                st.markdown("""
-                **👥 Client Scaling Analysis:**
-                - Accuracy vs number of medical facilities
-                - Optimal client configuration recommendations
-                - Federation efficiency insights
+                st.markdown(f"""
+                **👥 {get_translation("client_scaling_analysis", st.session_state.language)}:**
+                - {get_translation("accuracy_vs_facilities", st.session_state.language)}
+                - {get_translation("optimal_client_config", st.session_state.language)}
+                - {get_translation("federation_efficiency", st.session_state.language)}
                 """)
             
             with col2:
-                st.markdown("""
-                **🌫️ Fog Node Optimization:**
-                - Hierarchical aggregation performance
-                - Fog layer efficiency analysis
-                - Infrastructure trade-off analysis
+                st.markdown(f"""
+                **🌫️ {get_translation("fog_node_optimization", st.session_state.language)}:**
+                - {get_translation("hierarchical_aggregation", st.session_state.language)}
+                - {get_translation("fog_layer_efficiency", st.session_state.language)}
+                - {get_translation("infrastructure_tradeoff", st.session_state.language)}
                 """)
                 
-                st.markdown("""
-                **📈 Performance Comparison:**
-                - Multi-metric training evolution
-                - Configuration impact analysis
-                - Model performance grading
+                st.markdown(f"""
+                **📈 {get_translation("performance_comparison", st.session_state.language)}:**
+                - {get_translation("multi_metric_evolution", st.session_state.language)}
+                - {get_translation("configuration_impact", st.session_state.language)}
+                - {get_translation("model_performance_grading", st.session_state.language)}
                 """)
 
 if __name__ == "__main__":
