@@ -146,7 +146,7 @@ def main():
     ])
 
     with tab1:
-        st.header("🎛️ " + get_translation("tab_training"))
+        st.header("🎛️ " + get_translation("tab_training", st.session_state.language))
         
         if st.session_state.data_loaded:
             col1, col2 = st.columns(2)
