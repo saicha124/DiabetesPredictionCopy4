@@ -2264,8 +2264,8 @@ def main():
                         else:
                             st.success("**" + get_translation("low_diabetes_risk", st.session_state.language) + "**")
                             st.write("• " + get_translation("continue_healthy_lifestyle", st.session_state.language))
-                            st.write("• Routine screening as per guidelines")
-                            st.write("• Monitor risk factors periodically")
+                            st.write("• " + get_translation("routine_screening_guidelines", st.session_state.language))
+                            st.write("• " + get_translation("monitor_risk_factors_periodically", st.session_state.language))
                     
                     with col2:
                         st.subheader("📋 " + get_translation("risk_factors_analysis", st.session_state.language))
@@ -2299,12 +2299,12 @@ def main():
                             risk_factors.append("High insulin levels")
                         
                         if risk_factors:
-                            st.markdown("**Risk Factors:**")
+                            st.markdown(f"**{get_translation('risk_factors', st.session_state.language)}:**")
                             for factor in risk_factors:
                                 st.write(f"🔴 {factor}")
                         
                         if protective_factors:
-                            st.markdown("**Protective Factors:**")
+                            st.markdown(f"**{get_translation('protective_factors', st.session_state.language)}:**")
                             for factor in protective_factors:
                                 st.write(f"🟢 {factor}")
                     

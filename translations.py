@@ -402,6 +402,8 @@ TRANSLATIONS = {
         "clinical_interpretation": "Clinical Interpretation",
         "low_diabetes_risk": "Low diabetes risk",
         "continue_healthy_lifestyle": "Continue healthy lifestyle",
+        "routine_screening_guidelines": "Routine screening as per guidelines",
+        "monitor_risk_factors_periodically": "Monitor risk factors periodically",
         "risk_factors_analysis": "Risk Factors Analysis",
         
         # Secret Sharing
@@ -880,6 +882,8 @@ TRANSLATIONS = {
         "clinical_interpretation": "Interprétation Clinique",
         "low_diabetes_risk": "Faible risque de diabète",
         "continue_healthy_lifestyle": "Continuer un mode de vie sain",
+        "routine_screening_guidelines": "Dépistage de routine selon les directives",
+        "monitor_risk_factors_periodically": "Surveiller périodiquement les facteurs de risque",
         "risk_factors_analysis": "Analyse des Facteurs de Risque",
         "major_teaching_hospital": "Hôpital Universitaire Principal",
         "regional_medical_center": "Centre Médical Régional",
