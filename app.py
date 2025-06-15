@@ -1932,7 +1932,7 @@ def main():
                         )
                 
                 with corr_tab2:
-                    st.subheader("Feature Relationship Analysis")
+                    st.subheader(get_translation("feature_relationship_analysis", st.session_state.language))
                     
                     # Select features for detailed analysis
                     col1, col2 = st.columns(2)
@@ -2084,21 +2084,21 @@ def main():
                 """)
             
             with col2:
-                st.markdown("""
-                **Confusion Matrix Analysis:**
-                - Per-facility matrices
-                - Classification metrics
-                - Sensitivity & specificity
-                - Performance insights
+                st.markdown(f"""
+                **{get_translation("confusion_matrix_analysis", st.session_state.language)}:**
+                - {get_translation("per_facility_matrices", st.session_state.language)}
+                - {get_translation("classification_metrics", st.session_state.language)}
+                - {get_translation("sensitivity_specificity", st.session_state.language)}
+                - {get_translation("performance_insights", st.session_state.language)}
                 """)
             
             with col3:
-                st.markdown("""
-                **Anomaly Detection:**
-                - Underperforming facilities
-                - Performance outliers
-                - Convergence analysis
-                - Risk assessment
+                st.markdown(f"""
+                **{get_translation("anomaly_detection", st.session_state.language)}:**
+                - {get_translation("underperforming_facilities", st.session_state.language)}
+                - {get_translation("performance_outliers", st.session_state.language)}
+                - {get_translation("convergence_analysis", st.session_state.language)}
+                - {get_translation("risk_assessment", st.session_state.language)}
                 """)
 
     with tab6:
@@ -3104,19 +3104,19 @@ def main():
                 st.dataframe(config_df, use_container_width=True)
         
         else:
-            st.warning("Complete federated learning training to access advanced analytics.")
+            st.warning(get_translation("complete_federated_training", st.session_state.language))
             
             # Show preview of available analytics
-            st.subheader("📊 Available Analytics Features")
+            st.subheader("📊 " + get_translation("available_analytics_features", st.session_state.language))
             
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("""
-                **🔄 Confusion Matrix Analysis:**
-                - Classification performance metrics
-                - True/False positive/negative rates
-                - Clinical interpretation of results
+                st.markdown(f"""
+                **🔄 {get_translation("confusion_matrix_analysis", st.session_state.language)}**
+                - {get_translation("classification_metrics", st.session_state.language)}
+                - {get_translation("true_false_rates", st.session_state.language)}
+                - {get_translation("clinical_interpretation", st.session_state.language)}
                 """)
                 
                 st.markdown("""
