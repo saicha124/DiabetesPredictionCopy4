@@ -1902,7 +1902,7 @@ def main():
                     st.plotly_chart(fig_corr, use_container_width=True)
                     
                     # Display correlation insights
-                    st.subheader("Key Correlations")
+                    st.subheader(get_translation("key_correlations", st.session_state.language))
                     
                     # Find strongest positive and negative correlations (excluding diagonal)
                     corr_values = correlation_matrix.values
@@ -1919,14 +1919,14 @@ def main():
                     
                     with col1:
                         st.metric(
-                            "Strongest Positive Correlation",
+                            get_translation("strongest_positive_correlation", st.session_state.language),
                             f"{correlation_matrix.columns[max_corr_idx[0]]} ↔ {correlation_matrix.columns[max_corr_idx[1]]}",
                             f"{max_corr_val:.3f}"
                         )
                     
                     with col2:
                         st.metric(
-                            "Strongest Negative Correlation", 
+                            get_translation("strongest_negative_correlation", st.session_state.language), 
                             f"{correlation_matrix.columns[min_corr_idx[0]]} ↔ {correlation_matrix.columns[min_corr_idx[1]]}",
                             f"{min_corr_val:.3f}"
                         )
@@ -2067,20 +2067,20 @@ def main():
             analytics.create_medical_facility_dashboard()
             
         else:
-            st.warning("Please start training to access advanced medical facility analytics.")
+            st.warning(get_translation("start_training_access_analytics", st.session_state.language))
             
             # Show preview of available analytics features
-            st.subheader("📊 Available Analytics Features")
+            st.subheader("📊 " + get_translation("available_analytics_features", st.session_state.language))
             
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                st.markdown("""
-                **Performance Monitoring:**
-                - Real-time accuracy tracking
-                - F1-score evolution
-                - Precision & recall metrics
-                - Performance ranking
+                st.markdown(f"""
+                **{get_translation("performance_monitoring", st.session_state.language)}:**
+                - {get_translation("realtime_accuracy_tracking", st.session_state.language)}
+                - {get_translation("f1_score_evolution", st.session_state.language)}
+                - {get_translation("precision_recall_metrics", st.session_state.language)}
+                - {get_translation("performance_ranking", st.session_state.language)}
                 """)
             
             with col2:
