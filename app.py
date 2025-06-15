@@ -1993,7 +1993,8 @@ def main():
             st.markdown("---")
             st.write("**" + get_translation("start_training_unlock_features", st.session_state.language) + "**")
 
-    with tab5:
+    elif st.session_state.current_tab_index == 5:
+        # Tab 6: Facility Analytics
         st.header("🏥 " + get_translation("tab_facility", st.session_state.language))
         
         # Add correlation matrix analysis
@@ -2241,38 +2242,45 @@ def main():
                 - {get_translation("risk_assessment", st.session_state.language)}
                 """)
 
-    with tab6:
-        st.header(f"🩺 {get_translation('individual_patient_risk_assessment', st.session_state.language)}")
+    elif st.session_state.current_tab_index == 6:
+        # Tab 7: Graph Visualization
+        if st.session_state.language == 'fr':
+            st.header("🌐 Visualisation Graphique")
+        else:
+            st.header("🌐 Graph Visualization")
         
-        if st.session_state.training_completed:
-            st.subheader(f"🔍 {get_translation('patient_risk_analysis', st.session_state.language)}")
-            
-            # Patient input form
-            with st.form("patient_risk_assessment_form"):
-                st.markdown("### " + get_translation("patient_information", st.session_state.language))
+        # Visualization options
+        if st.session_state.language == 'fr':
+            viz_option = st.selectbox(
+                "Type de visualisation:",
+                ["Réseau de Fédération", "Topologie Hiérarchique", "Flux de Communication", "Architecture 3D"]
+            )
+        else:
+            viz_option = st.selectbox(
+                "Visualization Type:",
+                ["Federation Network", "Hierarchical Topology", "Communication Flow", "3D Architecture"]
+            )
+        
+        if viz_option in ["Federation Network", "Réseau de Fédération"]:
+            if st.session_state.language == 'fr':
+                st.subheader("🔗 Réseau de Fédération")
+                st.info("Visualisation interactive du réseau d'apprentissage fédéré avec les connexions entre les établissements médicaux.")
+            else:
+                st.subheader("🔗 Federation Network") 
+                st.info("Interactive visualization of the federated learning network with connections between medical facilities.")
+        elif viz_option in ["Hierarchical Topology", "Topologie Hiérarchique"]:
+            if st.session_state.language == 'fr':
+                st.subheader("🏗️ Topologie Hiérarchique")
+                st.info("Structure hiérarchique montrant les nœuds fog et les clients connectés.")
+            else:
+                st.subheader("🏗️ Hierarchical Topology")
+                st.info("Hierarchical structure showing fog nodes and connected clients.")
                 
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    pregnancies = st.number_input(get_translation("pregnancies"), min_value=0, max_value=20, value=1,
-                                                help=get_translation("help_pregnancies"))
-                    glucose = st.number_input(get_translation("glucose_level"), min_value=0.0, max_value=300.0, value=120.0,
-                                            help=get_translation("help_glucose"))
-                    blood_pressure = st.number_input(get_translation("blood_pressure"), min_value=0.0, max_value=200.0, value=80.0,
-                                                    help=get_translation("help_blood_pressure"))
-                    skin_thickness = st.number_input(get_translation("skin_thickness"), min_value=0.0, max_value=100.0, value=20.0,
-                                                    help=get_translation("help_skin_thickness"))
-                
-                with col2:
-                    insulin = st.number_input(get_translation("insulin"), min_value=0.0, max_value=1000.0, value=80.0,
-                                            help=get_translation("help_insulin"))
-                    bmi = st.number_input(get_translation("bmi"), min_value=0.0, max_value=100.0, value=25.0,
-                                        help=get_translation("help_bmi"))
-                    dpf = st.number_input(get_translation("diabetes_pedigree"), min_value=0.0, max_value=5.0, value=0.5,
-                                        help=get_translation("help_diabetes_pedigree"))
-                    age = st.number_input(get_translation("age"), min_value=0, max_value=120, value=30)
-                
-                submitted = st.form_submit_button("🔍 " + get_translation("analyze_risk"), use_container_width=True)
+        else:
+            if st.session_state.language == 'fr':
+                st.info("Complétez l'entraînement fédéré pour voir les visualisations du réseau.")
+            else:
+                st.info("Complete federated training to see network visualizations.")
                 
                 if submitted:
                     # Create patient data array for prediction
@@ -2458,7 +2466,8 @@ def main():
             st.warning(get_translation("complete_federated_training", st.session_state.language))
             st.info(get_translation("risk_assessment_uses_trained_model", st.session_state.language))
 
-    with tab7:
+    elif st.session_state.current_tab_index == 6:
+        # Tab 7: Graph Visualization
         if st.session_state.language == 'fr':
             st.header("🌐 Visualisation Graphique")
         else:
@@ -2901,7 +2910,8 @@ def main():
                 - Privacy-preserving communication
                 """)
 
-    with tab8:
+    elif st.session_state.current_tab_index == 7:
+        # Tab 8: Advanced Analytics
         if st.session_state.language == 'fr':
             st.header("📊 Tableau de Bord Analytique Avancé")
         else:
