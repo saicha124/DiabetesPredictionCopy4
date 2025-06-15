@@ -384,11 +384,19 @@ class FederatedLearningManager:
                         # Update progress to 100% when early stopped
                         if hasattr(st, 'session_state'):
                             if hasattr(st.session_state, 'training_progress'):
-                                st.session_state.training_progress.progress(1.0, text="100% - Training Complete (Early Stopping)")
+                                from translations import get_translation
+                                progress_text = f"100% - {get_translation('training_complete_early_stopping', st.session_state.language)}"
+                                st.session_state.training_progress.progress(1.0, text=progress_text)
                             if hasattr(st.session_state, 'training_status'):
-                                st.session_state.training_status.success(f"✅ Early stopping at round {self.current_round} - Best {self.early_stop_metric}: {self.best_metric_value:.4f}")
+                                from translations import get_translation
+                                status_text = get_translation('early_stopping_at_round', st.session_state.language, 
+                                                            round=self.current_round, accuracy=f"{self.best_metric_value:.4f}")
+                                st.session_state.training_status.success(f"✅ {status_text}")
                             if hasattr(st.session_state, 'accuracy_display'):
-                                st.session_state.accuracy_display.success(f"🎯 Final Accuracy: {self.best_metric_value:.1%} (Restored from Round {self.best_round})")
+                                from translations import get_translation
+                                accuracy_text = get_translation('final_accuracy_restored', st.session_state.language,
+                                                              accuracy=f"{self.best_metric_value:.1%}", round=self.best_round)
+                                st.session_state.accuracy_display.success(f"🎯 {accuracy_text}")
                         
                         self.early_stopped = True
                         self.convergence_reason = "early_stopping"
@@ -402,7 +410,10 @@ class FederatedLearningManager:
                             best_display += f" (Round {self.best_round})"
                         st.session_state.accuracy_display.success(f"🎯 Current Accuracy: {accuracy:.1%}{best_display}")
                     if hasattr(st.session_state, 'training_status'):
-                        status_text = f"Round {self.current_round}: Accuracy {accuracy:.1%}, Loss {loss:.4f}"
+                        from translations import get_translation
+                        round_text = get_translation('training_round_of', st.session_state.language, 
+                                                   current=self.current_round, total=self.max_rounds)
+                        status_text = f"🔄 {round_text}"
                         if self.enable_early_stopping:
                             status_text += f" | Patience: {self.patience_counter}/{self.patience}"
                         st.session_state.training_status.info(status_text)
@@ -446,9 +457,13 @@ class FederatedLearningManager:
                     # Update progress to 100% when converged
                     if hasattr(st, 'session_state'):
                         if hasattr(st.session_state, 'training_progress'):
-                            st.session_state.training_progress.progress(1.0, text="100% - Training Complete (Converged)")
+                            from translations import get_translation
+                            progress_text = f"100% - {get_translation('training_complete_early_stopping', st.session_state.language)}"
+                            st.session_state.training_progress.progress(1.0, text=progress_text)
                         if hasattr(st.session_state, 'training_status'):
-                            st.session_state.training_status.success(f"✅ Training converged at round {self.current_round}")
+                            from translations import get_translation
+                            status_text = get_translation('training_completed', st.session_state.language)
+                            st.session_state.training_status.success(f"✅ {status_text}")
                     break
                 
                 # STOPPING CRITERION 2: MAXIMUM ROUNDS CHECK
