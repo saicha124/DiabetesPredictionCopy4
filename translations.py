@@ -439,7 +439,7 @@ TRANSLATIONS = {
         "completed": "Completed",
         "journey_timeline": "Journey Timeline",
         "interactive_controls": "Interactive Controls",
-        "start_training_from_tab": "Please start training from the Training Control tab first.",
+        "start_training_from_tab": "Veuillez d'abord démarrer l'entraînement depuis l'onglet Contrôle d'Entraînement.",
         "complex_patterns": "Complex patterns",
         "excellent": "Excellent"
     },

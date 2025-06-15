@@ -294,7 +294,7 @@ def main():
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                if st.button("🚀 Start Training", disabled=st.session_state.training_started):
+                if st.button(get_translation("start_training", st.session_state.language), disabled=st.session_state.training_started):
                     # Show training initialization progress
                     init_progress = st.progress(0)
                     init_status = st.empty()
@@ -396,13 +396,13 @@ def main():
                     st.session_state.best_accuracy = 0.0
                     st.session_state.current_round = 0
                     
-                    st.success("Training initialized! Switch to Live Monitoring tab to see progress.")
+                    st.success(get_translation("training_initialized_switch_monitoring", st.session_state.language))
             
             with col2:
-                if st.button("⏹️ Stop Training", disabled=not st.session_state.training_started):
+                if st.button(get_translation("stop_training", st.session_state.language), disabled=not st.session_state.training_started):
                     st.session_state.training_started = False
                     st.session_state.training_completed = True
-                    st.success("Training stopped.")
+                    st.success(get_translation("training_stopped", st.session_state.language))
             
             with col3:
                 if st.button("🔄 Reset All"):
@@ -911,7 +911,7 @@ def main():
         if st.session_state.training_completed or (hasattr(st.session_state, 'results') and st.session_state.results):
             col1, col2 = st.columns([1, 4])
             with col1:
-                if st.button("🔄 New Session", type="primary"):
+                if st.button(get_translation("new_session", st.session_state.language), type="primary"):
                     # Show session reset progress
                     session_progress = st.progress(0)
                     session_status = st.empty()
@@ -1250,7 +1250,7 @@ def main():
                         st.dataframe(summary_df, use_container_width=True)
         
         else:
-            st.warning("Please start training from the Training Control tab first.")
+            st.warning(get_translation("start_training_from_tab", st.session_state.language))
             
             # Show available models preview
             st.subheader("🧠 " + get_translation("available_ai_models", st.session_state.language))
