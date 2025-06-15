@@ -1,0 +1,144 @@
+orrélations Clés
+Corrélation Positive la Plus Forte
+
+Pregnancies ↔ Age
+0.556
+Corrélation Négative la Plus Forte
+
+SkinThickness ↔ Age
+-0.146
+🏥 Medical Facility Performance Dashboard
+📊 Facility Overview
+Medical Facilities
+
+5
+Avg Accuracy
+
+0.608
+Avg F1-Score
+
+0.615
+Avg Precision
+
+0.635
+Avg Recall
+
+0.608
+📈 Performance Evolution Over Time
+Select Metric to Track
+
+Accuracy
+📊 Performance Improvement Analysis
+🔍 Confusion Matrix Analysis
+Select Medical Facility for Detailed Analysis
+
+Medical Station 1
+Select Training Round
+
+Round 6
+Classification Metrics
+No Diabetes:
+
+Precision
+
+0.746
+Recall
+
+0.612
+F1-Score
+
+0.672
+Diabetes:
+
+Precision
+
+0.400
+Recall
+
+0.554
+F1-Score
+
+0.465
+Performance Insights
+Sensitivity (Recall)
+
+0.554
+Specificity
+
+0.612
+PPV (Precision)
+
+0.400
+NPV
+
+0.746
+Performance Level: Needs Improvement (Accuracy: 0.593)
+
+🚨 Anomaly Detection & Outlier Analysis
+⚠️ Underperforming Medical Facilities
+🟡 Medical Station 3 - Medium Risk
+
+🟡 Medical Station 5 - Medium Risk
+
+🏆 Facility Performance Ranking
+🎯 Convergence Analysis
+📈 Convergence Trends
+Select Facility for Trend Analysis
+
+Medical Station 1
+🎯 Medical Station 1 Convergence Summary
+Convergence Score
+
+0.480
+Status: Unstable
+
+Stability Score
+
+0.948
+Stability: High
+
+Improvement Rate
+
+0.000
+Trend: Stable
+
+100% - Federated learning training complete!
+
+✅ Formation Terminée
+
+Données prétraitées: 768 échantillons, 8 caractéristiques
+
+Création de 5 cohortes d'établissements médicaux à partir de données patients réelles
+
+Created 5 authentic medical facility cohorts
+
+Authentic Medical Facility Distribution:
+
+• Major Teaching Hospital: 255 patients, 34.9% diabetes prevalence
+
+• Regional Medical Center: 127 patients, 34.6% diabetes prevalence
+
+• Community Health Center: 54 patients, 35.2% diabetes prevalence
+
+• Primary Care Clinic: 46 patients, 34.8% diabetes prevalence
+
+• Specialty Diabetes Clinic: 40 patients, 35.0% diabetes prevalence
+
+Data distributed to 5 clients
+
+Client data type: <class 'list'>
+
+Client data length: 5
+
+Trouvé 5 clients valides sur 5 au total
+
+Démarrage de l'entraînement avec 5 clients valides
+
+🔄 Progrès Formation Apprentissage Fédéré
+100% - Training Complete (Early Stopping)
+
+✅ Early stopping at round 6 - Best accuracy: 0.7576
+
+🔄 Training Round 6 of 20
+
+🎯 Final Accuracy: 75.8% (Restored from Round 1)

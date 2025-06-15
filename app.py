@@ -541,10 +541,10 @@ def main():
                                 'diabetic_rate': cohort['diabetic_rate']
                             })
                         
-                        st.success(f"Created {len(client_data)} authentic medical facility cohorts")
+                        st.success(get_translation("created_authentic_cohorts", st.session_state.language, count=len(client_data)))
                         
                         # Display authentic medical facility information
-                        st.info("**Authentic Medical Facility Distribution:**")
+                        st.info("**" + get_translation("authentic_medical_facility_distribution", st.session_state.language) + ":**")
                         for i, cohort in enumerate(facility_cohorts):
                             st.write(f"• **{cohort['facility_type']}**: {cohort['patient_count']} patients, "
                                    f"{cohort['diabetic_rate']:.1%} diabetes prevalence")
