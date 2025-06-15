@@ -192,7 +192,9 @@ class AdvancedClientAnalytics:
             st.warning("No client performance data available. Please complete training first.")
             return
         
-        st.subheader("🏥 Medical Facility Performance Dashboard")
+        from translations import get_translation
+        dashboard_title = f"🏥 {get_translation('medical_facility_performance_dashboard', st.session_state.language)}"
+        st.subheader(dashboard_title)
         
         # Overview metrics
         self._create_facility_overview()
@@ -219,7 +221,9 @@ class AdvancedClientAnalytics:
     
     def _create_facility_overview(self):
         """Create facility overview metrics"""
-        st.subheader("📊 Facility Overview")
+        from translations import get_translation
+        overview_title = f"📊 {get_translation('facility_overview', st.session_state.language)}"
+        st.subheader(overview_title)
         
         # Calculate aggregate metrics
         total_facilities = len(self.client_metrics_history)
@@ -243,15 +247,15 @@ class AdvancedClientAnalytics:
         col1, col2, col3, col4, col5 = st.columns(5)
         
         with col1:
-            st.metric("Medical Facilities", total_facilities)
+            st.metric(get_translation("medical_facilities", st.session_state.language), total_facilities)
         with col2:
-            st.metric("Avg Accuracy", f"{avg_accuracy:.3f}")
+            st.metric(get_translation("avg_accuracy", st.session_state.language), f"{avg_accuracy:.3f}")
         with col3:
-            st.metric("Avg F1-Score", f"{avg_f1:.3f}")
+            st.metric(get_translation("avg_f1_score", st.session_state.language), f"{avg_f1:.3f}")
         with col4:
-            st.metric("Avg Precision", f"{avg_precision:.3f}")
+            st.metric(get_translation("avg_precision", st.session_state.language), f"{avg_precision:.3f}")
         with col5:
-            st.metric("Avg Recall", f"{avg_recall:.3f}")
+            st.metric(get_translation("avg_recall", st.session_state.language), f"{avg_recall:.3f}")
         
         # Performance distribution
         performance_data = []

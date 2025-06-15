@@ -367,7 +367,8 @@ def main():
                     else:
                         st.session_state.training_ss_enabled = False
                     
-                    init_progress.progress(1.0, text="100% - FL manager ready!")
+                    progress_text = f"100% - {get_translation('fl_manager_ready', st.session_state.language)}"
+                    init_progress.progress(1.0, text=progress_text)
                     time.sleep(0.3)
                     init_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
                     
@@ -878,7 +879,8 @@ def main():
                 
                 # Complete progress bar when training actually finishes
                 if hasattr(st.session_state, 'data_progress') and st.session_state.data_progress:
-                    st.session_state.data_progress.progress(1.0, text="100% - Federated learning training complete!")
+                    progress_text = f"100% - {get_translation('federated_learning_training_complete', st.session_state.language)}"
+                    st.session_state.data_progress.progress(1.0, text=progress_text)
                     st.session_state.data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
                 
                 # Store final results with security metrics
@@ -1338,14 +1340,14 @@ def main():
             
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Final Accuracy", f"{final_accuracy:.3f}")
+                st.metric(get_translation("final_accuracy", st.session_state.language), f"{final_accuracy:.3f}")
             with col2:
-                st.metric("Training Rounds", total_rounds)
+                st.metric(get_translation("training_rounds", st.session_state.language), total_rounds)
             with col3:
-                st.metric("Best Accuracy", f"{st.session_state.best_accuracy:.3f}")
+                st.metric(get_translation("best_accuracy", st.session_state.language), f"{st.session_state.best_accuracy:.3f}")
             with col4:
                 improvement = st.session_state.best_accuracy - accuracies[0] if accuracies else 0
-                st.metric("Improvement", f"{improvement:.3f}")
+                st.metric(get_translation("improvement", st.session_state.language), f"{improvement:.3f}")
         
         else:
             st.info(get_translation("complete_training_see_performance", st.session_state.language))
