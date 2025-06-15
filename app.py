@@ -1197,12 +1197,12 @@ def main():
                 with col1:
                     st.metric(get_translation("final_accuracy", st.session_state.language), f"{results.get('accuracy', 0):.3f}")
                 with col2:
-                    st.metric("Rounds Completed", results.get('rounds_completed', 0))
+                    st.metric(get_translation("rounds_completed", st.session_state.language), results.get('rounds_completed', 0))
                 with col3:
-                    st.metric("Model Type", results.get('protocol_type', 'Unknown').split('(')[-1].replace(')', ''))
+                    st.metric(get_translation("model_type", st.session_state.language), results.get('protocol_type', 'Unknown').split('(')[-1].replace(')', ''))
                 with col4:
-                    convergence_status = "✅ Converged" if results.get('converged', False) else "⏳ Target Not Reached"
-                    st.metric("Status", convergence_status)
+                    convergence_status = get_translation("converged", st.session_state.language) if results.get('converged', False) else get_translation("target_not_reached", st.session_state.language)
+                    st.metric(get_translation("status", st.session_state.language), convergence_status)
             
             # Complete training visualization
             if st.session_state.training_metrics:

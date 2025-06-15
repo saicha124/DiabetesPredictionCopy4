@@ -392,6 +392,11 @@ TRANSLATIONS = {
         "creating_medical_cohorts": "Creating {num_clients} medical facility cohorts from real patient data",
         "found_valid_clients": "Found {valid} valid clients out of {total} total",
         "starting_training_clients": "Starting training with {clients} valid clients",
+        "training_completed_successfully": "Training Completed Successfully!",
+        "final_accuracy": "Final Accuracy",
+        "rounds_completed": "Rounds Completed",
+        "converged": "✅ Converged",
+        "target_not_reached": "⏳ Target Not Reached",
         
         # Secret Sharing
         "secret_sharing_threshold": "Secret Sharing Threshold",
@@ -849,6 +854,11 @@ TRANSLATIONS = {
         "creating_medical_cohorts": "Création de {num_clients} cohortes d'établissements médicaux à partir de données patients réelles",
         "found_valid_clients": "Trouvé {valid} clients valides sur {total} au total",
         "starting_training_clients": "Démarrage de l'entraînement avec {clients} clients valides",
+        "training_completed_successfully": "Formation Terminée avec Succès!",
+        "final_accuracy": "Précision Finale",
+        "rounds_completed": "Rondes Terminées",
+        "converged": "✅ Convergé",
+        "target_not_reached": "⏳ Objectif Non Atteint",
         "complete_training_see_performance": "Complétez l'entraînement pour voir l'analyse de performance",
         "journey_status_debug": "Débogage Statut Parcours",
         "training_completed": "Entraînement terminé",
