@@ -2275,28 +2275,28 @@ def main():
                         protective_factors = []
                         
                         if glucose >= 140:
-                            risk_factors.append(f"High glucose ({glucose:.0f} mg/dL)")
+                            risk_factors.append(get_translation("high_glucose_level", st.session_state.language, glucose=f"{glucose:.0f}"))
                         elif glucose <= 100:
-                            protective_factors.append("Normal glucose levels")
+                            protective_factors.append(get_translation("normal_glucose_levels", st.session_state.language))
                         
                         if bmi >= 30:
-                            risk_factors.append(f"Obesity (BMI: {bmi:.1f})")
+                            risk_factors.append(get_translation("obesity_bmi", st.session_state.language, bmi=f"{bmi:.1f}"))
                         elif bmi >= 25:
-                            risk_factors.append(f"Overweight (BMI: {bmi:.1f})")
+                            risk_factors.append(get_translation("overweight_bmi", st.session_state.language, bmi=f"{bmi:.1f}"))
                         else:
-                            protective_factors.append("Healthy weight")
+                            protective_factors.append(get_translation("healthy_weight", st.session_state.language))
                         
                         if age >= 45:
-                            risk_factors.append("Age ≥45 years")
+                            risk_factors.append(get_translation("age_45_years", st.session_state.language))
                         
                         if dpf > 0.5:
-                            risk_factors.append("Strong family history")
+                            risk_factors.append(get_translation("strong_family_history", st.session_state.language))
                         
                         if blood_pressure >= 140:
-                            risk_factors.append("High blood pressure")
+                            risk_factors.append(get_translation("high_blood_pressure", st.session_state.language))
                         
                         if insulin > 200:
-                            risk_factors.append("High insulin levels")
+                            risk_factors.append(get_translation("high_insulin_levels", st.session_state.language))
                         
                         if risk_factors:
                             st.markdown(f"**{get_translation('risk_factors', st.session_state.language)}:**")
@@ -2309,7 +2309,7 @@ def main():
                                 st.write(f"🟢 {factor}")
                     
                     with col3:
-                        st.subheader("📊 Risk Meter")
+                        st.subheader(f"📊 {get_translation('risk_meter', st.session_state.language)}")
                         
                         # Create risk gauge visualization
                         fig_gauge = go.Figure(go.Indicator(
