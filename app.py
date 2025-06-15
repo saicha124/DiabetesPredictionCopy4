@@ -184,6 +184,45 @@ def main():
                 st.error(get_translation("failed_to_load_dataset", st.session_state.language, error=str(e)))
                 return
 
+    # Add CSS for scrollable tabs
+    st.markdown("""
+    <style>
+    /* Make tabs scrollable horizontally */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+        overflow-x: auto;
+        white-space: nowrap;
+        max-width: 100%;
+        scrollbar-width: thin;
+        scrollbar-color: #888 #f1f1f1;
+    }
+    
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        flex-shrink: 0;
+        min-width: max-content;
+        padding: 8px 12px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Main tabs
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         get_translation("tab_training", st.session_state.language), 
