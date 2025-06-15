@@ -184,101 +184,15 @@ def main():
                 st.error(get_translation("failed_to_load_dataset", st.session_state.language, error=str(e)))
                 return
 
+    # Initialize tab index in session state
+    if 'active_tab' not in st.session_state:
+        st.session_state.active_tab = 0
+    
     # Tab navigation with arrows
     col1, col2, col3 = st.columns([1, 6, 1])
     
-    with col1:
-        if st.button("◀ Précédent" if st.session_state.language == 'fr' else "◀ Previous", key="prev_tab"):
-            pass
-    
-    with col2:
-        tab_names = [
-            get_translation("tab_training", st.session_state.language),
-            get_translation("tab_monitoring", st.session_state.language), 
-            get_translation("tab_visualization", st.session_state.language),
-            get_translation("tab_analytics", st.session_state.language),
-            get_translation("tab_facility", st.session_state.language),
-            get_translation("tab_risk", st.session_state.language),
-            get_translation("tab_graph_viz", st.session_state.language),
-            get_translation("tab_advanced_analytics", st.session_state.language)
-        ]
-        
-        if st.session_state.language == 'fr':
-            st.markdown("**Utilisez les flèches pour naviguer entre les onglets**")
-        else:
-            st.markdown("**Use arrows to navigate between tabs**")
-    
-    with col3:
-        if st.button("Suivant ▶" if st.session_state.language == 'fr' else "Next ▶", key="next_tab"):
-            pass
-
-    # Add JavaScript for tab navigation
-    st.markdown("""
-    <script>
-    // Initialize or get current tab index
-    if (!window.currentTabIndex) {
-        window.currentTabIndex = 0;
-    }
-    
-    // Function to get the currently active tab index
-    function getCurrentActiveTab() {
-        const tabs = document.querySelectorAll('[data-baseweb="tab"]');
-        for (let i = 0; i < tabs.length; i++) {
-            if (tabs[i].getAttribute('aria-selected') === 'true') {
-                window.currentTabIndex = i;
-                return i;
-            }
-        }
-        return 0;
-    }
-    
-    // Function to navigate tabs
-    function navigateTab(direction) {
-        const tabs = document.querySelectorAll('[data-baseweb="tab"]');
-        const currentActive = getCurrentActiveTab();
-        
-        let newIndex;
-        if (direction === 'prev' && currentActive > 0) {
-            newIndex = currentActive - 1;
-        } else if (direction === 'next' && currentActive < tabs.length - 1) {
-            newIndex = currentActive + 1;
-        } else {
-            return; // No navigation needed
-        }
-        
-        if (tabs[newIndex]) {
-            tabs[newIndex].click();
-            window.currentTabIndex = newIndex;
-        }
-    }
-    
-    // Add event listeners
-    document.addEventListener('click', function(e) {
-        const buttonText = e.target.textContent || '';
-        
-        if (buttonText.includes('◀') || buttonText.includes('Précédent') || buttonText.includes('Previous')) {
-            e.preventDefault();
-            setTimeout(() => navigateTab('prev'), 50);
-        }
-        
-        if (buttonText.includes('▶') || buttonText.includes('Suivant') || buttonText.includes('Next')) {
-            e.preventDefault();
-            setTimeout(() => navigateTab('next'), 50);
-        }
-    });
-    
-    // Track tab clicks to update current index
-    document.addEventListener('click', function(e) {
-        if (e.target.getAttribute('data-baseweb') === 'tab') {
-            setTimeout(getCurrentActiveTab, 100);
-        }
-    });
-    </script>
-    """, unsafe_allow_html=True)
-
-    # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        get_translation("tab_training", st.session_state.language), 
+    tab_names = [
+        get_translation("tab_training", st.session_state.language),
         get_translation("tab_monitoring", st.session_state.language), 
         get_translation("tab_visualization", st.session_state.language),
         get_translation("tab_analytics", st.session_state.language),
@@ -286,9 +200,31 @@ def main():
         get_translation("tab_risk", st.session_state.language),
         get_translation("tab_graph_viz", st.session_state.language),
         get_translation("tab_advanced_analytics", st.session_state.language)
-    ])
+    ]
+    
+    with col1:
+        if st.button("◀ Précédent" if st.session_state.language == 'fr' else "◀ Previous", key="prev_tab"):
+            if st.session_state.active_tab > 0:
+                st.session_state.active_tab -= 1
+                st.rerun()
+    
+    with col2:
+        current_tab_name = tab_names[st.session_state.active_tab]
+        if st.session_state.language == 'fr':
+            st.markdown(f"**Onglet actuel:** {current_tab_name} ({st.session_state.active_tab + 1}/8)")
+        else:
+            st.markdown(f"**Current tab:** {current_tab_name} ({st.session_state.active_tab + 1}/8)")
+    
+    with col3:
+        if st.button("Suivant ▶" if st.session_state.language == 'fr' else "Next ▶", key="next_tab"):
+            if st.session_state.active_tab < len(tab_names) - 1:
+                st.session_state.active_tab += 1
+                st.rerun()
 
-    with tab1:
+    # Display content based on active tab
+    st.markdown("---")
+    
+    if st.session_state.active_tab == 0:  # Training tab
         st.header("🎛️ " + get_translation("tab_training", st.session_state.language))
         
         if st.session_state.data_loaded:
@@ -1427,8 +1363,56 @@ def main():
             
             model_df = pd.DataFrame(model_info)
             st.dataframe(model_df, use_container_width=True)
+        else:
+            st.warning(get_translation("load_data_first", st.session_state.language))
 
-    with tab3:
+    elif st.session_state.active_tab == 1:  # Monitoring tab
+        st.header("📊 " + get_translation("tab_monitoring", st.session_state.language))
+        
+        if st.session_state.training_started:
+            if hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
+                st.subheader("🔄 " + get_translation("real_time_training_monitoring", st.session_state.language))
+                
+                # Latest metrics display
+                latest_metrics = st.session_state.training_metrics[-1]
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("🎯 Global Accuracy", f"{latest_metrics.get('accuracy', 0):.3f}")
+                with col2:
+                    st.metric("📊 F1 Score", f"{latest_metrics.get('f1_score', 0):.3f}")
+                with col3:
+                    st.metric("📉 Loss", f"{latest_metrics.get('loss', 0):.4f}")
+                with col4:
+                    current_round = latest_metrics.get('round', 0)
+                    max_rounds = st.session_state.get('max_rounds', 20)
+                    st.metric("🔄 Progress", f"{current_round}/{max_rounds}")
+                
+                # Training progress chart
+                if len(st.session_state.training_metrics) > 1:
+                    rounds = [m['round'] for m in st.session_state.training_metrics]
+                    accuracies = [m['accuracy'] for m in st.session_state.training_metrics]
+                    
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=rounds, y=accuracies,
+                        mode='lines+markers',
+                        name='Global Accuracy',
+                        line=dict(color='blue', width=3)
+                    ))
+                    fig.update_layout(
+                        title="Training Progress",
+                        xaxis_title="Round",
+                        yaxis_title="Accuracy",
+                        height=400
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info(get_translation("training_in_progress", st.session_state.language))
+        else:
+            st.warning(get_translation("start_training_to_monitor", st.session_state.language))
+
+    elif st.session_state.active_tab == 2:  # Visualization tab
         st.header("🗺️ " + get_translation("interactive_learning_journey_visualization", st.session_state.language))
         
         # Initialize and update journey visualizer
