@@ -337,7 +337,8 @@ class AdvancedClientAnalytics:
                 barmode='group'
             )
             fig_bar.update_layout(height=400)
-            st.plotly_chart(fig_bar, use_container_width=True, key=f"facility_performance_bar_{hash(str(df_performance))}")
+            import time
+            st.plotly_chart(fig_bar, use_container_width=True, key=f"facility_performance_bar_{int(time.time() * 1000000)}")
         
         with col2:
             fig_scatter = px.scatter(
@@ -350,7 +351,7 @@ class AdvancedClientAnalytics:
                 color='Facility'
             )
             fig_scatter.update_layout(height=400)
-            st.plotly_chart(fig_scatter, use_container_width=True, key=f"facility_scatter_overview_{hash(str(df_performance))}")
+            st.plotly_chart(fig_scatter, use_container_width=True, key=f"facility_scatter_overview_{int(time.time() * 1000000)}")
     
     def _create_performance_evolution(self):
         """Create performance evolution visualization"""
