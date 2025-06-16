@@ -265,21 +265,55 @@ class FederatedLearningManager:
             for round_num in range(self.max_rounds):
                 self.current_round = round_num + 1
                 
-                # Update progress bar in real-time
+                # Enhanced progress bar with real-time updates
                 progress_percentage = (round_num + 1) / self.max_rounds
-                progress_text = f"{progress_percentage:.0%} - Round {self.current_round}/{self.max_rounds}"
                 
-                # Update Streamlit progress elements if available
+                # Create enhanced progress text with visual indicators
+                if st.session_state.language == 'fr':
+                    progress_text = f"🚀 {progress_percentage:.0%} - Ronde {self.current_round}/{self.max_rounds} - Formation en cours..."
+                else:
+                    progress_text = f"🚀 {progress_percentage:.0%} - Round {self.current_round}/{self.max_rounds} - Training in progress..."
+                
+                # Update enhanced Streamlit progress elements if available
                 if hasattr(st, 'session_state'):
                     if hasattr(st.session_state, 'training_progress'):
                         st.session_state.training_progress.progress(progress_percentage, text=progress_text)
+                    
                     if hasattr(st.session_state, 'current_round_display'):
-                        st.session_state.current_round_display.info(f"🔄 Training Round {self.current_round} of {self.max_rounds}")
+                        if st.session_state.language == 'fr':
+                            round_text = f"🔄 **Ronde d'entraînement {self.current_round} sur {self.max_rounds}**"
+                        else:
+                            round_text = f"🔄 **Training Round {self.current_round} of {self.max_rounds}**"
+                        st.session_state.current_round_display.markdown(round_text)
+                    
+                    if hasattr(st.session_state, 'round_counter'):
+                        st.session_state.round_counter.metric(
+                            "Current Round" if st.session_state.language == 'en' else "Ronde Actuelle", 
+                            f"{self.current_round}/{self.max_rounds}"
+                        )
                 
                 start_time = time.time()
                 
+                # Update client status indicator
+                if hasattr(st, 'session_state') and hasattr(st.session_state, 'client_status'):
+                    active_clients = len([c for c in self.clients if c is not None])
+                    if st.session_state.language == 'fr':
+                        client_text = f"👥 Stations: {active_clients}/{self.num_clients}"
+                    else:
+                        client_text = f"👥 Clients: {active_clients}/{self.num_clients}"
+                    st.session_state.client_status.info(client_text)
+                
                 # Parallel client training
                 client_updates = self._train_clients_parallel()
+                
+                # Update aggregation status
+                if hasattr(st, 'session_state') and hasattr(st.session_state, 'aggregation_status'):
+                    valid_updates = len([u for u in client_updates if u is not None])
+                    if st.session_state.language == 'fr':
+                        agg_text = f"🔄 Agrégation: {valid_updates} mises à jour"
+                    else:
+                        agg_text = f"🔄 Aggregating: {valid_updates} updates"
+                    st.session_state.aggregation_status.info(agg_text)
                 
                 # Committee-based security validation and attack detection
                 if self.committee_security_active and self.secure_fl:

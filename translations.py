@@ -59,6 +59,18 @@ TRANSLATIONS = {
         "training_not_completed": "⚠️ Federated learning training not completed yet",
         "complete_training_first": "Please complete federated training first to use converged model for risk assessment",
         
+        # Enhanced Progress Display
+        "training_complete_early_stopping": "Training completed - Early stopping",
+        "early_stopping_at_round": "Early stopping at round {round_num}",
+        "final_accuracy_restored": "Final accuracy restored: {accuracy:.3f}",
+        "best_model_restored": "Best model restored (Round {round_num})",
+        "clients_active": "Active Clients: {active}/{total}",
+        "aggregation_complete": "Aggregation Complete",
+        "privacy_applied": "Privacy Applied (ε={epsilon})",
+        "convergence_check": "Convergence Check",
+        "model_improving": "Model Improving",
+        "no_improvement": "No improvement: {count}/{max_rounds}",
+        
         # Risk assessment
         "risk_assessment": "🎯 Risk Assessment",
         "risk_level": "Risk Level",
@@ -709,7 +721,7 @@ TRANSLATIONS = {
         "risk_assessment": "Évaluation risques",
         "tab_graph_viz": "🌐 Visualisation Graphique",
         
-        # Progress Bar Messages
+        # Enhanced Progress Bar Messages
         "initializing_training": "Initialisation Environnement Formation",
         "preparing_data": "Préparation Données Médicales",
         "setting_up_clients": "Configuration Stations Médicales",
@@ -721,6 +733,16 @@ TRANSLATIONS = {
         "aggregating_models": "Agrégation Modèle Global",
         "applying_privacy": "Application Protection Confidentialité",
         "evaluating_performance": "Évaluation Performance",
+        "training_complete_early_stopping": "Formation terminée - Arrêt précoce",
+        "early_stopping_at_round": "Arrêt précoce à la ronde {round_num}",
+        "final_accuracy_restored": "Précision finale restaurée: {accuracy:.3f}",
+        "best_model_restored": "Meilleur modèle restauré (Ronde {round_num})",
+        "clients_active": "Stations Actives: {active}/{total}",
+        "aggregation_complete": "Agrégation Terminée",
+        "privacy_applied": "Confidentialité Appliquée (ε={epsilon})",
+        "convergence_check": "Vérification Convergence",
+        "model_improving": "Modèle en Amélioration",
+        "no_improvement": "Aucune amélioration: {count}/{max_rounds}",
         "saving_results": "Sauvegarde Résultats Formation",
         "training_complete": "Formation Terminée",
         "processing_patient_data": "Traitement Données Patient",

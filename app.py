@@ -832,22 +832,51 @@ def main():
                 
                 st.success(get_translation("starting_training_clients", st.session_state.language, clients=valid_clients))
                 
-                # Initialize real-time progress tracking
+                # Initialize enhanced real-time progress tracking
                 progress_container = st.container()
                 with progress_container:
-                    st.subheader("🔄 " + get_translation("federated_learning_training_progress", st.session_state.language))
+                    st.markdown("---")
+                    st.markdown(f"### 🔄 {get_translation('federated_learning_training_progress', st.session_state.language)}")
                     
-                    # Create progress elements for training
-                    training_progress = st.progress(0.0, text="0% - Initializing federated learning...")
-                    training_status = st.empty()
-                    current_round_display = st.empty()
-                    accuracy_display = st.empty()
+                    # Enhanced progress display with multiple components
+                    col1, col2 = st.columns([3, 1])
+                    
+                    with col1:
+                        # Main training progress bar
+                        training_progress = st.progress(0.0, text="🚀 Initializing federated learning environment...")
+                        
+                        # Status indicators
+                        training_status = st.empty()
+                        current_round_display = st.empty()
+                    
+                    with col2:
+                        # Performance metrics display
+                        accuracy_display = st.empty()
+                        round_counter = st.empty()
+                    
+                    # Secondary progress indicators
+                    st.markdown("---")
+                    progress_cols = st.columns(4)
+                    
+                    with progress_cols[0]:
+                        client_status = st.empty()
+                    with progress_cols[1]:
+                        aggregation_status = st.empty()
+                    with progress_cols[2]:
+                        privacy_status = st.empty()
+                    with progress_cols[3]:
+                        convergence_status = st.empty()
                 
                 # Store progress elements in session state for real-time updates
                 st.session_state.training_progress = training_progress
                 st.session_state.training_status = training_status
                 st.session_state.current_round_display = current_round_display
                 st.session_state.accuracy_display = accuracy_display
+                st.session_state.round_counter = round_counter
+                st.session_state.client_status = client_status
+                st.session_state.aggregation_status = aggregation_status
+                st.session_state.privacy_status = privacy_status
+                st.session_state.convergence_status = convergence_status
                 
                 # Execute actual federated learning training with progress tracking
                 training_results = fl_manager.train(data)
