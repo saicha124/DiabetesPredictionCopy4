@@ -115,8 +115,11 @@ class AdvancedClientAnalytics:
     
     def detect_anomalies(self) -> Dict[str, Any]:
         """Detect anomalous client performance using isolation forest"""
+        # Load client performance data from session state
+        self._load_client_data_from_session()
+        
         if len(self.client_metrics_history) < 3:
-            return {'anomalous_clients': [], 'performance_outliers': []}
+            return {'anomalous_clients': [], 'anomaly_scores': {}}
         
         # Prepare feature matrix for anomaly detection
         features = []
@@ -186,8 +189,49 @@ class AdvancedClientAnalytics:
             'total_clients_analyzed': len(client_ids)
         }
     
+    def _load_client_data_from_session(self):
+        """Load client performance data from Streamlit session state"""
+        import streamlit as st
+        
+        if not hasattr(st, 'session_state') or not hasattr(st.session_state, 'round_client_metrics'):
+            return
+        
+        # Clear existing data
+        self.client_metrics_history.clear()
+        
+        # Load data from all training rounds
+        for round_num, clients_data in st.session_state.round_client_metrics.items():
+            for client_id, metrics in clients_data.items():
+                if client_id not in self.client_metrics_history:
+                    self.client_metrics_history[client_id] = []
+                
+                # Convert numpy arrays to lists for JSON serialization
+                processed_metrics = {
+                    'round': round_num,
+                    'accuracy': float(metrics.get('accuracy', 0)),
+                    'loss': float(metrics.get('loss', 0)),
+                    'f1_score': float(metrics.get('f1_score', 0)),
+                    'precision': float(metrics.get('precision', 0)),
+                    'recall': float(metrics.get('recall', 0)),
+                    'data_size': int(metrics.get('data_size', 0)),
+                    'y_true': metrics.get('y_true', []),
+                    'y_pred': metrics.get('y_pred', []),
+                    'y_prob': metrics.get('y_prob'),
+                    'model_params': metrics.get('model_params', {}),
+                    'client_id': client_id
+                }
+                
+                self.client_metrics_history[client_id].append(processed_metrics)
+        
+        # Sort by round number for each client
+        for client_id in self.client_metrics_history:
+            self.client_metrics_history[client_id].sort(key=lambda x: x['round'])
+    
     def create_medical_facility_dashboard(self):
         """Create comprehensive medical facility performance dashboard"""
+        # Load client performance data from session state
+        self._load_client_data_from_session()
+        
         if not self.client_metrics_history:
             st.warning("No client performance data available. Please complete training first.")
             return

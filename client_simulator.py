@@ -293,6 +293,8 @@ class ClientSimulator:
             return None
         
         try:
+            from sklearn.metrics import precision_score, recall_score, confusion_matrix
+            
             X_test = self.data['X_test']
             y_test = self.data['y_test']
             
@@ -302,12 +304,43 @@ class ClientSimulator:
             predictions = self.local_model.predict(X_test)
             accuracy = accuracy_score(y_test, predictions)
             f1 = f1_score(y_test, predictions, average='weighted')
+            precision = precision_score(y_test, predictions, average='weighted', zero_division=0)
+            recall = recall_score(y_test, predictions, average='weighted', zero_division=0)
+            
+            # Get prediction probabilities if available
+            y_prob = None
+            try:
+                if hasattr(self.local_model, 'predict_proba'):
+                    y_prob = self.local_model.predict_proba(X_test)[:, 1] if len(self.local_model.classes_) == 2 else None
+            except:
+                pass
+            
+            # Calculate loss (log loss or MSE approximation)
+            loss = 1 - accuracy  # Simple approximation
+            
+            # Extract model parameters
+            model_params = {}
+            try:
+                if self.model_type == 'logistic_regression' and hasattr(self.local_model, 'coef_'):
+                    model_params = {
+                        'coef_': self.local_model.coef_.tolist() if hasattr(self.local_model.coef_, 'tolist') else [],
+                        'intercept_': self.local_model.intercept_.tolist() if hasattr(self.local_model.intercept_, 'tolist') else []
+                    }
+            except:
+                pass
             
             return {
                 'client_id': self.client_id,
-                'test_accuracy': accuracy,
+                'accuracy': accuracy,
+                'loss': loss,
                 'f1_score': f1,
-                'test_samples': len(X_test)
+                'precision': precision,
+                'recall': recall,
+                'test_samples': len(X_test),
+                'y_true': y_test.tolist() if hasattr(y_test, 'tolist') else list(y_test),
+                'y_pred': predictions.tolist() if hasattr(predictions, 'tolist') else list(predictions),
+                'y_prob': y_prob.tolist() if y_prob is not None and hasattr(y_prob, 'tolist') else y_prob,
+                'model_params': model_params
             }
             
         except Exception as e:

@@ -355,6 +355,9 @@ class FederatedLearningManager:
                 # Record metrics
                 round_time = time.time() - start_time
                 
+                # Collect individual client performance metrics
+                self._collect_client_metrics(round_num, validated_updates)
+                
                 # Calculate DP effects if applied
                 dp_effects = {}
                 if self.enable_dp and validated_updates:
@@ -597,6 +600,59 @@ class FederatedLearningManager:
                     print(f"Client training error: {e}")
         
         return client_updates
+    
+    def _collect_client_metrics(self, round_num, validated_updates):
+        """Collect individual client performance metrics for analytics"""
+        if not hasattr(st, 'session_state'):
+            return
+        
+        # Initialize round_client_metrics if not exists
+        if not hasattr(st.session_state, 'round_client_metrics'):
+            st.session_state.round_client_metrics = {}
+        
+        if round_num not in st.session_state.round_client_metrics:
+            st.session_state.round_client_metrics[round_num] = {}
+        
+        # Evaluate each client's performance
+        for i, client in enumerate(self.clients):
+            try:
+                # Get client's local evaluation
+                client_eval = client.evaluate()
+                
+                if client_eval and isinstance(client_eval, dict):
+                    # Store comprehensive client metrics
+                    client_metrics = {
+                        'accuracy': client_eval.get('accuracy', 0),
+                        'loss': client_eval.get('loss', 0),
+                        'f1_score': client_eval.get('f1_score', 0),
+                        'precision': client_eval.get('precision', 0),
+                        'recall': client_eval.get('recall', 0),
+                        'data_size': len(client.X_train) if hasattr(client, 'X_train') else 0,
+                        'y_true': client_eval.get('y_true', []),
+                        'y_pred': client_eval.get('y_pred', []),
+                        'y_prob': client_eval.get('y_prob'),
+                        'model_params': client_eval.get('model_params'),
+                        'round': round_num,
+                        'client_id': i
+                    }
+                    
+                    st.session_state.round_client_metrics[round_num][i] = client_metrics
+                    
+            except Exception as e:
+                print(f"Failed to collect metrics for client {i}: {e}")
+                # Store minimal metrics for failed clients
+                st.session_state.round_client_metrics[round_num][i] = {
+                    'accuracy': 0,
+                    'loss': 1.0,
+                    'f1_score': 0,
+                    'precision': 0,
+                    'recall': 0,
+                    'data_size': 0,
+                    'y_true': [],
+                    'y_pred': [],
+                    'round': round_num,
+                    'client_id': i
+                }
     
     def _committee_security_validation(self, client_updates):
         """Validate client updates using committee-based security"""
