@@ -116,7 +116,7 @@ def main():
                 "Aller à l'onglet:",
                 ["Configuration", "Entraînement FL", "Sécurité Comité", "Surveillance Médicale", "Parcours de Formation", 
                  "Analytiques", "Station Médicale", "Évaluation des Risques", 
-                 "Visualisation Graphique", "Analytiques Avancées"],
+                 "Visualisation Graphique"],
                 index=0
             )
         else:
@@ -125,7 +125,7 @@ def main():
                 "Go to tab:",
                 ["Configuration", "FL Training", "Committee Security", "Medical Surveillance", "Training Journey", 
                  "Analytics", "Medical Station", "Risk Assessment", 
-                 "Graph Visualization", "Advanced Analytics"],
+                 "Graph Visualization"],
                 index=0
             )
         
@@ -225,7 +225,7 @@ def main():
     """, unsafe_allow_html=True)
 
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         get_translation("tab_training", st.session_state.language),
         "🛡️ Committee Security" if st.session_state.language == 'en' else "🛡️ Sécurité Comité",
         get_translation("tab_monitoring", st.session_state.language), 
@@ -233,8 +233,7 @@ def main():
         get_translation("tab_analytics", st.session_state.language),
         get_translation("tab_facility", st.session_state.language),
         get_translation("tab_risk", st.session_state.language),
-        get_translation("tab_graph_viz", st.session_state.language),
-        get_translation("tab_advanced_analytics", st.session_state.language)
+        get_translation("tab_graph_viz", st.session_state.language)
     ])
 
     with tab1:
@@ -3837,249 +3836,7 @@ def main():
                 - {get_translation("model_performance_grading", st.session_state.language)}
                 """)
 
-    with tab9:
-        if st.session_state.language == 'fr':
-            st.header("📊 Analytiques Avancées")
-        else:
-            st.header("📊 Advanced Analytics")
-        
-        if st.session_state.training_completed and hasattr(st.session_state, 'training_metrics') and st.session_state.training_metrics:
-            try:
-                from advanced_client_analytics import AdvancedClientAnalytics
-                
-                # Initialize advanced analytics
-                analytics = AdvancedClientAnalytics()
-                
-                # Populate analytics with training data
-                if hasattr(st.session_state, 'round_client_metrics') and st.session_state.round_client_metrics:
-                    for round_num, client_metrics in st.session_state.round_client_metrics.items():
-                        for client_id, metrics in client_metrics.items():
-                            if 'y_true' in metrics and 'y_pred' in metrics:
-                                analytics.update_client_performance(
-                                    round_num=round_num,
-                                    client_id=client_id,
-                                    y_true=metrics['y_true'],
-                                    y_pred=metrics['y_pred'],
-                                    y_prob=metrics.get('y_prob'),
-                                    model_params=metrics.get('model_params')
-                                )
-                
-                if st.session_state.language == 'fr':
-                    st.subheader("🏥 Tableau de Bord des Installations Médicales")
-                else:
-                    st.subheader("🏥 Medical Facility Dashboard")
-                
-                # Create comprehensive medical facility dashboard
-                analytics.create_medical_facility_dashboard()
-                
-                # Anomaly Detection Analysis
-                if st.session_state.language == 'fr':
-                    st.subheader("🚨 Détection d'Anomalies")
-                else:
-                    st.subheader("🚨 Anomaly Detection")
-                
-                anomalies = analytics.detect_anomalies()
-                
-                if anomalies['anomalous_clients']:
-                    if st.session_state.language == 'fr':
-                        st.warning(f"⚠️ Installations suspectes détectées: {', '.join(map(str, anomalies['anomalous_clients']))}")
-                        st.write("**Scores d'anomalie:**")
-                    else:
-                        st.warning(f"⚠️ Suspicious facilities detected: {', '.join(map(str, anomalies['anomalous_clients']))}")
-                        st.write("**Anomaly scores:**")
-                    
-                    anomaly_df = pd.DataFrame({
-                        'Client ID': list(anomalies['anomaly_scores'].keys()),
-                        'Anomaly Score': list(anomalies['anomaly_scores'].values())
-                    })
-                    st.dataframe(anomaly_df, use_container_width=True)
-                else:
-                    if st.session_state.language == 'fr':
-                        st.success("✅ Aucune anomalie détectée dans les installations médicales")
-                    else:
-                        st.success("✅ No anomalies detected in medical facilities")
-                
-                # Performance Evolution Analysis
-                if st.session_state.language == 'fr':
-                    st.subheader("📈 Évolution des Performances")
-                else:
-                    st.subheader("📈 Performance Evolution")
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    if st.session_state.language == 'fr':
-                        st.markdown("**Métriques de Performance:**")
-                    else:
-                        st.markdown("**Performance Metrics:**")
-                    
-                    if hasattr(st.session_state, 'training_metrics'):
-                        latest_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
-                        
-                        accuracy = latest_metrics.get('accuracy', 0)
-                        f1 = latest_metrics.get('f1_score', 0)
-                        precision = latest_metrics.get('precision', accuracy * 0.95)
-                        recall = latest_metrics.get('recall', accuracy * 0.98)
-                        
-                        if st.session_state.language == 'fr':
-                            st.metric("Précision Finale", f"{accuracy:.3f}")
-                            st.metric("Score F1", f"{f1:.3f}")
-                            st.metric("Précision", f"{precision:.3f}")
-                            st.metric("Rappel", f"{recall:.3f}")
-                        else:
-                            st.metric("Final Accuracy", f"{accuracy:.3f}")
-                            st.metric("F1 Score", f"{f1:.3f}")
-                            st.metric("Precision", f"{precision:.3f}")
-                            st.metric("Recall", f"{recall:.3f}")
-                
-                with col2:
-                    if st.session_state.language == 'fr':
-                        st.markdown("**Analyse de Convergence:**")
-                    else:
-                        st.markdown("**Convergence Analysis:**")
-                    
-                    if hasattr(st.session_state, 'training_metrics'):
-                        rounds_completed = len(st.session_state.training_metrics)
-                        converged = st.session_state.results.get('converged', False) if hasattr(st.session_state, 'results') else False
-                        
-                        if st.session_state.language == 'fr':
-                            st.metric("Tours Complétés", rounds_completed)
-                            st.metric("Convergé", "Oui" if converged else "Non")
-                        else:
-                            st.metric("Rounds Completed", rounds_completed)
-                            st.metric("Converged", "Yes" if converged else "No")
-                        
-                        # Training efficiency
-                        if rounds_completed > 0:
-                            efficiency = accuracy / rounds_completed if 'accuracy' in locals() else 0
-                            if st.session_state.language == 'fr':
-                                st.metric("Efficacité d'Entraînement", f"{efficiency:.4f}")
-                            else:
-                                st.metric("Training Efficiency", f"{efficiency:.4f}")
-                
-                # Client Performance Comparison
-                if st.session_state.language == 'fr':
-                    st.subheader("👥 Comparaison des Performances des Clients")
-                else:
-                    st.subheader("👥 Client Performance Comparison")
-                
-                if hasattr(st.session_state, 'round_client_metrics') and st.session_state.round_client_metrics:
-                    # Create client performance summary
-                    client_summary = []
-                    
-                    for round_num, client_metrics in st.session_state.round_client_metrics.items():
-                        for client_id, metrics in client_metrics.items():
-                            client_summary.append({
-                                'Round': round_num,
-                                'Client': f"Facility {client_id}",
-                                'Accuracy': metrics.get('accuracy', 0),
-                                'Loss': metrics.get('loss', 0),
-                                'F1 Score': metrics.get('f1_score', 0),
-                                'Data Size': metrics.get('data_size', 0)
-                            })
-                    
-                    if client_summary:
-                        client_df = pd.DataFrame(client_summary)
-                        
-                        # Group by client and get latest performance
-                        latest_performance = client_df.groupby('Client').last().reset_index()
-                        
-                        if st.session_state.language == 'fr':
-                            latest_performance.columns = ['Installation', 'Tour', 'Précision', 'Perte', 'Score F1', 'Taille Données']
-                        
-                        st.dataframe(latest_performance, use_container_width=True)
-                        
-                        # Performance ranking
-                        if st.session_state.language == 'fr':
-                            st.subheader("🏆 Classement des Performances")
-                        else:
-                            st.subheader("🏆 Performance Ranking")
-                        
-                        ranking_df = latest_performance.sort_values('Accuracy' if st.session_state.language == 'en' else 'Précision', ascending=False)
-                        ranking_df['Rank'] = range(1, len(ranking_df) + 1)
-                        
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            if len(ranking_df) > 0:
-                                top_client = ranking_df.iloc[0]
-                                if st.session_state.language == 'fr':
-                                    st.metric("🥇 Meilleure Installation", top_client['Installation'])
-                                    st.metric("Précision", f"{top_client['Précision']:.3f}")
-                                else:
-                                    st.metric("🥇 Top Facility", top_client['Client'])
-                                    st.metric("Accuracy", f"{top_client['Accuracy']:.3f}")
-                        
-                        with col2:
-                            if len(ranking_df) > 1:
-                                second_client = ranking_df.iloc[1]
-                                if st.session_state.language == 'fr':
-                                    st.metric("🥈 Deuxième", second_client['Installation'])
-                                    st.metric("Précision", f"{second_client['Précision']:.3f}")
-                                else:
-                                    st.metric("🥈 Second Best", second_client['Client'])
-                                    st.metric("Accuracy", f"{second_client['Accuracy']:.3f}")
-                        
-                        with col3:
-                            if len(ranking_df) > 2:
-                                third_client = ranking_df.iloc[2]
-                                if st.session_state.language == 'fr':
-                                    st.metric("🥉 Troisième", third_client['Installation'])
-                                    st.metric("Précision", f"{third_client['Précision']:.3f}")
-                                else:
-                                    st.metric("🥉 Third Best", third_client['Client'])
-                                    st.metric("Accuracy", f"{third_client['Accuracy']:.3f}")
-                
-                # Security Analytics
-                if hasattr(st.session_state, 'enable_committee_security') and st.session_state.enable_committee_security:
-                    if st.session_state.language == 'fr':
-                        st.subheader("🛡️ Analytiques de Sécurité")
-                    else:
-                        st.subheader("🛡️ Security Analytics")
-                    
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        if st.session_state.language == 'fr':
-                            st.metric("Comité Actif", "Oui")
-                            st.metric("Taille du Comité", st.session_state.get('committee_size', 5))
-                        else:
-                            st.metric("Committee Active", "Yes")
-                            st.metric("Committee Size", st.session_state.get('committee_size', 5))
-                    
-                    with col2:
-                        if st.session_state.language == 'fr':
-                            st.metric("Attaques Détectées", "0")
-                            st.metric("Nœuds Validés", "100%")
-                        else:
-                            st.metric("Attacks Detected", "0")
-                            st.metric("Nodes Validated", "100%")
-                
-            except ImportError:
-                if st.session_state.language == 'fr':
-                    st.error("Module d'analytiques avancées non disponible")
-                else:
-                    st.error("Advanced analytics module not available")
-            except Exception as e:
-                if st.session_state.language == 'fr':
-                    st.error(f"Erreur lors de l'affichage des analytiques: {str(e)}")
-                else:
-                    st.error(f"Error displaying analytics: {str(e)}")
-        else:
-            if st.session_state.language == 'fr':
-                st.info("🔄 Veuillez d'abord terminer un entraînement pour voir les analytiques avancées.")
-                st.markdown("**Pour commencer:**")
-                st.markdown("1. Allez à l'onglet Entraînement FL")
-                st.markdown("2. Configurez les paramètres d'entraînement")
-                st.markdown("3. Lancez l'entraînement fédéré")
-                st.markdown("4. Revenez ici pour l'analyse détaillée")
-            else:
-                st.info("🔄 Please complete a training session first to view advanced analytics.")
-                st.markdown("**To get started:**")
-                st.markdown("1. Go to the FL Training tab")
-                st.markdown("2. Configure training parameters")
-                st.markdown("3. Start federated training")
-                st.markdown("4. Return here for detailed analysis")
+
 
 if __name__ == "__main__":
     main()
