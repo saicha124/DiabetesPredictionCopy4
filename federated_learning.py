@@ -616,7 +616,13 @@ class FederatedLearningManager:
             node_updates = {}
             performance_metrics = {}
             
-            for client_id, update in client_updates.items():
+            # Handle both list and dict formats for client_updates
+            if isinstance(client_updates, list):
+                client_updates_dict = {i: update for i, update in enumerate(client_updates) if update is not None}
+            else:
+                client_updates_dict = client_updates
+            
+            for client_id, update in client_updates_dict.items():
                 node_id = f"client_{client_id}"
                 if update is not None and 'parameters' in update:
                     node_updates[node_id] = update['parameters']
@@ -644,13 +650,24 @@ class FederatedLearningManager:
             flagged_nodes = set(security_results['attack_detection']['sybil_nodes'] + 
                               security_results['attack_detection']['byzantine_nodes'])
             
-            validated_updates = {}
-            for client_id, update in client_updates.items():
-                node_id = f"client_{client_id}"
-                if node_id not in flagged_nodes:
-                    validated_updates[client_id] = update
-                else:
-                    print(f"⚠️ Client {client_id} flagged by security system, excluding from aggregation")
+            # Return results in original format (list if input was list)
+            if isinstance(client_updates, list):
+                validated_updates = []
+                for i, update in enumerate(client_updates):
+                    node_id = f"client_{i}"
+                    if node_id not in flagged_nodes:
+                        validated_updates.append(update)
+                    else:
+                        print(f"⚠️ Client {i} flagged by security system, excluding from aggregation")
+                        validated_updates.append(None)
+            else:
+                validated_updates = {}
+                for client_id, update in client_updates_dict.items():
+                    node_id = f"client_{client_id}"
+                    if node_id not in flagged_nodes:
+                        validated_updates[client_id] = update
+                    else:
+                        print(f"⚠️ Client {client_id} flagged by security system, excluding from aggregation")
             
             return validated_updates, security_results
             

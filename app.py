@@ -114,7 +114,7 @@ def main():
             st.subheader("🧭 Navigation Rapide")
             selected_tab = st.selectbox(
                 "Aller à l'onglet:",
-                ["Configuration", "Entraînement FL", "Surveillance Médicale", "Parcours de Formation", 
+                ["Configuration", "Entraînement FL", "Sécurité Comité", "Surveillance Médicale", "Parcours de Formation", 
                  "Analytiques", "Station Médicale", "Évaluation des Risques", 
                  "Visualisation Graphique", "Analytiques Avancées"],
                 index=0
@@ -123,7 +123,7 @@ def main():
             st.subheader("🧭 Quick Navigation")
             selected_tab = st.selectbox(
                 "Go to tab:",
-                ["Configuration", "FL Training", "Medical Surveillance", "Training Journey", 
+                ["Configuration", "FL Training", "Committee Security", "Medical Surveillance", "Training Journey", 
                  "Analytics", "Medical Station", "Risk Assessment", 
                  "Graph Visualization", "Advanced Analytics"],
                 index=0
@@ -291,6 +291,29 @@ def main():
                 st.session_state.patience = patience
                 st.session_state.early_stop_metric = early_stop_metric
                 st.session_state.min_improvement = min_improvement
+                
+                # Committee-Based Security Configuration
+                if st.session_state.language == 'fr':
+                    st.subheader("🛡️ Configuration de Sécurité Basée sur Comité")
+                    enable_committee_security = st.checkbox("Activer la Sécurité par Comité", value=True, 
+                                                           help="Active la sélection de comité basée sur la réputation, la détection d'attaques Sybil/Byzantine, et la vérification cryptographique")
+                else:
+                    st.subheader("🛡️ Committee-Based Security Configuration")
+                    enable_committee_security = st.checkbox("Enable Committee Security", value=True, 
+                                                           help="Enables reputation-weighted committee selection, Sybil/Byzantine attack detection, and cryptographic verification")
+                
+                if enable_committee_security:
+                    if st.session_state.language == 'fr':
+                        committee_size = st.slider("Taille du Comité de Sécurité", 3, min(7, num_clients), min(5, num_clients))
+                        st.info("🔒 Fonctionnalités de Sécurité Activées:\n• Sélection de comité basée sur la réputation\n• Rotation périodique des rôles\n• Détection d'attaques Sybil et Byzantine\n• Vérification cryptographique\n• Protection de la vie privée différentielle")
+                    else:
+                        committee_size = st.slider("Security Committee Size", 3, min(7, num_clients), min(5, num_clients))
+                        st.info("🔒 Security Features Enabled:\n• Reputation-weighted committee selection\n• Periodic role rotation\n• Sybil & Byzantine attack detection\n• Cryptographic verification\n• Differential privacy protection")
+                else:
+                    committee_size = 3
+                
+                st.session_state.enable_committee_security = enable_committee_security
+                st.session_state.committee_size = committee_size
                 
                 st.subheader(get_translation("model_selection", st.session_state.language))
                 default_model = "Deep Learning (Neural Network)" if 'reset_requested' in st.session_state else st.session_state.get('model_type_display', "Deep Learning (Neural Network)")
