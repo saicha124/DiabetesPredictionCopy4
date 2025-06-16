@@ -731,7 +731,7 @@ class AdvancedClientAnalytics:
                 color_continuous_scale='Viridis'
             )
             fig_scatter.update_layout(height=400)
-            st.plotly_chart(fig_scatter, use_container_width=True, key="stability_improvement_scatter")
+            st.plotly_chart(fig_scatter, use_container_width=True, key=f"stability_improvement_scatter_{int(time.time() * 1000000)}")
         
         # Convergence trends
         st.subheader(f"📈 {get_translation('convergence_trends', st.session_state.language)}")
