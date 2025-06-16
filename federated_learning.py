@@ -598,6 +598,66 @@ class FederatedLearningManager:
         
         return client_updates
     
+    def _committee_security_validation(self, client_updates):
+        """Validate client updates using committee-based security"""
+        if not self.committee_security_active or not self.secure_fl:
+            return client_updates, None
+        
+        try:
+            # Initialize secure training if not already done
+            node_ids = [f"client_{i}" for i in range(self.num_clients)]
+            if not hasattr(self.secure_fl, 'initialized'):
+                if self.secure_fl.initialize_secure_training(node_ids):
+                    self.secure_fl.initialized = True
+                else:
+                    return client_updates, None
+            
+            # Convert client updates to the format expected by committee security
+            node_updates = {}
+            performance_metrics = {}
+            
+            for client_id, update in client_updates.items():
+                node_id = f"client_{client_id}"
+                if update is not None and 'parameters' in update:
+                    node_updates[node_id] = update['parameters']
+                    
+                    # Create performance metrics for reputation system
+                    performance_metrics[node_id] = {
+                        'accuracy_delta': update.get('accuracy', 0.5) - 0.5,  # Improvement from baseline
+                        'availability_delta': 0.1,  # Positive for participating
+                        'validation_success': update.get('accuracy', 0) > 0.3,  # Basic threshold
+                        'malicious_detected': False  # Would be detected by Byzantine detector
+                    }
+                else:
+                    node_updates[node_id] = None
+                    performance_metrics[node_id] = {
+                        'accuracy_delta': -0.1,  # Penalty for not participating
+                        'availability_delta': -0.1,
+                        'validation_success': False,
+                        'malicious_detected': False
+                    }
+            
+            # Execute secure training round with committee oversight
+            security_results = self.secure_fl.secure_training_round(node_updates, performance_metrics)
+            
+            # Filter out updates flagged as malicious
+            flagged_nodes = set(security_results['attack_detection']['sybil_nodes'] + 
+                              security_results['attack_detection']['byzantine_nodes'])
+            
+            validated_updates = {}
+            for client_id, update in client_updates.items():
+                node_id = f"client_{client_id}"
+                if node_id not in flagged_nodes:
+                    validated_updates[client_id] = update
+                else:
+                    print(f"⚠️ Client {client_id} flagged by security system, excluding from aggregation")
+            
+            return validated_updates, security_results
+            
+        except Exception as e:
+            print(f"Committee security validation failed: {e}")
+            return client_updates, None
+    
     def _committee_validation(self, client_updates):
         """Committee-based security validation"""
         if len(client_updates) < self.committee_size:
