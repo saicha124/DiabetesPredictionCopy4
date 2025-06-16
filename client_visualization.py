@@ -107,7 +107,7 @@ class ClientPerformanceVisualizer:
         
         fig.update_yaxis(range=[0, 1])
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="client_accuracy_trends")
     
     def _create_client_comparison_radar(self):
         """Create radar chart comparing client performances"""
@@ -162,7 +162,7 @@ class ClientPerformanceVisualizer:
             height=400
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="client_performance_radar")
     
     def _create_round_analysis(self, round_num: int):
         """Create detailed analysis for a specific round"""
@@ -266,7 +266,7 @@ class ClientPerformanceVisualizer:
         )
         
         fig.update_layout(height=600, title_text="Round Performance Distribution Analysis")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key=f"round_analysis_{round_num}")
     
     def create_global_performance_summary(self):
         """Create global performance summary across all rounds and clients"""
@@ -350,7 +350,7 @@ class ClientPerformanceVisualizer:
             height=400
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="performance_heatmap_summary")
 
 def simulate_client_performance_data(visualizer: ClientPerformanceVisualizer, num_clients: int = 5, num_rounds: int = 10):
     """Simulate client performance data for demonstration"""
