@@ -342,7 +342,7 @@ def main():
                 
                 if enable_fog:
                     default_fog_nodes = 3 if 'reset_requested' not in st.session_state else 3
-                    num_fog_nodes = st.slider(get_translation("num_fog_nodes", st.session_state.language), 2, 6, st.session_state.get('num_fog_nodes', default_fog_nodes))
+                    num_fog_nodes = st.slider(get_translation("num_fog_nodes", st.session_state.language), 2, 20, st.session_state.get('num_fog_nodes', default_fog_nodes))
                     st.session_state.num_fog_nodes = num_fog_nodes
                     
                     default_fog_method = "FedAvg" if 'reset_requested' not in st.session_state else "FedAvg"
@@ -3460,22 +3460,33 @@ def main():
                     st.subheader("🌫️ Accuracy vs Number of Fog Nodes")
                 
                 # Simulate different fog node scenarios
-                fog_scenarios = [1, 2, 3, 4, 5, 6]
+                fog_scenarios = list(range(1, 21))  # 1 to 20 fog nodes
                 accuracies_fog = []
                 
                 # Base accuracy from current training
                 base_accuracy = st.session_state.training_metrics[-1]['accuracy'] if st.session_state.training_metrics else 0.75
                 
                 for num_fog in fog_scenarios:
-                    # Adjust based on fog nodes - hierarchical aggregation improves efficiency
+                    # Advanced hierarchical aggregation modeling for 1-20 fog nodes
                     if num_fog == 1:
                         adjustment = -0.03  # Centralized approach penalty
                     elif num_fog <= 3:
-                        adjustment = (num_fog - 1) * 0.02
-                    else:
-                        adjustment = 0.04 + (num_fog - 3) * 0.01
+                        adjustment = (num_fog - 1) * 0.02  # Linear improvement
+                    elif num_fog <= 6:
+                        adjustment = 0.04 + (num_fog - 3) * 0.015  # Diminishing returns
+                    elif num_fog <= 10:
+                        adjustment = 0.085 + (num_fog - 6) * 0.01  # Regional specialization
+                    elif num_fog <= 15:
+                        adjustment = 0.125 + (num_fog - 10) * 0.005  # Fine-grained locality
+                    else:  # 16-20 fog nodes
+                        adjustment = 0.15 + (num_fog - 15) * 0.002  # Minimal gains, overhead increases
                     
-                    final_accuracy = min(0.92, max(0.65, base_accuracy + adjustment))
+                    # Apply diminishing returns and communication overhead for large deployments
+                    if num_fog > 12:
+                        overhead_penalty = (num_fog - 12) * 0.003  # Communication overhead
+                        adjustment -= overhead_penalty
+                    
+                    final_accuracy = min(0.95, max(0.65, base_accuracy + adjustment))
                     accuracies_fog.append(final_accuracy)
                 
                 # Create accuracy vs fog nodes plot
@@ -3528,13 +3539,19 @@ def main():
                         st.subheader("🌫️ Avantages de la Couche Fog")
                         st.write("• **1 nœud fog**: Agrégation centralisée")
                         st.write("• **2-3 nœuds fog**: Spécialisation régionale")
-                        st.write("• **4+ nœuds fog**: Localité fine")
+                        st.write("• **4-6 nœuds fog**: Localité fine")
+                        st.write("• **7-10 nœuds fog**: Spécialisation géographique")
+                        st.write("• **11-15 nœuds fog**: Distribution ultra-fine")
+                        st.write("• **16-20 nœuds fog**: Couverture maximale")
                         st.write("• **Hiérarchique**: Réduit la communication vers le serveur global")
                     else:
                         st.subheader("🌫️ Fog Layer Benefits")
                         st.write("• **1 fog node**: Centralized aggregation")
                         st.write("• **2-3 fog nodes**: Regional specialization")
-                        st.write("• **4+ fog nodes**: Fine-grained locality")
+                        st.write("• **4-6 fog nodes**: Fine-grained locality")
+                        st.write("• **7-10 fog nodes**: Geographic specialization")
+                        st.write("• **11-15 fog nodes**: Ultra-fine distribution")
+                        st.write("• **16-20 fog nodes**: Maximum coverage")
                         st.write("• **Hierarchical**: Reduces communication to global server")
                 
                 with col2:
