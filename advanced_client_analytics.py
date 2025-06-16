@@ -208,12 +208,8 @@ class AdvancedClientAnalytics:
         # Clear existing data
         self.client_metrics_history.clear()
         
-        # Debug: Check what's available in session state
-        print(f"DEBUG: Session state attributes: {dir(st.session_state) if hasattr(st, 'session_state') else 'No session_state'}")
-        
         # First try to load from round_client_metrics (legacy format)
         if hasattr(st, 'session_state') and hasattr(st.session_state, 'round_client_metrics'):
-            print(f"DEBUG: Found round_client_metrics with {len(st.session_state.round_client_metrics)} rounds")
             for round_num, clients_data in st.session_state.round_client_metrics.items():
                 for client_id, metrics in clients_data.items():
                     if client_id not in self.client_metrics_history:
@@ -239,27 +235,21 @@ class AdvancedClientAnalytics:
         # Also try to load from training_history (current format)
         if hasattr(st, 'session_state') and hasattr(st.session_state, 'training_history'):
             training_history = st.session_state.training_history
-            print(f"DEBUG: Found training_history with {len(training_history) if training_history else 0} entries")
             if training_history:
                 # Extract authentic client data from global training history
                 num_clients = getattr(st.session_state, 'num_clients', 8)
-                print(f"DEBUG: Processing {num_clients} clients")
                 
                 # Set seed once for consistent variations across all data
                 import random
                 random.seed(42)
                 
-                for i, round_data in enumerate(training_history):
+                for round_data in training_history:
                     round_num = round_data.get('round', 0)
                     global_accuracy = round_data.get('accuracy', 0)
                     global_loss = round_data.get('loss', 0)
                     global_f1 = round_data.get('f1_score', 0)
                     global_precision = round_data.get('precision', 0)
                     global_recall = round_data.get('recall', 0)
-                    
-                    if i == 0:  # Debug first round
-                        print(f"DEBUG: First round data - accuracy: {global_accuracy}, f1: {global_f1}, precision: {global_precision}, recall: {global_recall}")
-                        print(f"DEBUG: Round data keys: {list(round_data.keys())}")
                     
                     # If precision/recall are zero, derive them from f1 and accuracy
                     if global_precision == 0 and global_f1 > 0:
@@ -365,18 +355,9 @@ class AdvancedClientAnalytics:
             st.warning("No recent metrics available")
             return
         
-        # Debug: Check what metrics we have
-        print(f"DEBUG: Total facilities: {total_facilities}")
-        print(f"DEBUG: Latest metrics keys: {list(latest_metrics.keys()) if latest_metrics else 'None'}")
-        if latest_metrics:
-            first_client = list(latest_metrics.keys())[0]
-            print(f"DEBUG: First client metrics: {latest_metrics[first_client]}")
-        
         # Aggregate statistics
         accuracy_values = [m['accuracy'] for m in latest_metrics.values()]
         f1_values = [m['f1_score'] for m in latest_metrics.values()]
-        print(f"DEBUG: Accuracy values: {accuracy_values}")
-        print(f"DEBUG: F1 values: {f1_values}")
         
         avg_accuracy = np.mean(accuracy_values) if accuracy_values else 0
         avg_f1 = np.mean(f1_values) if f1_values else 0
