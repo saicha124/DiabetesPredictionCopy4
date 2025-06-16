@@ -183,8 +183,19 @@ class AdvancedClientAnalytics:
                         'anomaly_score': features_scaled[i].tolist()
                     })
         
+        # Create anomaly scores dictionary for dashboard compatibility
+        anomaly_scores = {}
+        decision_scores = isolation_forest.decision_function(features_scaled)
+        
+        for client_id, score in zip(client_ids, decision_scores):
+            anomaly_scores[client_id] = float(score)
+        
+        # Extract client IDs from anomalous_clients for backward compatibility
+        anomalous_client_ids = [item['client_id'] if isinstance(item, dict) else item for item in anomalous_clients]
+        
         return {
-            'anomalous_clients': anomalous_clients,
+            'anomalous_clients': anomalous_client_ids,
+            'anomaly_scores': anomaly_scores,
             'performance_outliers': performance_outliers,
             'total_clients_analyzed': len(client_ids)
         }
