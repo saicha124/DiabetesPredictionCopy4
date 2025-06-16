@@ -1240,35 +1240,105 @@ def main():
         else:
             st.subheader("📈 Real-Time Security Metrics")
         
-        # Simulate security events over time
+        # Simulate security events over time with complete data
         time_points = list(range(1, 21))  # 20 rounds
-        reputation_scores = [0.8 + 0.15 * np.sin(i/3) + np.random.normal(0, 0.02) for i in time_points]
-        attack_attempts = [max(0, int(5 + 3*np.sin(i/2) + np.random.normal(0, 1))) for i in time_points]
-        blocked_attacks = [max(0, int(att * 0.95)) for att in attack_attempts]
+        np.random.seed(42)  # Consistent data generation
+        
+        # Complete reputation scores with proper bounds
+        reputation_scores = []
+        base_reputation = 0.85
+        for i in time_points:
+            trend = 0.1 * np.sin(i/4)  # Seasonal variation
+            noise = np.random.normal(0, 0.015)  # Small random variation
+            score = base_reputation + trend + noise
+            score = max(0.75, min(0.98, score))  # Ensure realistic bounds
+            reputation_scores.append(score)
+        
+        # Security event data with different attack types
+        sybil_attacks = [max(0, int(2 + np.random.poisson(1))) for _ in time_points]
+        byzantine_attacks = [max(0, int(1 + np.random.poisson(0.5))) for _ in time_points]
+        network_intrusions = [max(0, int(np.random.poisson(0.8))) for _ in time_points]
+        
+        # Calculate total attacks and blocked attacks
+        total_attacks = [s + b + n for s, b, n in zip(sybil_attacks, byzantine_attacks, network_intrusions)]
+        blocked_attacks = [max(0, int(att * (0.92 + np.random.uniform(-0.05, 0.05)))) for att in total_attacks]
         
         col1, col2 = st.columns(2)
         
         with col1:
-            # Reputation trend chart
-            fig_rep = plt.figure(figsize=(8, 4))
-            plt.plot(time_points, reputation_scores, 'g-', linewidth=2, marker='o')
-            plt.title('Average Committee Reputation' if st.session_state.language == 'en' else 'Réputation Moyenne du Comité')
-            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-            plt.ylabel('Reputation Score' if st.session_state.language == 'en' else 'Score de Réputation')
-            plt.grid(True, alpha=0.3)
+            # Enhanced reputation trend chart with complete data
+            fig_rep = plt.figure(figsize=(10, 5))
+            plt.plot(time_points, reputation_scores, 'g-', linewidth=3, marker='o', markersize=6, 
+                    markerfacecolor='lightgreen', markeredgecolor='darkgreen', markeredgewidth=2)
+            plt.fill_between(time_points, reputation_scores, alpha=0.3, color='green')
+            
+            # Add trend line
+            z = np.polyfit(time_points, reputation_scores, 1)
+            p = np.poly1d(z)
+            plt.plot(time_points, p(time_points), "--", alpha=0.8, color='darkgreen', linewidth=2)
+            
+            plt.title('Average Committee Reputation Over Time' if st.session_state.language == 'en' else 'Réputation Moyenne du Comité dans le Temps', 
+                     fontsize=14, fontweight='bold')
+            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement', fontsize=12)
+            plt.ylabel('Reputation Score' if st.session_state.language == 'en' else 'Score de Réputation', fontsize=12)
+            plt.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
             plt.ylim(0.7, 1.0)
+            plt.xlim(1, 20)
+            
+            # Add annotations for min/max values
+            max_rep = max(reputation_scores)
+            min_rep = min(reputation_scores)
+            max_idx = reputation_scores.index(max_rep) + 1
+            min_idx = reputation_scores.index(min_rep) + 1
+            
+            plt.annotate(f'Max: {max_rep:.3f}', xy=(max_idx, max_rep), xytext=(max_idx+2, max_rep+0.02),
+                        arrowprops=dict(arrowstyle='->', color='darkgreen', alpha=0.7), fontsize=10)
+            plt.annotate(f'Min: {min_rep:.3f}', xy=(min_idx, min_rep), xytext=(min_idx+2, min_rep-0.02),
+                        arrowprops=dict(arrowstyle='->', color='red', alpha=0.7), fontsize=10)
+            
+            plt.tight_layout()
             st.pyplot(fig_rep)
         
         with col2:
-            # Attack detection chart
-            fig_att = plt.figure(figsize=(8, 4))
-            plt.bar(time_points, attack_attempts, alpha=0.6, color='red', label='Attack Attempts' if st.session_state.language == 'en' else 'Tentatives d\'Attaque')
-            plt.bar(time_points, blocked_attacks, alpha=0.8, color='green', label='Blocked' if st.session_state.language == 'en' else 'Bloquées')
-            plt.title('Security Event Detection' if st.session_state.language == 'en' else 'Détection d\'Événements de Sécurité')
-            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-            plt.ylabel('Count' if st.session_state.language == 'en' else 'Nombre')
-            plt.legend()
-            plt.grid(True, alpha=0.3)
+            # Enhanced security event detection chart with stacked visualization
+            fig_att = plt.figure(figsize=(10, 5))
+            
+            # Create stacked bar chart for different attack types
+            width = 0.6
+            p1 = plt.bar(time_points, sybil_attacks, width, label='Sybil Attacks' if st.session_state.language == 'en' else 'Attaques Sybil', 
+                        color='#ff4444', alpha=0.8)
+            p2 = plt.bar(time_points, byzantine_attacks, width, bottom=sybil_attacks, 
+                        label='Byzantine Attacks' if st.session_state.language == 'en' else 'Attaques Byzantines', 
+                        color='#ff8844', alpha=0.8)
+            p3 = plt.bar(time_points, network_intrusions, width, 
+                        bottom=[i+j for i,j in zip(sybil_attacks, byzantine_attacks)],
+                        label='Network Intrusions' if st.session_state.language == 'en' else 'Intrusions Réseau', 
+                        color='#ffaa44', alpha=0.8)
+            
+            # Add blocked attacks line
+            plt.plot(time_points, blocked_attacks, 'g-', linewidth=3, marker='s', markersize=5,
+                    label='Successfully Blocked' if st.session_state.language == 'en' else 'Bloquées avec Succès',
+                    markerfacecolor='lightgreen', markeredgecolor='darkgreen')
+            
+            plt.title('Security Event Detection & Response' if st.session_state.language == 'en' else 'Détection et Réponse aux Événements de Sécurité', 
+                     fontsize=14, fontweight='bold')
+            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement', fontsize=12)
+            plt.ylabel('Security Events Count' if st.session_state.language == 'en' else 'Nombre d\'Événements de Sécurité', fontsize=12)
+            plt.legend(loc='upper right', fontsize=10)
+            plt.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
+            plt.xlim(0.5, 20.5)
+            
+            # Add effectiveness metrics
+            total_blocked = sum(blocked_attacks)
+            total_attempts = sum(total_attacks)
+            effectiveness = (total_blocked / total_attempts) * 100 if total_attempts > 0 else 0
+            
+            plt.text(0.02, 0.98, f'Detection Rate: {effectiveness:.1f}%' if st.session_state.language == 'en' else f'Taux de Détection: {effectiveness:.1f}%',
+                    transform=plt.gca().transAxes, fontsize=11, fontweight='bold',
+                    bbox=dict(boxstyle='round,pad=0.3', facecolor='lightblue', alpha=0.7),
+                    verticalalignment='top')
+            
+            plt.tight_layout()
             st.pyplot(fig_att)
         
         # Security Protocols Details
