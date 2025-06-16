@@ -373,11 +373,35 @@ class FederatedLearningManager:
                             noisy_updates.append(update)
                     
                     validated_updates = noisy_updates
+                    
+                    # Update privacy status indicator
+                    if hasattr(st, 'session_state') and hasattr(st.session_state, 'privacy_status'):
+                        if st.session_state.language == 'fr':
+                            privacy_text = f"🔒 Confidentialité: ε={self.dp_manager.epsilon}"
+                        else:
+                            privacy_text = f"🔒 Privacy: ε={self.dp_manager.epsilon}"
+                        st.session_state.privacy_status.success(privacy_text)
+                else:
+                    # Update privacy status when DP is disabled
+                    if hasattr(st, 'session_state') and hasattr(st.session_state, 'privacy_status'):
+                        if st.session_state.language == 'fr':
+                            privacy_text = "🔓 Confidentialité: Désactivée"
+                        else:
+                            privacy_text = "🔓 Privacy: Disabled"
+                        st.session_state.privacy_status.info(privacy_text)
                 
                 # Aggregate updates
                 self.global_model = self.aggregator.aggregate(
                     self.global_model, validated_updates
                 )
+                
+                # Update aggregation completion status
+                if hasattr(st, 'session_state') and hasattr(st.session_state, 'aggregation_status'):
+                    if st.session_state.language == 'fr':
+                        agg_complete_text = "✅ Agrégation Terminée"
+                    else:
+                        agg_complete_text = "✅ Aggregation Complete"
+                    st.session_state.aggregation_status.success(agg_complete_text)
                 
                 # Evaluate global model
                 eval_results = self._evaluate_global_model()
@@ -418,6 +442,37 @@ class FederatedLearningManager:
                 
                 # Store metrics in training history and update real-time display
                 self.training_history.append(metrics)
+                
+                # Update convergence status indicator
+                if hasattr(st, 'session_state') and hasattr(st.session_state, 'convergence_status'):
+                    if self.enable_early_stopping and hasattr(self, 'patience_counter'):
+                        if st.session_state.language == 'fr':
+                            if self.patience_counter == 0:
+                                conv_text = "📈 Modèle en Amélioration"
+                                st.session_state.convergence_status.success(conv_text)
+                            else:
+                                conv_text = f"⏳ Aucune amélioration: {self.patience_counter}/{self.patience}"
+                                st.session_state.convergence_status.warning(conv_text)
+                        else:
+                            if self.patience_counter == 0:
+                                conv_text = "📈 Model Improving"
+                                st.session_state.convergence_status.success(conv_text)
+                            else:
+                                conv_text = f"⏳ No improvement: {self.patience_counter}/{self.patience}"
+                                st.session_state.convergence_status.warning(conv_text)
+                    else:
+                        if st.session_state.language == 'fr':
+                            conv_text = "🔄 Vérification Convergence"
+                        else:
+                            conv_text = "🔄 Convergence Check"
+                        st.session_state.convergence_status.info(conv_text)
+                
+                # Update real-time accuracy display
+                if hasattr(st, 'session_state') and hasattr(st.session_state, 'accuracy_display'):
+                    best_display = f" | Best: {self.best_accuracy:.1%}"
+                    if self.enable_early_stopping and self.best_metric_value is not None:
+                        best_display += f" (Round {self.best_round})"
+                    st.session_state.accuracy_display.metric("🎯 Accuracy", f"{accuracy:.1%}{best_display}")
                 
                 # Early stopping logic with model checkpointing
                 if self.enable_early_stopping:
@@ -462,22 +517,6 @@ class FederatedLearningManager:
                         self.early_stopped = True
                         self.convergence_reason = "early_stopping"
                         break
-                
-                # Update real-time accuracy display
-                if hasattr(st, 'session_state'):
-                    if hasattr(st.session_state, 'accuracy_display'):
-                        best_display = f" | Best: {self.best_accuracy:.1%}"
-                        if self.enable_early_stopping and self.best_metric_value is not None:
-                            best_display += f" (Round {self.best_round})"
-                        st.session_state.accuracy_display.success(f"🎯 Current Accuracy: {accuracy:.1%}{best_display}")
-                    if hasattr(st.session_state, 'training_status'):
-                        from translations import get_translation
-                        round_text = get_translation('training_round_of', st.session_state.language, 
-                                                   current=self.current_round, total=self.max_rounds)
-                        status_text = f"🔄 {round_text}"
-                        if self.enable_early_stopping:
-                            status_text += f" | Patience: {self.patience_counter}/{self.patience}"
-                        st.session_state.training_status.info(status_text)
                 
                 # Store confusion matrix
                 if not hasattr(self, 'confusion_matrices'):
