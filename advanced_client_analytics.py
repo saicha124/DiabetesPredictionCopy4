@@ -468,7 +468,7 @@ class AdvancedClientAnalytics:
             st.warning("No client data available for confusion matrix analysis")
             return
         
-        selected_client_name = st.selectbox(get_translation('select_medical_facility_detailed_analysis', st.session_state.language), client_options)
+        selected_client_name = st.selectbox(get_translation('select_medical_facility_detailed_analysis', st.session_state.language), client_options, key=f"confusion_matrix_client_selector_{int(time.time() * 1000000)}")
         client_id = int(selected_client_name.split()[-1]) - 1
         
         if client_id not in self.client_metrics_history:
@@ -487,7 +487,7 @@ class AdvancedClientAnalytics:
             return
             
         default_index = len(round_options) - 1 if round_options else 0
-        selected_round_name = st.selectbox(get_translation('select_training_round', st.session_state.language), round_options, index=default_index)
+        selected_round_name = st.selectbox(get_translation('select_training_round', st.session_state.language), round_options, index=default_index, key=f"confusion_matrix_round_selector_{int(time.time() * 1000000)}")
         round_idx = int(selected_round_name.split()[-1])
         
         # Find corresponding metrics
@@ -522,7 +522,7 @@ class AdvancedClientAnalytics:
                     color_continuous_scale='Blues'
                 )
                 fig_cm.update_layout(height=400)
-                st.plotly_chart(fig_cm, use_container_width=True, key=f"confusion_matrix_{selected_client}_{selected_round}")
+                st.plotly_chart(fig_cm, use_container_width=True, key=f"confusion_matrix_{client_id}_{round_idx}_{int(time.time() * 1000000)}")
             else:
                 st.warning("Insufficient prediction data for confusion matrix visualization")
         
