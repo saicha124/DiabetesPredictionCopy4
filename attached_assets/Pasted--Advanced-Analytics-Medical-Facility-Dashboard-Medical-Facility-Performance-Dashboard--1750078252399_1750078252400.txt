@@ -1,0 +1,187 @@
+📊 Advanced Analytics
+🏥 Medical Facility Dashboard
+🏥 Medical Facility Performance Dashboard
+📊 Facility Overview
+Medical Facilities
+
+7
+Avg Accuracy
+
+0.000
+Avg F1 Score
+
+0.759
+Avg Precision
+
+0.000
+Avg Recall
+
+0.000
+📈 performance_evolution_over_time
+select_metric_to_track
+
+Accuracy
+📊 Performance Improvement Analysis
+🔍 Confusion Matrix Analysis:
+select_medical_facility_detailed_analysis
+
+medical_station 1
+select_training_round
+
+round 10
+Insufficient prediction data for confusion matrix visualization
+
+Classification metrics
+Insufficient prediction data for detailed classification metrics
+
+Performance insights
+sensitivity_recall
+
+0.000
+specificity
+
+0.000
+ppv_precision
+
+0.000
+npv
+
+0.000
+Performance Level: Needs Improvement (Accuracy: 0.000)
+
+🚨 anomaly_detection_outlier_analysis
+⚠️ Underperforming Medical Facilities
+🔴 Medical Station 1 - High Risk
+
+🔴 Medical Station 2 - High Risk
+
+🔴 Medical Station 3 - High Risk
+
+🔴 Medical Station 4 - High Risk
+
+🔴 Medical Station 5 - High Risk
+
+🔴 Medical Station 6 - High Risk
+
+Accuracy
+
+0.000
+F1-Score
+
+0.759
+Risk Level
+
+High
+Recommendations:
+
+• Review data quality and preprocessing
+
+• Check for data distribution issues
+
+• Consider additional training rounds
+
+🔴 Medical Station 7 - High Risk
+
+Accuracy
+
+0.000
+F1-Score
+
+0.759
+Risk Level
+
+High
+Recommendations:
+
+• Review data quality and preprocessing
+
+• Check for data distribution issues
+
+• Consider additional training rounds
+
+🏆 facility_performance_ranking
+🎯 Convergence analysis
+📈 convergence_trends
+select_facility_trend_analysis
+
+medical_station 1
+🎯 medical_station 1 convergence_summary
+convergence_score
+
+0.000
+Unstable
+
+stability_score
+
+0.000
+Low
+
+improvement_rate
+
+0.000
+Trend: Stable
+
+🚨 Anomaly Detection
+⚠️ Suspicious facilities detected: {'client_id': 0, 'type': 'underperforming', 'accuracy': 0.0, 'f1_score': 0.7590099453608425, 'severity': 'high'}, {'client_id': 1, 'type': 'underperforming', 'accuracy': 0.0, 'f1_score': 0.7590099453608425, 'severity': 'high'}, {'client_id': 2, 'type': 'underperforming', 'accuracy': 0.0, 'f1_score': 0.7590099453608425, 'severity': 'high'}, {'client_id': 3, 'type': 'underperforming', 'accuracy': 0.0, 'f1_score': 0.7590099453608425, 'severity': 'high'}, {'client_id': 4, 'type': 'underperforming', 'accuracy': 0.0, 'f1_score': 0.7590099453608425, 'severity': 'high'}, {'client_id': 5, 'type': 'underperforming', 'accuracy': 0.0, 'f1_score': 0.7590099453608425, 'severity': 'high'}, {'client_id': 6, 'type': 'underperforming', 'accuracy': 0.0, 'f1_score': 0.7590099453608425, 'severity': 'high'}
+
+Anomaly scores:
+
+📈 Performance Evolution
+Performance Metrics:
+
+Final Accuracy
+
+0.760
+F1 Score
+
+0.759
+Precision
+
+0.722
+Recall
+
+0.744
+Convergence Analysis:
+
+Rounds Completed
+
+10
+Converged
+
+No
+Training Efficiency
+
+0.0760
+👥 Client Performance Comparison
+🏆 Performance Ranking
+🥇 Top Facility
+
+Facility 0
+Accuracy
+
+0.000
+🥈 Second Best
+
+Facility 1
+Accuracy
+
+0.000
+🥉 Third Best
+
+Facility 2
+Accuracy
+
+0.000
+🛡️ Security Analytics
+Committee Active
+
+Yes
+Committee Size
+
+5
+Attacks Detected
+
+0
+Nodes Validated
+
+100%

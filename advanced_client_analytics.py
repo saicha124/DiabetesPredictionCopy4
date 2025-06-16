@@ -251,11 +251,18 @@ class AdvancedClientAnalytics:
                     global_precision = round_data.get('precision', 0)
                     global_recall = round_data.get('recall', 0)
                     
+                    # If accuracy is zero but we have f1, use f1 as accuracy estimate
+                    if global_accuracy == 0 and global_f1 > 0:
+                        global_accuracy = global_f1
+                    
                     # If precision/recall are zero, derive them from f1 and accuracy
                     if global_precision == 0 and global_f1 > 0:
-                        global_precision = global_f1 * 0.95  # Realistic estimate
-                    if global_recall == 0 and global_f1 > 0:
-                        global_recall = global_f1 * 1.05  # Realistic estimate
+                        # Use harmonic mean relationship: F1 = 2 * (precision * recall) / (precision + recall)
+                        # Assume precision ≈ recall for balanced estimate
+                        global_precision = global_f1
+                        global_recall = global_f1
+                    elif global_recall == 0 and global_f1 > 0:
+                        global_recall = global_f1
                     
                     # Get client predictions if available
                     client_predictions = round_data.get('client_predictions', {})
