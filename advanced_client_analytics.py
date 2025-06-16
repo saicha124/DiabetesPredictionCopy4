@@ -528,29 +528,45 @@ class AdvancedClientAnalytics:
             # Classification metrics
             st.subheader(get_translation('classification_metrics', st.session_state.language))
             
-            class_report = selected_metrics['classification_report']
+            # Generate classification report from predictions
+            y_true = selected_metrics.get('y_true', [])
+            y_pred = selected_metrics.get('y_pred', [])
             
-            # Display per-class metrics
-            for class_label in ['0', '1']:  # No diabetes, Diabetes
-                if class_label in class_report:
-                    class_name = get_translation('no_diabetes', st.session_state.language) if class_label == '0' else get_translation('diabetes', st.session_state.language)
-                    st.markdown(f"**{class_name}:**")
-                    
-                    metrics_data = class_report[class_label]
-                    col_a, col_b, col_c = st.columns(3)
-                    
-                    with col_a:
-                        st.metric(get_translation('precision', st.session_state.language), f"{metrics_data['precision']:.3f}")
-                    with col_b:
-                        st.metric(get_translation('recall', st.session_state.language), f"{metrics_data['recall']:.3f}")
-                    with col_c:
-                        st.metric(get_translation('f1_score', st.session_state.language), f"{metrics_data['f1-score']:.3f}")
+            if y_true and y_pred and len(y_true) == len(y_pred):
+                from sklearn.metrics import classification_report
+                class_report = classification_report(y_true, y_pred, output_dict=True)
+                
+                # Display per-class metrics
+                for class_label in ['0', '1']:  # No diabetes, Diabetes
+                    if class_label in class_report:
+                        class_name = get_translation('no_diabetes', st.session_state.language) if class_label == '0' else get_translation('diabetes', st.session_state.language)
+                        st.markdown(f"**{class_name}:**")
+                        
+                        metrics_data = class_report[class_label]
+                        col_a, col_b, col_c = st.columns(3)
+                        
+                        with col_a:
+                            st.metric(get_translation('precision', st.session_state.language), f"{metrics_data['precision']:.3f}")
+                        with col_b:
+                            st.metric(get_translation('recall', st.session_state.language), f"{metrics_data['recall']:.3f}")
+                        with col_c:
+                            st.metric(get_translation('f1_score', st.session_state.language), f"{metrics_data['f1-score']:.3f}")
+            else:
+                st.warning("Insufficient prediction data for detailed classification metrics")
         
         # Additional analysis
         st.subheader(get_translation('performance_insights', st.session_state.language))
         
-        # Calculate derived metrics
-        tn, fp, fn, tp = cm.ravel() if cm.size == 4 else (0, 0, 0, 0)
+        # Calculate derived metrics from confusion matrix if available
+        y_true = selected_metrics.get('y_true', [])
+        y_pred = selected_metrics.get('y_pred', [])
+        
+        if y_true and y_pred and len(y_true) == len(y_pred):
+            from sklearn.metrics import confusion_matrix
+            cm = confusion_matrix(y_true, y_pred)
+            tn, fp, fn, tp = cm.ravel() if cm.size == 4 else (0, 0, 0, 0)
+        else:
+            tn, fp, fn, tp = 0, 0, 0, 0
         
         specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
         sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0
