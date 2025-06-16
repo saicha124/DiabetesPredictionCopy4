@@ -377,6 +377,8 @@ class FederatedLearningManager:
                     'precision': eval_results['precision'],
                     'recall': eval_results['recall'],
                     'execution_time': round_time,
+                    'prediction_data': eval_results.get('prediction_data', {}),
+                    'client_predictions': eval_results.get('client_predictions', {}),
                     **dp_effects
                 }
                 
@@ -850,13 +852,41 @@ class FederatedLearningManager:
         # Confusion matrix
         cm = confusion_matrix(all_true_labels, all_predictions)
         
+        # Store prediction data for confusion matrix analysis
+        prediction_data = {
+            'y_true': np.array(all_true_labels),
+            'y_pred': np.array(all_predictions),
+            'y_prob': np.array(all_probabilities) if all_probabilities else None
+        }
+        
+        # Store per-client prediction data for detailed analysis
+        client_predictions = {}
+        for i, client in enumerate(self.clients):
+            X_test = client.data['X_test']
+            y_test = client.data['y_test']
+            
+            if len(X_test) > 0 and self.global_model is not None:
+                try:
+                    predictions = self.global_model.predict(X_test)
+                    probabilities = self.global_model.predict_proba(X_test)[:, 1]
+                    
+                    client_predictions[client.client_id] = {
+                        'y_true': np.array(y_test),
+                        'y_pred': np.array(predictions),
+                        'y_prob': np.array(probabilities)
+                    }
+                except Exception:
+                    continue
+        
         return {
             'accuracy': accuracy,
             'loss': loss,
             'f1_score': f1,
             'precision': precision,
             'recall': recall,
-            'confusion_matrix': cm
+            'confusion_matrix': cm,
+            'prediction_data': prediction_data,
+            'client_predictions': client_predictions
         }
     
     def _check_global_convergence(self):

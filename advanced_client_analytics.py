@@ -505,11 +505,41 @@ class AdvancedClientAnalytics:
         
         with col1:
             # Generate confusion matrix from predictions
-            y_true = selected_metrics.get('y_true', [])
-            y_pred = selected_metrics.get('y_pred', [])
+            y_true = []
+            y_pred = []
             
-            if y_true and y_pred and len(y_true) == len(y_pred):
+            # First try to get prediction data from training history
+            if hasattr(st.session_state, 'training_history') and st.session_state.training_history:
+                for round_data in st.session_state.training_history:
+                    if round_data.get('round') == round_idx:
+                        # Check if client-specific predictions exist
+                        client_predictions = round_data.get('client_predictions', {})
+                        if client_id in client_predictions:
+                            pred_data = client_predictions[client_id]
+                            y_true = pred_data.get('y_true', [])
+                            y_pred = pred_data.get('y_pred', [])
+                        else:
+                            # Fall back to global prediction data
+                            pred_data = round_data.get('prediction_data', {})
+                            y_true = pred_data.get('y_true', [])
+                            y_pred = pred_data.get('y_pred', [])
+                        break
+            
+            # Fall back to client metrics if training history doesn't have predictions
+            if not y_true or not y_pred:
+                y_true = selected_metrics.get('y_true', [])
+                y_pred = selected_metrics.get('y_pred', [])
+            
+            if len(y_true) > 0 and len(y_pred) > 0 and len(y_true) == len(y_pred):
                 from sklearn.metrics import confusion_matrix
+                import numpy as np
+                
+                # Convert to numpy arrays if they're lists
+                if isinstance(y_true, list):
+                    y_true = np.array(y_true)
+                if isinstance(y_pred, list):
+                    y_pred = np.array(y_pred)
+                
                 cm = confusion_matrix(y_true, y_pred)
                 
                 fig_cm = px.imshow(
@@ -531,10 +561,32 @@ class AdvancedClientAnalytics:
             st.subheader(get_translation('classification_metrics', st.session_state.language))
             
             # Generate classification report from predictions
-            y_true = selected_metrics.get('y_true', [])
-            y_pred = selected_metrics.get('y_pred', [])
+            y_true = []
+            y_pred = []
             
-            if y_true and y_pred and len(y_true) == len(y_pred):
+            # First try to get prediction data from training history
+            if hasattr(st.session_state, 'training_history') and st.session_state.training_history:
+                for round_data in st.session_state.training_history:
+                    if round_data.get('round') == round_idx:
+                        # Check if client-specific predictions exist
+                        client_predictions = round_data.get('client_predictions', {})
+                        if client_id in client_predictions:
+                            pred_data = client_predictions[client_id]
+                            y_true = pred_data.get('y_true', [])
+                            y_pred = pred_data.get('y_pred', [])
+                        else:
+                            # Fall back to global prediction data
+                            pred_data = round_data.get('prediction_data', {})
+                            y_true = pred_data.get('y_true', [])
+                            y_pred = pred_data.get('y_pred', [])
+                        break
+            
+            # Fall back to client metrics if training history doesn't have predictions
+            if not y_true or not y_pred:
+                y_true = selected_metrics.get('y_true', [])
+                y_pred = selected_metrics.get('y_pred', [])
+            
+            if len(y_true) > 0 and len(y_pred) > 0 and len(y_true) == len(y_pred):
                 from sklearn.metrics import classification_report
                 class_report = classification_report(y_true, y_pred, output_dict=True)
                 
