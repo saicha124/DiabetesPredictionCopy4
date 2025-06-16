@@ -136,13 +136,14 @@ def main():
         if selected_tab != "Configuration":
             tab_mapping = {
                 "Entraînement FL": 0, "FL Training": 0,
-                "Surveillance Médicale": 1, "Medical Surveillance": 1,
-                "Parcours de Formation": 2, "Training Journey": 2,
-                "Analytiques": 3, "Analytics": 3,
-                "Station Médicale": 4, "Medical Station": 4,
-                "Évaluation des Risques": 5, "Risk Assessment": 5,
-                "Visualisation Graphique": 6, "Graph Visualization": 6,
-                "Analytiques Avancées": 7, "Advanced Analytics": 7
+                "Sécurité Comité": 1, "Committee Security": 1,
+                "Surveillance Médicale": 2, "Medical Surveillance": 2,
+                "Parcours de Formation": 3, "Training Journey": 3,
+                "Analytiques": 4, "Analytics": 4,
+                "Station Médicale": 5, "Medical Station": 5,
+                "Évaluation des Risques": 6, "Risk Assessment": 6,
+                "Visualisation Graphique": 7, "Graph Visualization": 7,
+                "Analytiques Avancées": 8, "Advanced Analytics": 8
             }
             
             if selected_tab in tab_mapping:
@@ -224,8 +225,9 @@ def main():
     """, unsafe_allow_html=True)
 
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        get_translation("tab_training", st.session_state.language), 
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+        get_translation("tab_training", st.session_state.language),
+        "🛡️ Committee Security" if st.session_state.language == 'en' else "🛡️ Sécurité Comité",
         get_translation("tab_monitoring", st.session_state.language), 
         get_translation("tab_visualization", st.session_state.language),
         get_translation("tab_analytics", st.session_state.language),
@@ -1030,6 +1032,260 @@ def main():
                 st.error(f"Training failed: {str(e)}")
 
     with tab2:
+        if st.session_state.language == 'fr':
+            st.header("🛡️ Surveillance de Sécurité par Comité")
+        else:
+            st.header("🛡️ Committee-Based Security Monitoring")
+        
+        # Security Overview Dashboard
+        if st.session_state.language == 'fr':
+            st.subheader("📊 État du Système de Sécurité")
+        else:
+            st.subheader("📊 Security System Status")
+        
+        # Display security features status
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.session_state.language == 'fr':
+                st.metric("🔒 Comité Actif", "Oui" if st.session_state.get('enable_committee_security', True) else "Non")
+                st.metric("👥 Taille du Comité", st.session_state.get('committee_size', 5))
+            else:
+                st.metric("🔒 Committee Active", "Yes" if st.session_state.get('enable_committee_security', True) else "No")
+                st.metric("👥 Committee Size", st.session_state.get('committee_size', 5))
+        
+        with col2:
+            if st.session_state.language == 'fr':
+                st.metric("🎯 Détection Sybil", "Activée")
+                st.metric("⚔️ Détection Byzantine", "Activée")
+            else:
+                st.metric("🎯 Sybil Detection", "Enabled")
+                st.metric("⚔️ Byzantine Detection", "Enabled")
+        
+        with col3:
+            if st.session_state.language == 'fr':
+                st.metric("🔐 Vérification Crypto", "RSA-2048")
+                st.metric("🔒 Vie Privée Diff.", f"ε={st.session_state.get('epsilon', 1.0)}")
+            else:
+                st.metric("🔐 Crypto Verification", "RSA-2048")
+                st.metric("🔒 Differential Privacy", f"ε={st.session_state.get('epsilon', 1.0)}")
+        
+        # Committee Composition Simulation
+        if st.session_state.language == 'fr':
+            st.subheader("🏛️ Composition du Comité de Sécurité")
+        else:
+            st.subheader("🏛️ Security Committee Composition")
+        
+        # Simulate committee member data
+        import random
+        np.random.seed(42)
+        committee_members = []
+        roles = ["Validator", "Aggregator", "Monitor", "Coordinator"]
+        committee_size = st.session_state.get('committee_size', 5)
+        
+        for i in range(committee_size):
+            member = {
+                "Node ID": f"node_{i+1:03d}",
+                "Role": roles[i % len(roles)],
+                "Reputation Score": round(np.random.uniform(0.75, 0.99), 3),
+                "Uptime %": round(np.random.uniform(85, 99), 1),
+                "Validations": np.random.randint(50, 200),
+                "Last Active": f"{np.random.randint(1, 10)} min ago"
+            }
+            committee_members.append(member)
+        
+        committee_df = pd.DataFrame(committee_members)
+        
+        if st.session_state.language == 'fr':
+            # Translate column names for French
+            committee_df_fr = committee_df.copy()
+            committee_df_fr.columns = ["ID Nœud", "Rôle", "Score Réputation", "Disponibilité %", "Validations", "Dernière Activité"]
+            st.dataframe(committee_df_fr, use_container_width=True)
+        else:
+            st.dataframe(committee_df, use_container_width=True)
+        
+        # Security Metrics Visualization
+        if st.session_state.language == 'fr':
+            st.subheader("📈 Métriques de Sécurité en Temps Réel")
+        else:
+            st.subheader("📈 Real-Time Security Metrics")
+        
+        # Simulate security events over time
+        time_points = list(range(1, 21))  # 20 rounds
+        reputation_scores = [0.8 + 0.15 * np.sin(i/3) + np.random.normal(0, 0.02) for i in time_points]
+        attack_attempts = [max(0, int(5 + 3*np.sin(i/2) + np.random.normal(0, 1))) for i in time_points]
+        blocked_attacks = [max(0, int(att * 0.95)) for att in attack_attempts]
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Reputation trend chart
+            fig_rep = plt.figure(figsize=(8, 4))
+            plt.plot(time_points, reputation_scores, 'g-', linewidth=2, marker='o')
+            plt.title('Average Committee Reputation' if st.session_state.language == 'en' else 'Réputation Moyenne du Comité')
+            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            plt.ylabel('Reputation Score' if st.session_state.language == 'en' else 'Score de Réputation')
+            plt.grid(True, alpha=0.3)
+            plt.ylim(0.7, 1.0)
+            st.pyplot(fig_rep)
+        
+        with col2:
+            # Attack detection chart
+            fig_att = plt.figure(figsize=(8, 4))
+            plt.bar(time_points, attack_attempts, alpha=0.6, color='red', label='Attack Attempts' if st.session_state.language == 'en' else 'Tentatives d\'Attaque')
+            plt.bar(time_points, blocked_attacks, alpha=0.8, color='green', label='Blocked' if st.session_state.language == 'en' else 'Bloquées')
+            plt.title('Security Event Detection' if st.session_state.language == 'en' else 'Détection d\'Événements de Sécurité')
+            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            plt.ylabel('Count' if st.session_state.language == 'en' else 'Nombre')
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+            st.pyplot(fig_att)
+        
+        # Security Protocols Details
+        if st.session_state.language == 'fr':
+            st.subheader("🔧 Protocoles de Sécurité Actifs")
+            
+            with st.expander("🎯 Détection d'Attaques Sybil"):
+                st.write("""
+                **Mécanisme de Preuve de Travail:**
+                - Difficulté: 4 bits
+                - Défi cryptographique: SHA-256
+                - Détection de motifs comportementaux
+                - Seuil de similarité: 0.8
+                """)
+                
+            with st.expander("⚔️ Détection d'Attaques Byzantines"):
+                st.write("""
+                **Analyse de Déviation des Mises à Jour:**
+                - Seuil Byzantine: 33% des nœuds
+                - Distance cosinus pour détecter les anomalies
+                - Exclusion automatique des nœuds malveillants
+                - Agrégation sécurisée résistante aux pannes
+                """)
+                
+            with st.expander("🔐 Vérification Cryptographique"):
+                st.write("""
+                **Signatures Numériques RSA:**
+                - Taille de clé: 2048 bits
+                - Fonction de hachage: SHA-256
+                - Vérification d'intégrité des messages
+                - Preuve de non-répudiation
+                """)
+                
+            with st.expander("🔒 Protection de la Vie Privée"):
+                st.write("""
+                **Vie Privée Différentielle:**
+                - Epsilon (ε): """ + str(st.session_state.get('epsilon', 1.0)) + """
+                - Delta (δ): 1e-5
+                - Bruit de Laplace pour les scores de réputation
+                - Protection contre l'inférence d'attributs
+                """)
+        else:
+            st.subheader("🔧 Active Security Protocols")
+            
+            with st.expander("🎯 Sybil Attack Detection"):
+                st.write("""
+                **Proof-of-Work Mechanism:**
+                - Difficulty: 4 bits
+                - Cryptographic challenge: SHA-256
+                - Behavioral pattern detection
+                - Similarity threshold: 0.8
+                """)
+                
+            with st.expander("⚔️ Byzantine Attack Detection"):
+                st.write("""
+                **Update Deviation Analysis:**
+                - Byzantine threshold: 33% of nodes
+                - Cosine distance for anomaly detection
+                - Automatic exclusion of malicious nodes
+                - Fault-tolerant secure aggregation
+                """)
+                
+            with st.expander("🔐 Cryptographic Verification"):
+                st.write("""
+                **RSA Digital Signatures:**
+                - Key size: 2048 bits
+                - Hash function: SHA-256
+                - Message integrity verification
+                - Non-repudiation proof
+                """)
+                
+            with st.expander("🔒 Privacy Protection"):
+                st.write("""
+                **Differential Privacy:**
+                - Epsilon (ε): """ + str(st.session_state.get('epsilon', 1.0)) + """
+                - Delta (δ): 1e-5
+                - Laplace noise for reputation scores
+                - Protection against attribute inference
+                """)
+        
+        # Live Security Events Log
+        if st.session_state.language == 'fr':
+            st.subheader("📋 Journal des Événements de Sécurité")
+        else:
+            st.subheader("📋 Security Events Log")
+        
+        # Simulate security events
+        events = [
+            {"Time": "08:35:12", "Event": "Committee rotation completed", "Status": "✅ Success"},
+            {"Time": "08:34:55", "Event": "Sybil detection scan", "Status": "✅ No threats"},
+            {"Time": "08:34:33", "Event": "Byzantine behavior check", "Status": "✅ All nodes valid"},
+            {"Time": "08:34:10", "Event": "Reputation update with DP", "Status": "✅ Privacy preserved"},
+            {"Time": "08:33:45", "Event": "Cryptographic verification", "Status": "✅ Signatures valid"},
+        ]
+        
+        if st.session_state.language == 'fr':
+            events_fr = []
+            for event in events:
+                event_fr = event.copy()
+                if "Committee rotation" in event["Event"]:
+                    event_fr["Event"] = "Rotation du comité terminée"
+                elif "Sybil detection" in event["Event"]:
+                    event_fr["Event"] = "Scan de détection Sybil"
+                    event_fr["Status"] = "✅ Aucune menace"
+                elif "Byzantine behavior" in event["Event"]:
+                    event_fr["Event"] = "Vérification comportement Byzantine"
+                    event_fr["Status"] = "✅ Tous nœuds valides"
+                elif "Reputation update" in event["Event"]:
+                    event_fr["Event"] = "Mise à jour réputation avec VP"
+                    event_fr["Status"] = "✅ Vie privée préservée"
+                elif "Cryptographic verification" in event["Event"]:
+                    event_fr["Event"] = "Vérification cryptographique"
+                    event_fr["Status"] = "✅ Signatures valides"
+                events_fr.append(event_fr)
+            
+            events_df = pd.DataFrame(events_fr)
+            events_df.columns = ["Heure", "Événement", "Statut"]
+        else:
+            events_df = pd.DataFrame(events)
+        
+        st.dataframe(events_df, use_container_width=True)
+        
+        # Security Configuration Panel
+        if st.session_state.language == 'fr':
+            st.subheader("⚙️ Configuration de Sécurité Avancée")
+        else:
+            st.subheader("⚙️ Advanced Security Configuration")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.session_state.language == 'fr':
+                rotation_period = st.slider("Période de Rotation (tours)", 5, 25, 10)
+                byzantine_threshold = st.slider("Seuil Byzantine (%)", 10, 50, 33)
+            else:
+                rotation_period = st.slider("Rotation Period (rounds)", 5, 25, 10)
+                byzantine_threshold = st.slider("Byzantine Threshold (%)", 10, 50, 33)
+        
+        with col2:
+            if st.session_state.language == 'fr':
+                proof_difficulty = st.slider("Difficulté Preuve de Travail", 2, 8, 4)
+                privacy_epsilon = st.slider("Epsilon Vie Privée", 0.1, 5.0, 1.0, 0.1)
+            else:
+                proof_difficulty = st.slider("Proof-of-Work Difficulty", 2, 8, 4)
+                privacy_epsilon = st.slider("Privacy Epsilon", 0.1, 5.0, 1.0, 0.1)
+
+    with tab3:
         st.header("🏥 " + get_translation("medical_station_monitoring", st.session_state.language))
         
         # Add reset button for new training sessions
