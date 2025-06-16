@@ -175,7 +175,7 @@ class ClientSimulator:
             
             # Evaluate local performance to create heterogeneous metrics
             local_eval = self.evaluate()
-            local_accuracy = local_eval['test_accuracy'] if local_eval else 0.5
+            local_accuracy = local_eval['accuracy'] if local_eval else 0.5
             local_f1 = local_eval['f1_score'] if local_eval else 0.5
             
             # Calculate number of samples used for training

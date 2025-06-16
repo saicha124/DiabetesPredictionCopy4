@@ -502,20 +502,27 @@ class AdvancedClientAnalytics:
         col1, col2 = st.columns(2)
         
         with col1:
-            # Confusion matrix heatmap
-            cm = selected_metrics['confusion_matrix']
+            # Generate confusion matrix from predictions
+            y_true = selected_metrics.get('y_true', [])
+            y_pred = selected_metrics.get('y_pred', [])
             
-            fig_cm = px.imshow(
-                cm,
-                text_auto=True,
-                title=f"Confusion Matrix - {selected_client_name}, {selected_round_name}",
-                labels=dict(x="Predicted", y="Actual", color="Count"),
-                x=[get_translation('no_diabetes', st.session_state.language), get_translation('diabetes', st.session_state.language)],
-                y=[get_translation('no_diabetes', st.session_state.language), get_translation('diabetes', st.session_state.language)],
-                color_continuous_scale='Blues'
-            )
-            fig_cm.update_layout(height=400)
-            st.plotly_chart(fig_cm, use_container_width=True)
+            if y_true and y_pred and len(y_true) == len(y_pred):
+                from sklearn.metrics import confusion_matrix
+                cm = confusion_matrix(y_true, y_pred)
+                
+                fig_cm = px.imshow(
+                    cm,
+                    text_auto=True,
+                    title=f"Confusion Matrix - {selected_client_name}, {selected_round_name}",
+                    labels=dict(x="Predicted", y="Actual", color="Count"),
+                    x=[get_translation('no_diabetes', st.session_state.language), get_translation('diabetes', st.session_state.language)],
+                    y=[get_translation('no_diabetes', st.session_state.language), get_translation('diabetes', st.session_state.language)],
+                    color_continuous_scale='Blues'
+                )
+                fig_cm.update_layout(height=400)
+                st.plotly_chart(fig_cm, use_container_width=True)
+            else:
+                st.warning("Insufficient prediction data for confusion matrix visualization")
         
         with col2:
             # Classification metrics
