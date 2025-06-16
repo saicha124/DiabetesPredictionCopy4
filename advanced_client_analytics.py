@@ -381,7 +381,7 @@ class AdvancedClientAnalytics:
         
         # Metric selector
         metric_options = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
-        selected_metric = st.selectbox(get_translation('select_metric_to_track', st.session_state.language), metric_options, index=0)
+        selected_metric = st.selectbox(get_translation('select_metric_to_track', st.session_state.language), metric_options, index=0, key="performance_evolution_metric_selector")
         
         col1, col2 = st.columns(2)
         
