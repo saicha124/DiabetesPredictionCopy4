@@ -15,6 +15,7 @@ from aggregation_algorithms import FedAvgAggregator, FedProxAggregator
 from differential_privacy import DifferentialPrivacyManager
 from data_preprocessing import DataPreprocessor
 from utils import calculate_metrics
+from committee_security import SecureFederatedLearning, CommitteeManager, NodeReputation
 
 class FederatedLearningManager:
     """Main federated learning orchestrator"""
@@ -24,11 +25,12 @@ class FederatedLearningManager:
                  delta=1e-5, committee_size=3, model_type='logistic_regression',
                  privacy_mechanism='gaussian', gradient_clip_norm=1.0,
                  enable_early_stopping=True, patience=5, early_stop_metric='accuracy',
-                 min_improvement=0.001):
+                 min_improvement=0.001, enable_committee_security=True):
         self.num_clients = num_clients
         self.max_rounds = max_rounds
         self.target_accuracy = target_accuracy
         self.aggregation_algorithm = aggregation_algorithm
+        self.enable_committee_security = enable_committee_security
         self.enable_dp = enable_dp
         self.epsilon = epsilon
         self.delta = delta
@@ -84,6 +86,22 @@ class FederatedLearningManager:
         
         # Thread safety
         self.lock = threading.Lock()
+        
+        # Initialize committee-based security if enabled
+        if self.enable_committee_security:
+            try:
+                self.secure_fl = SecureFederatedLearning(
+                    committee_size=min(self.committee_size, self.num_clients),
+                    rotation_period=max(5, self.max_rounds // 4)  # Rotate every 25% of training
+                )
+                self.committee_security_active = True
+            except Exception:
+                # Fallback if committee security fails to initialize
+                self.committee_security_active = False
+                self.secure_fl = None
+        else:
+            self.committee_security_active = False
+            self.secure_fl = None
     
     def setup_clients(self, data):
         """Setup federated clients with data partitions"""
@@ -263,8 +281,12 @@ class FederatedLearningManager:
                 # Parallel client training
                 client_updates = self._train_clients_parallel()
                 
-                # Committee-based security check
-                validated_updates = self._committee_validation(client_updates)
+                # Committee-based security validation and attack detection
+                if self.committee_security_active and self.secure_fl:
+                    validated_updates, security_results = self._committee_security_validation(client_updates)
+                else:
+                    validated_updates = client_updates
+                    security_results = None
                 
                 # Apply differential privacy with current parameters
                 if self.enable_dp and self.dp_manager:
