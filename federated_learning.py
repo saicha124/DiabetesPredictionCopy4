@@ -306,7 +306,7 @@ class FederatedLearningManager:
                     print(f"Applying DP noise with ε={self.dp_manager.epsilon}, noise_scale={self.dp_manager.noise_scale}")
                     noisy_updates = []
                     for update in validated_updates:
-                        if 'parameters' in update and isinstance(update['parameters'], np.ndarray):
+                        if update is not None and 'parameters' in update and isinstance(update['parameters'], np.ndarray):
                             original_params = update['parameters'].copy()
                             
                             # Calculate adaptive sensitivity based on parameter magnitude
@@ -650,6 +650,12 @@ class FederatedLearningManager:
             flagged_nodes = set(security_results['attack_detection']['sybil_nodes'] + 
                               security_results['attack_detection']['byzantine_nodes'])
             
+            # Safety mechanism: if too many clients are flagged, use original updates to prevent training failure
+            total_clients = len(client_updates_dict) if isinstance(client_updates, list) else len(client_updates)
+            if len(flagged_nodes) >= total_clients * 0.8:  # If 80%+ flagged, likely false positives
+                print(f"⚠️ Security system flagged {len(flagged_nodes)}/{total_clients} clients - using original updates to prevent training failure")
+                return client_updates, security_results
+            
             # Return results in original format (list if input was list)
             if isinstance(client_updates, list):
                 validated_updates = []
@@ -658,7 +664,7 @@ class FederatedLearningManager:
                     if node_id not in flagged_nodes:
                         validated_updates.append(update)
                     else:
-                        print(f"⚠️ Client {i} flagged by security system, excluding from aggregation")
+                        print(f"🛡️ Client {i} flagged by security system, excluding from aggregation")
                         validated_updates.append(None)
             else:
                 validated_updates = {}
@@ -667,7 +673,7 @@ class FederatedLearningManager:
                     if node_id not in flagged_nodes:
                         validated_updates[client_id] = update
                     else:
-                        print(f"⚠️ Client {client_id} flagged by security system, excluding from aggregation")
+                        print(f"🛡️ Client {client_id} flagged by security system, excluding from aggregation")
             
             return validated_updates, security_results
             

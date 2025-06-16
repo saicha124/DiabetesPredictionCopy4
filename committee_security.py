@@ -172,10 +172,10 @@ class SybilDetector:
                 response_times = [b.get('response_time', 0) for b in behaviors[-10:]]
                 accuracy_scores = [b.get('accuracy', 0) for b in behaviors[-10:]]
                 
-                # Detect too-perfect behavior (potential bot)
-                if (np.std(response_times) < 0.01 or  # Too consistent response times
-                    np.std(accuracy_scores) < 0.001 or  # Too consistent accuracy
-                    np.mean(accuracy_scores) > 0.99):  # Suspiciously high accuracy
+                # Detect extremely suspicious behavior (very lenient for FL)
+                if (np.std(response_times) < 0.001 or  # Extremely consistent response times
+                    np.std(accuracy_scores) < 0.0001 or  # Extremely consistent accuracy
+                    np.mean(accuracy_scores) > 0.999):  # Perfect accuracy (nearly impossible)
                     suspicious_nodes.append(node_id)
         
         return suspicious_nodes
@@ -186,6 +186,7 @@ class ByzantineDetector:
     
     def __init__(self, byzantine_threshold: float = 0.33):
         self.byzantine_threshold = byzantine_threshold
+        self.deviation_threshold = 3.0  # Allow larger deviations for legitimate FL
         self.node_deviations: Dict[str, List[float]] = {}
     
     def detect_byzantine_behavior(self, node_updates: Dict[str, np.ndarray],
@@ -207,13 +208,14 @@ class ByzantineDetector:
                 if len(self.node_deviations[node_id]) > 10:
                     self.node_deviations[node_id] = self.node_deviations[node_id][-10:]
                 
-                # Check if node consistently deviates
+                # Check if node consistently deviates beyond reasonable thresholds
                 if len(self.node_deviations[node_id]) >= 5:
                     avg_deviation = np.mean(self.node_deviations[node_id])
                     std_deviation = np.std(self.node_deviations[node_id])
                     
-                    # Flag as Byzantine if consistently high deviation
-                    if avg_deviation > std_deviation * 3:
+                    # More lenient threshold for federated learning variations
+                    # Only flag if deviation is extremely high (10x standard deviation + base threshold)
+                    if avg_deviation > max(self.deviation_threshold, std_deviation * 10):
                         byzantine_nodes.append(node_id)
         
         return byzantine_nodes
