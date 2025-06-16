@@ -838,8 +838,8 @@ def main():
                     st.markdown("---")
                     st.markdown(f"### 🔄 {get_translation('federated_learning_training_progress', st.session_state.language)}")
                     
-                    # Enhanced progress display with multiple components
-                    col1, col2 = st.columns([3, 1])
+                    # Enhanced progress display with compact layout
+                    col1, col2 = st.columns([2.5, 1.5])
                     
                     with col1:
                         # Main training progress bar
@@ -850,9 +850,12 @@ def main():
                         current_round_display = st.empty()
                     
                     with col2:
-                        # Performance metrics display
-                        accuracy_display = st.empty()
-                        round_counter = st.empty()
+                        # Compact performance metrics display
+                        metric_cols = st.columns(2)
+                        with metric_cols[0]:
+                            accuracy_display = st.empty()
+                        with metric_cols[1]:
+                            round_counter = st.empty()
                     
                     # Secondary progress indicators
                     st.markdown("---")

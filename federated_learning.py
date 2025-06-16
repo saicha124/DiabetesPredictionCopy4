@@ -467,12 +467,27 @@ class FederatedLearningManager:
                             conv_text = "🔄 Convergence Check"
                         st.session_state.convergence_status.info(conv_text)
                 
-                # Update real-time accuracy display
+                # Update real-time accuracy display with compact format
                 if hasattr(st, 'session_state') and hasattr(st.session_state, 'accuracy_display'):
-                    best_display = f" | Best: {self.best_accuracy:.1%}"
-                    if self.enable_early_stopping and self.best_metric_value is not None:
-                        best_display += f" (Round {self.best_round})"
-                    st.session_state.accuracy_display.metric("🎯 Accuracy", f"{accuracy:.1%}{best_display}")
+                    delta_text = None
+                    if hasattr(self, 'previous_accuracy') and self.previous_accuracy is not None:
+                        delta = accuracy - self.previous_accuracy
+                        if delta != 0:
+                            delta_text = f"{delta:.1%}"
+                    
+                    st.session_state.accuracy_display.metric(
+                        label="🎯 Accuracy",
+                        value=f"{accuracy:.1%}",
+                        delta=delta_text
+                    )
+                    self.previous_accuracy = accuracy
+                
+                # Update round counter display with compact format
+                if hasattr(st, 'session_state') and hasattr(st.session_state, 'round_counter'):
+                    st.session_state.round_counter.metric(
+                        label="🔄 Round",
+                        value=f"{self.current_round}/{self.max_rounds}"
+                    )
                 
                 # Early stopping logic with model checkpointing
                 if self.enable_early_stopping:
@@ -630,14 +645,17 @@ class FederatedLearningManager:
                 
                 if hasattr(st.session_state, 'accuracy_display'):
                     if st.session_state.language == 'fr':
-                        accuracy_final = f"🎯 Précision Finale: {final_accuracy:.1%}"
-                        if self.early_stopped:
-                            accuracy_final += f" (Meilleur: Ronde {self.best_round})"
+                        label_text = "🎯 Précision Finale"
+                        delta_text = f"Meilleur: Ronde {self.best_round}" if self.early_stopped else None
                     else:
-                        accuracy_final = f"🎯 Final Accuracy: {final_accuracy:.1%}"
-                        if self.early_stopped:
-                            accuracy_final += f" (Best: Round {self.best_round})"
-                    st.session_state.accuracy_display.success(accuracy_final)
+                        label_text = "🎯 Final Accuracy"
+                        delta_text = f"Best: Round {self.best_round}" if self.early_stopped else None
+                    
+                    st.session_state.accuracy_display.metric(
+                        label=label_text,
+                        value=f"{final_accuracy:.1%}",
+                        delta=delta_text
+                    )
                 
                 # Update secondary progress indicators with completion status
                 if hasattr(st.session_state, 'client_status'):
