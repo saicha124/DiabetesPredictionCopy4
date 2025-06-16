@@ -716,7 +716,7 @@ class AdvancedClientAnalytics:
                 barmode='group'
             )
             fig_conv.update_layout(height=400)
-            st.plotly_chart(fig_conv, use_container_width=True, key="convergence_analysis")
+            st.plotly_chart(fig_conv, use_container_width=True, key=f"convergence_analysis_{int(time.time() * 1000000)}")
         
         with col2:
             # Improvement vs stability
@@ -738,7 +738,7 @@ class AdvancedClientAnalytics:
         
         # Select facility for detailed trend analysis
         facility_options = [f"{get_translation('medical_station', st.session_state.language)} {i + 1}" for i in self.convergence_metrics.keys()]
-        selected_facility = st.selectbox(get_translation('select_facility_trend_analysis', st.session_state.language), facility_options)
+        selected_facility = st.selectbox(get_translation('select_facility_trend_analysis', st.session_state.language), facility_options, key=f"convergence_facility_selector_{int(time.time() * 1000000)}")
         client_id = int(selected_facility.split()[-1]) - 1
         
         if client_id in self.convergence_metrics:
@@ -765,7 +765,7 @@ class AdvancedClientAnalytics:
                         yaxis_title="Accuracy",
                         height=300
                     )
-                    st.plotly_chart(fig_trend, use_container_width=True, key=f"accuracy_trend_{client_id}")
+                    st.plotly_chart(fig_trend, use_container_width=True, key=f"accuracy_trend_{client_id}_{int(time.time() * 1000000)}")
             
             with col2:
                 # F1 trend
@@ -786,7 +786,7 @@ class AdvancedClientAnalytics:
                         yaxis_title="F1-Score",
                         height=300
                     )
-                    st.plotly_chart(fig_f1_trend, use_container_width=True, key=f"f1_trend_{client_id}")
+                    st.plotly_chart(fig_f1_trend, use_container_width=True, key=f"f1_trend_{client_id}_{int(time.time() * 1000000)}")
             
             # Convergence summary
             st.subheader(f"🎯 {selected_facility} {get_translation('convergence_summary', st.session_state.language)}")
