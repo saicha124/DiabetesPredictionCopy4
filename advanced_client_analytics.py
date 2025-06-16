@@ -195,7 +195,7 @@ class AdvancedClientAnalytics:
         anomalous_client_ids = [item['client_id'] if isinstance(item, dict) else item for item in anomalous_clients]
         
         return {
-            'anomalous_clients': anomalous_client_ids,
+            'anomalous_clients': anomalous_clients,  # Return full dictionary objects, not just IDs
             'anomaly_scores': anomaly_scores,
             'performance_outliers': performance_outliers,
             'total_clients_analyzed': len(client_ids)
