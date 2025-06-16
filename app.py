@@ -1030,9 +1030,27 @@ def main():
                         progress_text = f"100% - 🎯 Federated Learning Training Complete"
                     st.session_state.data_progress.progress(1.0, text=progress_text)
                     
-                    # Enhanced completion status with training summary
-                    final_accuracy = st.session_state.results.get('accuracy', 0) if hasattr(st.session_state, 'results') else 0
-                    rounds_completed = len(st.session_state.training_metrics) if hasattr(st.session_state, 'training_metrics') else 0
+                    # Enhanced completion status with training summary - get accuracy from FL manager
+                    final_accuracy = 0
+                    rounds_completed = 0
+                    
+                    # Get accuracy from FL manager results
+                    if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
+                        if hasattr(st.session_state.fl_manager, 'best_accuracy'):
+                            final_accuracy = st.session_state.fl_manager.best_accuracy
+                        elif hasattr(st.session_state.fl_manager, 'training_history') and st.session_state.fl_manager.training_history:
+                            final_accuracy = st.session_state.fl_manager.training_history[-1].get('accuracy', 0)
+                        
+                        if hasattr(st.session_state.fl_manager, 'current_round'):
+                            rounds_completed = st.session_state.fl_manager.current_round
+                    
+                    # Fallback to session state results
+                    if final_accuracy == 0 and hasattr(st.session_state, 'results'):
+                        final_accuracy = st.session_state.results.get('accuracy', 0)
+                    
+                    # Fallback to training metrics
+                    if rounds_completed == 0 and hasattr(st.session_state, 'training_metrics'):
+                        rounds_completed = len(st.session_state.training_metrics)
                     
                     if st.session_state.language == 'fr':
                         completion_message = f"✅ Formation Terminée - Précision: {final_accuracy:.1%} ({rounds_completed} rondes)"
@@ -1044,27 +1062,31 @@ def main():
                 # Update enhanced progress elements with completion status
                 if hasattr(st.session_state, 'training_progress'):
                     if st.session_state.language == 'fr':
-                        final_progress_text = "🎯 100% - Formation Fédérée Réussie"
+                        final_progress_text = f"🎯 100% - Formation Terminée (Précision: {final_accuracy:.1%})"
                     else:
-                        final_progress_text = "🎯 100% - Federated Learning Complete"
+                        final_progress_text = f"🎯 100% - Training Complete (Accuracy: {final_accuracy:.1%})"
                     st.session_state.training_progress.progress(1.0, text=final_progress_text)
                 
                 if hasattr(st.session_state, 'training_status'):
                     if st.session_state.language == 'fr':
-                        status_message = "🏆 Formation fédérée terminée avec succès!"
+                        status_message = f"🏆 Formation fédérée terminée avec succès! Précision finale: {final_accuracy:.1%}"
                     else:
-                        status_message = "🏆 Federated learning training completed successfully!"
+                        status_message = f"🏆 Federated learning completed successfully! Final accuracy: {final_accuracy:.1%}"
                     st.session_state.training_status.success(status_message)
                 
                 if hasattr(st.session_state, 'current_round_display'):
-                    final_accuracy = st.session_state.results.get('accuracy', 0) if hasattr(st.session_state, 'results') else 0
-                    rounds_completed = len(st.session_state.training_metrics) if hasattr(st.session_state, 'training_metrics') else 0
-                    
                     if st.session_state.language == 'fr':
                         round_summary = f"📊 **Formation Terminée**: {rounds_completed} rondes - Précision finale: {final_accuracy:.1%}"
                     else:
                         round_summary = f"📊 **Training Complete**: {rounds_completed} rounds - Final accuracy: {final_accuracy:.1%}"
                     st.session_state.current_round_display.success(round_summary)
+                
+                if hasattr(st.session_state, 'accuracy_display'):
+                    if st.session_state.language == 'fr':
+                        accuracy_final = f"🎯 Précision Finale: {final_accuracy:.1%}"
+                    else:
+                        accuracy_final = f"🎯 Final Accuracy: {final_accuracy:.1%}"
+                    st.session_state.accuracy_display.success(accuracy_final)
                 
                 # Update secondary status indicators
                 if hasattr(st.session_state, 'client_status'):
