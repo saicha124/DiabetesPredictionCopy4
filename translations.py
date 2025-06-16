@@ -124,10 +124,16 @@ TRANSLATIONS = {
         # Facility Analytics Tab
         "facility_analytics": "Facility Analytics",
         "medical_facility_dashboard": "Medical Facility Dashboard",
+        "medical_facility_performance_dashboard": "Medical Facility Performance Dashboard",
         "facility_overview": "Facility Overview",
         "performance_evolution": "Performance Evolution",
         "anomaly_detection": "Anomaly Detection",
         "convergence_analysis": "Convergence Analysis",
+        "medical_facilities": "Medical Facilities",
+        "avg_accuracy": "Avg Accuracy",
+        "avg_f1_score": "Avg F1 Score",
+        "avg_precision": "Avg Precision",
+        "avg_recall": "Avg Recall",
         
         # Journey Visualization Tab
         "journey_visualization": "Journey Visualization",
@@ -679,6 +685,18 @@ TRANSLATIONS = {
         "underperforming_facilities": "Établissements sous-performants",
         "performance_outliers": "Valeurs aberrantes performance",
         "convergence_analysis": "Analyse convergence",
+        
+        # Facility Analytics Tab
+        "facility_analytics": "Analytiques d'établissement",
+        "medical_facility_dashboard": "Tableau de bord des établissements médicaux",
+        "medical_facility_performance_dashboard": "Tableau de bord de performance des établissements médicaux",
+        "facility_overview": "Aperçu de l'établissement",
+        "performance_evolution": "Évolution des performances",
+        "medical_facilities": "Établissements médicaux",
+        "avg_accuracy": "Précision moy.",
+        "avg_f1_score": "Score F1 moy.",
+        "avg_precision": "Précision moy.",
+        "avg_recall": "Rappel moy.",
         "facility_performance_ranking": "Classement des Performances des Établissements",
         "convergence_trends": "Tendances de Convergence",
         "select_facility_trend_analysis": "Sélectionner un Établissement pour l'Analyse des Tendances",
