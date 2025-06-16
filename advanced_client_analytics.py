@@ -395,7 +395,7 @@ class AdvancedClientAnalytics:
                 markers=True
             )
             fig_evolution.update_layout(height=400)
-            st.plotly_chart(fig_evolution, use_container_width=True)
+            st.plotly_chart(fig_evolution, use_container_width=True, key="performance_evolution_timeline")
         
         with col2:
             # Heatmap for performance matrix
@@ -413,7 +413,7 @@ class AdvancedClientAnalytics:
                 aspect='auto'
             )
             fig_heatmap.update_layout(height=400)
-            st.plotly_chart(fig_heatmap, use_container_width=True)
+            st.plotly_chart(fig_heatmap, use_container_width=True, key="performance_heatmap")
         
         # Performance improvement analysis
         st.subheader("📊 Performance Improvement Analysis")
@@ -453,7 +453,7 @@ class AdvancedClientAnalytics:
             )
             fig_improvement.add_hline(y=0, line_dash="dash", line_color="gray")
             fig_improvement.add_vline(x=0, line_dash="dash", line_color="gray")
-            st.plotly_chart(fig_improvement, use_container_width=True)
+            st.plotly_chart(fig_improvement, use_container_width=True, key="performance_improvement_scatter")
     
     def _create_confusion_matrix_analysis(self):
         """Create comprehensive confusion matrix analysis"""
@@ -714,7 +714,7 @@ class AdvancedClientAnalytics:
                 barmode='group'
             )
             fig_conv.update_layout(height=400)
-            st.plotly_chart(fig_conv, use_container_width=True)
+            st.plotly_chart(fig_conv, use_container_width=True, key="convergence_analysis")
         
         with col2:
             # Improvement vs stability
@@ -729,7 +729,7 @@ class AdvancedClientAnalytics:
                 color_continuous_scale='Viridis'
             )
             fig_scatter.update_layout(height=400)
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.plotly_chart(fig_scatter, use_container_width=True, key="stability_improvement_scatter")
         
         # Convergence trends
         st.subheader(f"📈 {get_translation('convergence_trends', st.session_state.language)}")
@@ -763,7 +763,7 @@ class AdvancedClientAnalytics:
                         yaxis_title="Accuracy",
                         height=300
                     )
-                    st.plotly_chart(fig_trend, use_container_width=True)
+                    st.plotly_chart(fig_trend, use_container_width=True, key=f"accuracy_trend_{client_id}")
             
             with col2:
                 # F1 trend
@@ -784,7 +784,7 @@ class AdvancedClientAnalytics:
                         yaxis_title="F1-Score",
                         height=300
                     )
-                    st.plotly_chart(fig_f1_trend, use_container_width=True)
+                    st.plotly_chart(fig_f1_trend, use_container_width=True, key=f"f1_trend_{client_id}")
             
             # Convergence summary
             st.subheader(f"🎯 {selected_facility} {get_translation('convergence_summary', st.session_state.language)}")
