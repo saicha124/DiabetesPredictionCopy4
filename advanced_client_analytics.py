@@ -455,7 +455,7 @@ class AdvancedClientAnalytics:
             )
             fig_improvement.add_hline(y=0, line_dash="dash", line_color="gray")
             fig_improvement.add_vline(x=0, line_dash="dash", line_color="gray")
-            st.plotly_chart(fig_improvement, use_container_width=True, key="performance_improvement_scatter")
+            st.plotly_chart(fig_improvement, use_container_width=True, key=f"performance_improvement_scatter_{int(time.time() * 1000000)}")
     
     def _create_confusion_matrix_analysis(self):
         """Create comprehensive confusion matrix analysis"""
