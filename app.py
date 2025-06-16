@@ -1199,29 +1199,37 @@ def main():
         import random
         np.random.seed(42)
         committee_members = []
-        roles = ["Validator", "Aggregator", "Monitor", "Coordinator"]
+        
+        if st.session_state.language == 'fr':
+            roles = ["Validateur", "Agrégateur", "Moniteur", "Coordinateur"]
+        else:
+            roles = ["Validator", "Aggregator", "Monitor", "Coordinator"]
+        
         committee_size = st.session_state.get('committee_size', 5)
         
         for i in range(committee_size):
-            member = {
-                "Node ID": f"node_{i+1:03d}",
-                "Role": roles[i % len(roles)],
-                "Reputation Score": round(np.random.uniform(0.75, 0.99), 3),
-                "Uptime %": round(np.random.uniform(85, 99), 1),
-                "Validations": np.random.randint(50, 200),
-                "Last Active": f"{np.random.randint(1, 10)} min ago"
-            }
+            if st.session_state.language == 'fr':
+                member = {
+                    "ID Nœud": f"nœud_{i+1:03d}",
+                    "Rôle": roles[i % len(roles)],
+                    "Score Réputation": round(np.random.uniform(0.75, 0.99), 3),
+                    "Disponibilité %": round(np.random.uniform(85, 99), 1),
+                    "Validations": np.random.randint(50, 200),
+                    "Dernière Activité": f"il y a {np.random.randint(1, 10)} min"
+                }
+            else:
+                member = {
+                    "Node ID": f"node_{i+1:03d}",
+                    "Role": roles[i % len(roles)],
+                    "Reputation Score": round(np.random.uniform(0.75, 0.99), 3),
+                    "Uptime %": round(np.random.uniform(85, 99), 1),
+                    "Validations": np.random.randint(50, 200),
+                    "Last Active": f"{np.random.randint(1, 10)} min ago"
+                }
             committee_members.append(member)
         
         committee_df = pd.DataFrame(committee_members)
-        
-        if st.session_state.language == 'fr':
-            # Translate column names for French
-            committee_df_fr = committee_df.copy()
-            committee_df_fr.columns = ["ID Nœud", "Rôle", "Score Réputation", "Disponibilité %", "Validations", "Dernière Activité"]
-            st.dataframe(committee_df_fr, use_container_width=True)
-        else:
-            st.dataframe(committee_df, use_container_width=True)
+        st.dataframe(committee_df, use_container_width=True)
         
         # Security Metrics Visualization
         if st.session_state.language == 'fr':
