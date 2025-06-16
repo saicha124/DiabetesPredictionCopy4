@@ -605,6 +605,76 @@ class FederatedLearningManager:
                 final_loss = self.training_history[-1]['loss'] if self.training_history else 0
                 final_f1 = self.training_history[-1]['f1_score'] if self.training_history else 0
             
+            # Enhanced completion display with comprehensive status updates
+            if hasattr(st, 'session_state'):
+                # Update all progress elements to completion status
+                if hasattr(st.session_state, 'training_progress'):
+                    if st.session_state.language == 'fr':
+                        completion_text = f"🎯 100% - Formation Terminée (Précision: {final_accuracy:.1%})"
+                    else:
+                        completion_text = f"🎯 100% - Training Complete (Accuracy: {final_accuracy:.1%})"
+                    st.session_state.training_progress.progress(1.0, text=completion_text)
+                
+                if hasattr(st.session_state, 'training_status'):
+                    convergence_info = ""
+                    if self.early_stopped:
+                        convergence_info = f" (early stopped at round {self.best_round})"
+                    elif hasattr(self, 'convergence_reason') and self.convergence_reason == "convergence_detected":
+                        convergence_info = " (converged)"
+                    
+                    if st.session_state.language == 'fr':
+                        final_status = f"🏆 Formation fédérée terminée avec succès! Précision finale: {final_accuracy:.1%}{convergence_info}"
+                    else:
+                        final_status = f"🏆 Federated learning completed successfully! Final accuracy: {final_accuracy:.1%}{convergence_info}"
+                    st.session_state.training_status.success(final_status)
+                
+                if hasattr(st.session_state, 'accuracy_display'):
+                    if st.session_state.language == 'fr':
+                        accuracy_final = f"🎯 Précision Finale: {final_accuracy:.1%}"
+                        if self.early_stopped:
+                            accuracy_final += f" (Meilleur: Ronde {self.best_round})"
+                    else:
+                        accuracy_final = f"🎯 Final Accuracy: {final_accuracy:.1%}"
+                        if self.early_stopped:
+                            accuracy_final += f" (Best: Round {self.best_round})"
+                    st.session_state.accuracy_display.success(accuracy_final)
+                
+                # Update secondary progress indicators with completion status
+                if hasattr(st.session_state, 'client_status'):
+                    if st.session_state.language == 'fr':
+                        client_final = "✅ Toutes les Stations Médicales Terminées"
+                    else:
+                        client_final = "✅ All Medical Facilities Complete"
+                    st.session_state.client_status.success(client_final)
+                
+                if hasattr(st.session_state, 'aggregation_status'):
+                    if st.session_state.language == 'fr':
+                        agg_final = "🎯 Agrégation Finale Réussie"
+                    else:
+                        agg_final = "🎯 Final Aggregation Complete"
+                    st.session_state.aggregation_status.success(agg_final)
+                
+                if hasattr(st.session_state, 'privacy_status'):
+                    epsilon_value = getattr(st.session_state, 'epsilon', 1.0)
+                    if st.session_state.language == 'fr':
+                        privacy_final = f"🔒 Confidentialité Garantie (ε={epsilon_value})"
+                    else:
+                        privacy_final = f"🔒 Privacy Guaranteed (ε={epsilon_value})"
+                    st.session_state.privacy_status.success(privacy_final)
+                
+                if hasattr(st.session_state, 'convergence_status'):
+                    if self.early_stopped:
+                        if st.session_state.language == 'fr':
+                            conv_final = f"🎯 Arrêt Précoce (Optimal à la Ronde {self.best_round})"
+                        else:
+                            conv_final = f"🎯 Early Stopped (Optimal at Round {self.best_round})"
+                    else:
+                        if st.session_state.language == 'fr':
+                            conv_final = "🎯 Convergence Atteinte"
+                        else:
+                            conv_final = "🎯 Convergence Achieved"
+                    st.session_state.convergence_status.success(conv_final)
+            
             results = {
                 'accuracy': final_accuracy,
                 'final_accuracy': final_accuracy,

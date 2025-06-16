@@ -1022,11 +1022,80 @@ def main():
                 st.session_state.training_started = False
                 st.session_state.training_in_progress = False
                 
-                # Complete progress bar when training actually finishes
+                # Enhanced completion display with comprehensive status updates
                 if hasattr(st.session_state, 'data_progress') and st.session_state.data_progress:
-                    progress_text = f"100% - {get_translation('federated_learning_training_complete', st.session_state.language)}"
+                    if st.session_state.language == 'fr':
+                        progress_text = f"100% - 🎯 Formation Fédérée Terminée avec Succès"
+                    else:
+                        progress_text = f"100% - 🎯 Federated Learning Training Complete"
                     st.session_state.data_progress.progress(1.0, text=progress_text)
-                    st.session_state.data_status.success(f"✅ {get_translation('training_complete', st.session_state.language)}")
+                    
+                    # Enhanced completion status with training summary
+                    final_accuracy = st.session_state.results.get('accuracy', 0) if hasattr(st.session_state, 'results') else 0
+                    rounds_completed = len(st.session_state.training_metrics) if hasattr(st.session_state, 'training_metrics') else 0
+                    
+                    if st.session_state.language == 'fr':
+                        completion_message = f"✅ Formation Terminée - Précision: {final_accuracy:.1%} ({rounds_completed} rondes)"
+                    else:
+                        completion_message = f"✅ Training Complete - Accuracy: {final_accuracy:.1%} ({rounds_completed} rounds)"
+                    
+                    st.session_state.data_status.success(completion_message)
+                
+                # Update enhanced progress elements with completion status
+                if hasattr(st.session_state, 'training_progress'):
+                    if st.session_state.language == 'fr':
+                        final_progress_text = "🎯 100% - Formation Fédérée Réussie"
+                    else:
+                        final_progress_text = "🎯 100% - Federated Learning Complete"
+                    st.session_state.training_progress.progress(1.0, text=final_progress_text)
+                
+                if hasattr(st.session_state, 'training_status'):
+                    if st.session_state.language == 'fr':
+                        status_message = "🏆 Formation fédérée terminée avec succès!"
+                    else:
+                        status_message = "🏆 Federated learning training completed successfully!"
+                    st.session_state.training_status.success(status_message)
+                
+                if hasattr(st.session_state, 'current_round_display'):
+                    final_accuracy = st.session_state.results.get('accuracy', 0) if hasattr(st.session_state, 'results') else 0
+                    rounds_completed = len(st.session_state.training_metrics) if hasattr(st.session_state, 'training_metrics') else 0
+                    
+                    if st.session_state.language == 'fr':
+                        round_summary = f"📊 **Formation Terminée**: {rounds_completed} rondes - Précision finale: {final_accuracy:.1%}"
+                    else:
+                        round_summary = f"📊 **Training Complete**: {rounds_completed} rounds - Final accuracy: {final_accuracy:.1%}"
+                    st.session_state.current_round_display.success(round_summary)
+                
+                # Update secondary status indicators
+                if hasattr(st.session_state, 'client_status'):
+                    active_clients = len(client_data) if client_data else 0
+                    if st.session_state.language == 'fr':
+                        client_complete = f"✅ {active_clients} Stations Médicales Terminées"
+                    else:
+                        client_complete = f"✅ {active_clients} Medical Facilities Complete"
+                    st.session_state.client_status.success(client_complete)
+                
+                if hasattr(st.session_state, 'aggregation_status'):
+                    if st.session_state.language == 'fr':
+                        agg_complete = "🎯 Agrégation Globale Réussie"
+                    else:
+                        agg_complete = "🎯 Global Aggregation Complete"
+                    st.session_state.aggregation_status.success(agg_complete)
+                
+                if hasattr(st.session_state, 'privacy_status'):
+                    epsilon_value = st.session_state.get('epsilon', 1.0)
+                    if st.session_state.language == 'fr':
+                        privacy_complete = f"🔒 Confidentialité Préservée (ε={epsilon_value})"
+                    else:
+                        privacy_complete = f"🔒 Privacy Preserved (ε={epsilon_value})"
+                    st.session_state.privacy_status.success(privacy_complete)
+                
+                if hasattr(st.session_state, 'convergence_status'):
+                    if st.session_state.language == 'fr':
+                        conv_complete = "🎯 Modèle Convergé"
+                    else:
+                        conv_complete = "🎯 Model Converged"
+                    st.session_state.convergence_status.success(conv_complete)
                 
                 # Store final results with security metrics
                 final_metrics = st.session_state.training_metrics[-1] if st.session_state.training_metrics else {}
