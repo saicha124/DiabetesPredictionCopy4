@@ -337,7 +337,7 @@ class AdvancedClientAnalytics:
                 barmode='group'
             )
             fig_bar.update_layout(height=400)
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, use_container_width=True, key="facility_performance_bar")
         
         with col2:
             fig_scatter = px.scatter(
@@ -350,7 +350,7 @@ class AdvancedClientAnalytics:
                 color='Facility'
             )
             fig_scatter.update_layout(height=400)
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.plotly_chart(fig_scatter, use_container_width=True, key="facility_scatter_overview")
     
     def _create_performance_evolution(self):
         """Create performance evolution visualization"""
@@ -520,7 +520,7 @@ class AdvancedClientAnalytics:
                     color_continuous_scale='Blues'
                 )
                 fig_cm.update_layout(height=400)
-                st.plotly_chart(fig_cm, use_container_width=True)
+                st.plotly_chart(fig_cm, use_container_width=True, key=f"confusion_matrix_{selected_client}_{selected_round}")
             else:
                 st.warning("Insufficient prediction data for confusion matrix visualization")
         
