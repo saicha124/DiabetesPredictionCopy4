@@ -2103,8 +2103,12 @@ def main():
                                     risk_probabilities = global_model.predict_proba(processed_features)[0]
                                     risk_score = risk_probabilities[1]  # Probability of diabetes class
                                     confidence = max(risk_probabilities)
-                                    probability_text = get_translation("model_prediction_probability", st.session_state.language, 
-                                                                       probability=f"{risk_score:.3f}")
+                                    
+                                    # Display model prediction probability with proper formatting
+                                    if st.session_state.language == 'fr':
+                                        probability_text = f"Probabilité de prédiction du modèle: {risk_score:.3f}"
+                                    else:
+                                        probability_text = f"Model prediction probability: {risk_score:.3f}"
                                     st.info(probability_text)
                                 elif hasattr(global_model, 'predict') and global_model.predict is not None:
                                     prediction = global_model.predict(processed_features)[0]
