@@ -2682,6 +2682,213 @@ def main():
             **Bottom line:** {'Our defense works very well!' if overall_success >= 90 else 'Our defense works well but can be improved.' if overall_success >= 80 else 'We need to improve our defenses.'}
             """)
         
+        # Individual Attack Analysis
+        st.markdown("---")
+        if st.session_state.language == 'fr':
+            st.subheader("🎯 Analyse Individuelle des Attaques")
+        else:
+            st.subheader("🎯 Individual Attack Analysis")
+        
+        # Create tabs for each attack type
+        if st.session_state.language == 'fr':
+            tab1, tab2, tab3 = st.tabs(["🛡️ Attaques Sybil", "⚠️ Attaques Byzantines", "🔒 Intrusions Réseau"])
+        else:
+            tab1, tab2, tab3 = st.tabs(["🛡️ Sybil Attacks", "⚠️ Byzantine Attacks", "🔒 Network Intrusions"])
+        
+        with tab1:
+            # Sybil Attack Analysis
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Sybil attack trends
+                fig_sybil = plt.figure(figsize=(10, 6))
+                
+                # Calculate success rate per round for Sybil
+                sybil_success_per_round = []
+                for i in range(len(time_points)):
+                    if sybil_attacks[i] > 0:
+                        success_rate = (sybil_blocked[i] / sybil_attacks[i]) * 100
+                    else:
+                        success_rate = 0
+                    sybil_success_per_round.append(success_rate)
+                
+                # Area chart for Sybil defense
+                plt.fill_between(time_points, sybil_success_per_round, alpha=0.6, color='#4CAF50')
+                plt.plot(time_points, sybil_success_per_round, 'darkgreen', linewidth=3, marker='o', markersize=5)
+                
+                # Add target line
+                plt.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7, label='Target 90%')
+                
+                plt.title('Sybil Defense Effectiveness' if st.session_state.language == 'en' 
+                         else 'Efficacité Défense Sybil', fontsize=14, fontweight='bold')
+                plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+                plt.ylabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)')
+                plt.ylim(80, 105)
+                plt.grid(True, alpha=0.3)
+                plt.legend()
+                st.pyplot(fig_sybil)
+            
+            with col2:
+                # Sybil attack volume
+                fig_sybil_vol = plt.figure(figsize=(10, 6))
+                
+                plt.bar(time_points, sybil_attacks, alpha=0.6, color='#FF5722', label='Attacks Detected' if st.session_state.language == 'en' else 'Attaques Détectées')
+                plt.bar(time_points, sybil_blocked, alpha=0.8, color='#4CAF50', label='Attacks Blocked' if st.session_state.language == 'en' else 'Attaques Bloquées')
+                
+                plt.title('Sybil Attack Volume & Defense' if st.session_state.language == 'en' 
+                         else 'Volume Attaques Sybil & Défense', fontsize=14, fontweight='bold')
+                plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+                plt.ylabel('Number of Attacks' if st.session_state.language == 'en' else 'Nombre d\'Attaques')
+                plt.legend()
+                plt.grid(True, alpha=0.3)
+                st.pyplot(fig_sybil_vol)
+            
+            # Sybil Status
+            if st.session_state.language == 'fr':
+                st.success(f"✅ **Statut Sybil: EXCELLENT** - {sybil_success:.1f}% de succès (Objectif: 90%)")
+                st.info("🎯 **Forces**: Détection rapide, filtrage efficace des fausses identités")
+                st.info("📈 **Recommandation**: Maintenir les protocoles actuels")
+            else:
+                st.success(f"✅ **Sybil Status: EXCELLENT** - {sybil_success:.1f}% success rate (Target: 90%)")
+                st.info("🎯 **Strengths**: Fast detection, effective fake identity filtering")
+                st.info("📈 **Recommendation**: Maintain current protocols")
+        
+        with tab2:
+            # Byzantine Attack Analysis - NEEDS IMPROVEMENT
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Byzantine attack trends
+                fig_byzantine = plt.figure(figsize=(10, 6))
+                
+                # Calculate success rate per round for Byzantine
+                byzantine_success_per_round = []
+                for i in range(len(time_points)):
+                    if byzantine_attacks[i] > 0:
+                        success_rate = (byzantine_blocked[i] / byzantine_attacks[i]) * 100
+                    else:
+                        success_rate = 0
+                    byzantine_success_per_round.append(success_rate)
+                
+                # Area chart for Byzantine defense - using warning colors
+                plt.fill_between(time_points, byzantine_success_per_round, alpha=0.6, color='#FF9800')
+                plt.plot(time_points, byzantine_success_per_round, 'darkorange', linewidth=3, marker='s', markersize=5)
+                
+                # Add target line and current performance
+                plt.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7, label='Target 90%')
+                plt.axhline(y=byzantine_success, color='orange', linestyle='-', linewidth=2, alpha=0.7, 
+                           label=f'Current: {byzantine_success:.1f}%')
+                
+                plt.title('Byzantine Defense Effectiveness - NEEDS IMPROVEMENT' if st.session_state.language == 'en' 
+                         else 'Efficacité Défense Byzantine - À AMÉLIORER', fontsize=14, fontweight='bold', color='red')
+                plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+                plt.ylabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)')
+                plt.ylim(30, 105)
+                plt.grid(True, alpha=0.3)
+                plt.legend()
+                st.pyplot(fig_byzantine)
+            
+            with col2:
+                # Byzantine attack patterns
+                fig_byzantine_pattern = plt.figure(figsize=(10, 6))
+                
+                # Create a pie chart showing Byzantine attack success/failure
+                byzantine_total_attacks = sum(byzantine_attacks)
+                byzantine_total_blocked = sum(byzantine_blocked)
+                byzantine_total_successful = byzantine_total_attacks - byzantine_total_blocked
+                
+                sizes = [byzantine_total_blocked, byzantine_total_successful]
+                labels = ['Blocked', 'Successful Attacks'] if st.session_state.language == 'en' else ['Bloquées', 'Attaques Réussies']
+                colors = ['#4CAF50', '#F44336']
+                explode = (0, 0.1)  # explode the successful attacks slice
+                
+                plt.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%',
+                       shadow=True, startangle=90, textprops={'fontsize': 12, 'fontweight': 'bold'})
+                plt.title('Byzantine Attack Success/Failure Ratio' if st.session_state.language == 'en' 
+                         else 'Ratio Succès/Échec Attaques Byzantines', fontsize=14, fontweight='bold')
+                st.pyplot(fig_byzantine_pattern)
+            
+            # Byzantine Status - WARNING
+            if st.session_state.language == 'fr':
+                st.error(f"⚠️ **Statut Byzantine: À AMÉLIORER** - {byzantine_success:.1f}% de succès (Objectif: 90%)")
+                st.warning("🔍 **Problèmes identifiés**: Détection tardive, algorithmes de consensus faibles")
+                st.info("🛠️ **Solutions recommandées**:")
+                st.write("• Renforcer les algorithmes de détection de comportement malveillant")
+                st.write("• Implémenter une validation croisée plus stricte")
+                st.write("• Augmenter la fréquence des vérifications de consensus")
+                st.write("• Améliorer les seuils de détection d'anomalies")
+            else:
+                st.error(f"⚠️ **Byzantine Status: NEEDS IMPROVEMENT** - {byzantine_success:.1f}% success rate (Target: 90%)")
+                st.warning("🔍 **Issues identified**: Late detection, weak consensus algorithms")
+                st.info("🛠️ **Recommended solutions**:")
+                st.write("• Strengthen malicious behavior detection algorithms")
+                st.write("• Implement stricter cross-validation")
+                st.write("• Increase consensus verification frequency")
+                st.write("• Improve anomaly detection thresholds")
+        
+        with tab3:
+            # Network Intrusion Analysis
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Network intrusion trends
+                fig_intrusion = plt.figure(figsize=(10, 6))
+                
+                # Calculate success rate per round for Network Intrusions
+                intrusion_success_per_round = []
+                for i in range(len(time_points)):
+                    if network_intrusions[i] > 0:
+                        success_rate = (intrusion_blocked[i] / network_intrusions[i]) * 100
+                    else:
+                        success_rate = 0
+                    intrusion_success_per_round.append(success_rate)
+                
+                # Area chart for Network intrusion defense
+                plt.fill_between(time_points, intrusion_success_per_round, alpha=0.6, color='#2196F3')
+                plt.plot(time_points, intrusion_success_per_round, 'darkblue', linewidth=3, marker='^', markersize=5)
+                
+                # Add target line
+                plt.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7, label='Target 90%')
+                
+                plt.title('Network Intrusion Defense Effectiveness' if st.session_state.language == 'en' 
+                         else 'Efficacité Défense Intrusions Réseau', fontsize=14, fontweight='bold')
+                plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+                plt.ylabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)')
+                plt.ylim(80, 105)
+                plt.grid(True, alpha=0.3)
+                plt.legend()
+                st.pyplot(fig_intrusion)
+            
+            with col2:
+                # Network intrusion types
+                fig_intrusion_types = plt.figure(figsize=(10, 6))
+                
+                # Simulate different intrusion types
+                intrusion_types = ['DDoS', 'Port Scan', 'SQL Injection', 'Malware']
+                if st.session_state.language == 'fr':
+                    intrusion_types = ['DDoS', 'Scan de Port', 'Injection SQL', 'Malware']
+                
+                type_counts = [30, 25, 20, 25]  # Simulated distribution
+                colors_intrusion = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4']
+                
+                plt.bar(intrusion_types, type_counts, color=colors_intrusion, alpha=0.8, edgecolor='black')
+                plt.title('Network Intrusion Types Detected' if st.session_state.language == 'en' 
+                         else 'Types d\'Intrusions Réseau Détectées', fontsize=14, fontweight='bold')
+                plt.ylabel('Count' if st.session_state.language == 'en' else 'Nombre')
+                plt.xticks(rotation=45)
+                plt.grid(True, alpha=0.3, axis='y')
+                st.pyplot(fig_intrusion_types)
+            
+            # Network Intrusion Status
+            if st.session_state.language == 'fr':
+                st.success(f"✅ **Statut Intrusions: BON** - {intrusion_success:.1f}% de succès (Objectif: 90%)")
+                st.info("🎯 **Forces**: Détection de signatures efficace, filtrage de trafic")
+                st.info("📈 **Recommandation**: Optimiser pour atteindre 90%")
+            else:
+                st.success(f"✅ **Intrusion Status: GOOD** - {intrusion_success:.1f}% success rate (Target: 90%)")
+                st.info("🎯 **Strengths**: Effective signature detection, traffic filtering")
+                st.info("📈 **Recommendation**: Optimize to reach 90% target")
+
         # Additional Security Visualizations
         st.markdown("---")
         if st.session_state.language == 'fr':
