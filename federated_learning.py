@@ -368,10 +368,13 @@ class FederatedLearningManager:
                             noisy_update['adaptive_sensitivity'] = adaptive_sensitivity
                             noisy_update['noise_scale_used'] = noise_scale
                             
-                            print(f"Client {update.get('client_id', 'unknown')}: ε={self.dp_manager.epsilon}, sensitivity={adaptive_sensitivity:.4f}, noise_scale={noise_scale:.4f}, noise_mag={np.linalg.norm(noise):.6f}")
+                            client_id = update.get('client_id', 'unknown') if isinstance(update, dict) else 'unknown'
+                            print(f"Client {client_id}: ε={self.dp_manager.epsilon}, sensitivity={adaptive_sensitivity:.4f}, noise_scale={noise_scale:.4f}, noise_mag={np.linalg.norm(noise):.6f}")
                             noisy_updates.append(noisy_update)
                         else:
-                            noisy_updates.append(update)
+                            # Only append non-None updates
+                            if update is not None:
+                                noisy_updates.append(update)
                     
                     validated_updates = noisy_updates
                     
@@ -424,13 +427,17 @@ class FederatedLearningManager:
                 # Calculate DP effects if applied
                 dp_effects = {}
                 if self.enable_dp and validated_updates:
-                    dp_applied_count = sum(1 for update in validated_updates if update.get('dp_applied', False))
-                    avg_noise_magnitude = np.mean([update.get('noise_magnitude', 0) for update in validated_updates if 'noise_magnitude' in update]) if validated_updates else 0
-                    dp_effects = {
-                        'dp_noise_applied': dp_applied_count,
-                        'avg_noise_magnitude': avg_noise_magnitude,
-                        'epsilon_used': self.dp_manager.epsilon if self.dp_manager else 0
-                    }
+                    # Filter out None values before processing
+                    valid_dp_updates = [update for update in validated_updates if update is not None]
+                    if valid_dp_updates:
+                        dp_applied_count = sum(1 for update in valid_dp_updates if update.get('dp_applied', False))
+                        noise_magnitudes = [update.get('noise_magnitude', 0) for update in valid_dp_updates if 'noise_magnitude' in update]
+                        avg_noise_magnitude = np.mean(noise_magnitudes) if noise_magnitudes else 0
+                        dp_effects = {
+                            'dp_noise_applied': dp_applied_count,
+                            'avg_noise_magnitude': avg_noise_magnitude,
+                            'epsilon_used': self.dp_manager.epsilon if self.dp_manager else 0
+                        }
                 
                 metrics = {
                     'round': self.current_round,
