@@ -2892,7 +2892,7 @@ def main():
                     progress_bar = st.progress(byzantine_success / 90.0)
                     st.write(f"Progress towards target: {byzantine_success:.1f}% / 90%")
                     
-                    improvement_rate = (byzantine_success - 48.8) / 41.2 * 100  # From current 48.8% to target 90%
+                    improvement_rate = (byzantine_success - 43.9) / 46.1 * 100  # From current 43.9% to target 90%
                     improvement_rate = max(0, min(100, improvement_rate))
                     st.write(f"Improvement rate: {improvement_rate:.1f}% completed")
                     
