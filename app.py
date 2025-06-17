@@ -2272,6 +2272,27 @@ def main():
         # Create learning phases visualization
         fig_timeline = plt.figure(figsize=(14, 6))
         
+        # Calculate detection rates for the learning timeline
+        detection_rates = []
+        for i in range(len(time_points)):
+            # Simulate improving detection rates over time with learning phases
+            base_rate = 75  # Starting detection rate
+            improvement = i * 1.2  # Linear improvement
+            phase_bonus = 0
+            
+            # Add phase-specific bonuses
+            if i >= 5:  # Learning phase
+                phase_bonus += 5
+            if i >= 12:  # Adaptation phase
+                phase_bonus += 3
+            if i >= 17:  # Optimization phase
+                phase_bonus += 2
+            
+            # Add some realistic noise
+            noise = np.random.uniform(-2, 3)
+            rate = min(98, base_rate + improvement + phase_bonus + noise)
+            detection_rates.append(rate)
+        
         # Define learning phases
         phases = {
             'Initial': (1, 5, '#ff9999'),
