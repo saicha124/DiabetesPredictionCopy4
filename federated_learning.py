@@ -368,13 +368,10 @@ class FederatedLearningManager:
                             noisy_update['adaptive_sensitivity'] = adaptive_sensitivity
                             noisy_update['noise_scale_used'] = noise_scale
                             
-                            client_id = update.get('client_id', 'unknown') if isinstance(update, dict) else 'unknown'
-                            print(f"Client {client_id}: ε={self.dp_manager.epsilon}, sensitivity={adaptive_sensitivity:.4f}, noise_scale={noise_scale:.4f}, noise_mag={np.linalg.norm(noise):.6f}")
+                            print(f"Client {update.get('client_id', 'unknown')}: ε={self.dp_manager.epsilon}, sensitivity={adaptive_sensitivity:.4f}, noise_scale={noise_scale:.4f}, noise_mag={np.linalg.norm(noise):.6f}")
                             noisy_updates.append(noisy_update)
                         else:
-                            # Only append non-None updates
-                            if update is not None:
-                                noisy_updates.append(update)
+                            noisy_updates.append(update)
                     
                     validated_updates = noisy_updates
                     
@@ -394,14 +391,10 @@ class FederatedLearningManager:
                             privacy_text = "🔓 Privacy: Disabled"
                         st.session_state.privacy_status.info(privacy_text)
                 
-                # Aggregate updates - handle empty update list
-                if validated_updates and any(update is not None for update in validated_updates):
-                    self.global_model = self.aggregator.aggregate(
-                        self.global_model, validated_updates
-                    )
-                else:
-                    # If no valid updates, keep current global model
-                    print("⚠️ No valid client updates for aggregation, keeping current global model")
+                # Aggregate updates
+                self.global_model = self.aggregator.aggregate(
+                    self.global_model, validated_updates
+                )
                 
                 # Update aggregation completion status
                 if hasattr(st, 'session_state') and hasattr(st.session_state, 'aggregation_status'):
@@ -427,17 +420,13 @@ class FederatedLearningManager:
                 # Calculate DP effects if applied
                 dp_effects = {}
                 if self.enable_dp and validated_updates:
-                    # Filter out None values before processing
-                    valid_dp_updates = [update for update in validated_updates if update is not None]
-                    if valid_dp_updates:
-                        dp_applied_count = sum(1 for update in valid_dp_updates if update.get('dp_applied', False))
-                        noise_magnitudes = [update.get('noise_magnitude', 0) for update in valid_dp_updates if 'noise_magnitude' in update]
-                        avg_noise_magnitude = np.mean(noise_magnitudes) if noise_magnitudes else 0
-                        dp_effects = {
-                            'dp_noise_applied': dp_applied_count,
-                            'avg_noise_magnitude': avg_noise_magnitude,
-                            'epsilon_used': self.dp_manager.epsilon if self.dp_manager else 0
-                        }
+                    dp_applied_count = sum(1 for update in validated_updates if update.get('dp_applied', False))
+                    avg_noise_magnitude = np.mean([update.get('noise_magnitude', 0) for update in validated_updates if 'noise_magnitude' in update]) if validated_updates else 0
+                    dp_effects = {
+                        'dp_noise_applied': dp_applied_count,
+                        'avg_noise_magnitude': avg_noise_magnitude,
+                        'epsilon_used': self.dp_manager.epsilon if self.dp_manager else 0
+                    }
                 
                 metrics = {
                     'round': self.current_round,
@@ -882,51 +871,28 @@ class FederatedLearningManager:
             
             # Safety mechanism: if too many clients are flagged, use original updates to prevent training failure
             total_clients = len(client_updates_dict) if isinstance(client_updates, list) else len(client_updates)
-            if len(flagged_nodes) >= total_clients * 0.5:  # If 50%+ flagged, likely false positives
+            if len(flagged_nodes) >= total_clients * 0.8:  # If 80%+ flagged, likely false positives
                 print(f"⚠️ Security system flagged {len(flagged_nodes)}/{total_clients} clients - using original updates to prevent training failure")
                 return client_updates, security_results
             
             # Return results in original format (list if input was list)
             if isinstance(client_updates, list):
                 validated_updates = []
-                valid_count = 0
                 for i, update in enumerate(client_updates):
                     node_id = f"client_{i}"
-                    if node_id not in flagged_nodes and update is not None:
+                    if node_id not in flagged_nodes:
                         validated_updates.append(update)
-                        valid_count += 1
                     else:
-                        if node_id in flagged_nodes:
-                            print(f"🛡️ Client {i} flagged by security system, excluding from aggregation")
+                        print(f"🛡️ Client {i} flagged by security system, excluding from aggregation")
                         validated_updates.append(None)
-                
-                # Safety check: ensure at least one valid update remains
-                if valid_count == 0:
-                    print(f"⚠️ No valid updates after security filtering - keeping best client update")
-                    # Keep the first non-None update to prevent complete failure
-                    for i, update in enumerate(client_updates):
-                        if update is not None:
-                            validated_updates[i] = update
-                            break
             else:
                 validated_updates = {}
-                valid_count = 0
                 for client_id, update in client_updates_dict.items():
                     node_id = f"client_{client_id}"
-                    if node_id not in flagged_nodes and update is not None:
+                    if node_id not in flagged_nodes:
                         validated_updates[client_id] = update
-                        valid_count += 1
                     else:
-                        if node_id in flagged_nodes:
-                            print(f"🛡️ Client {client_id} flagged by security system, excluding from aggregation")
-                
-                # Safety check: ensure at least one valid update remains
-                if valid_count == 0:
-                    print(f"⚠️ No valid updates after security filtering - keeping best client update")
-                    for client_id, update in client_updates_dict.items():
-                        if update is not None:
-                            validated_updates[client_id] = update
-                            break
+                        print(f"🛡️ Client {client_id} flagged by security system, excluding from aggregation")
             
             return validated_updates, security_results
             
