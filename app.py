@@ -883,7 +883,6 @@ def main():
                 
                 # Initialize federated learning manager if not exists
                 if not hasattr(st.session_state, 'fl_manager') or st.session_state.fl_manager is None:
-                    from federated_learning import FederatedLearningManager
                     
                     # Get configuration parameters
                     enable_dp = st.session_state.get('enable_dp', True)
