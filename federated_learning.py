@@ -627,23 +627,20 @@ class FederatedLearningManager:
             if hasattr(st, 'session_state'):
                 # Update all progress elements to completion status
                 if hasattr(st.session_state, 'training_progress'):
-                    if st.session_state.language == 'fr':
-                        completion_text = f"🎯 100% - Formation Terminée (Précision: {final_accuracy:.1%})"
-                    else:
-                        completion_text = f"🎯 100% - Training Complete (Accuracy: {final_accuracy:.1%})"
+                    from translations import get_translation
+                    completion_text = f"🎯 100% - {get_translation('analysis_complete', st.session_state.language)}"
                     st.session_state.training_progress.progress(1.0, text=completion_text)
                 
                 if hasattr(st.session_state, 'training_status'):
-                    convergence_info = ""
-                    if self.early_stopped:
-                        convergence_info = f" (early stopped at round {self.best_round})"
-                    elif hasattr(self, 'convergence_reason') and self.convergence_reason == "convergence_detected":
-                        convergence_info = " (converged)"
+                    from translations import get_translation
                     
-                    if st.session_state.language == 'fr':
-                        final_status = f"🏆 Formation fédérée terminée avec succès! Précision finale: {final_accuracy:.1%}{convergence_info}"
-                    else:
-                        final_status = f"🏆 Federated learning completed successfully! Final accuracy: {final_accuracy:.1%}{convergence_info}"
+                    # Enhanced completion status with model convergence information
+                    rounds_text = get_translation('model_converged_after_rounds', st.session_state.language, rounds=self.current_round)
+                    convergence_status = f"✅ {get_translation('risk_analysis_completed', st.session_state.language)}"
+                    model_status = f"✅ {get_translation('using_converged_global_federated_model', st.session_state.language)}"
+                    
+                    # Combine all status messages
+                    final_status = f"{convergence_status}\n\n{model_status}\n\n{rounds_text}"
                     st.session_state.training_status.success(final_status)
                 
                 if hasattr(st.session_state, 'accuracy_display'):
