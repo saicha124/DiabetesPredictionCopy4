@@ -1840,9 +1840,6 @@ def main():
             
             plt.tight_layout()
             st.pyplot(fig_analytics)
-            
-            plt.tight_layout()
-            st.pyplot(fig_detection)
         
         # Graph Explanations
         st.markdown("---")
