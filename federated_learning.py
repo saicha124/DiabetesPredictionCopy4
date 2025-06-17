@@ -391,10 +391,14 @@ class FederatedLearningManager:
                             privacy_text = "🔓 Privacy: Disabled"
                         st.session_state.privacy_status.info(privacy_text)
                 
-                # Aggregate updates
-                self.global_model = self.aggregator.aggregate(
-                    self.global_model, validated_updates
-                )
+                # Aggregate updates - handle empty update list
+                if validated_updates and any(update is not None for update in validated_updates):
+                    self.global_model = self.aggregator.aggregate(
+                        self.global_model, validated_updates
+                    )
+                else:
+                    # If no valid updates, keep current global model
+                    print("⚠️ No valid client updates for aggregation, keeping current global model")
                 
                 # Update aggregation completion status
                 if hasattr(st, 'session_state') and hasattr(st.session_state, 'aggregation_status'):
@@ -871,28 +875,51 @@ class FederatedLearningManager:
             
             # Safety mechanism: if too many clients are flagged, use original updates to prevent training failure
             total_clients = len(client_updates_dict) if isinstance(client_updates, list) else len(client_updates)
-            if len(flagged_nodes) >= total_clients * 0.8:  # If 80%+ flagged, likely false positives
+            if len(flagged_nodes) >= total_clients * 0.5:  # If 50%+ flagged, likely false positives
                 print(f"⚠️ Security system flagged {len(flagged_nodes)}/{total_clients} clients - using original updates to prevent training failure")
                 return client_updates, security_results
             
             # Return results in original format (list if input was list)
             if isinstance(client_updates, list):
                 validated_updates = []
+                valid_count = 0
                 for i, update in enumerate(client_updates):
                     node_id = f"client_{i}"
-                    if node_id not in flagged_nodes:
+                    if node_id not in flagged_nodes and update is not None:
                         validated_updates.append(update)
+                        valid_count += 1
                     else:
-                        print(f"🛡️ Client {i} flagged by security system, excluding from aggregation")
+                        if node_id in flagged_nodes:
+                            print(f"🛡️ Client {i} flagged by security system, excluding from aggregation")
                         validated_updates.append(None)
+                
+                # Safety check: ensure at least one valid update remains
+                if valid_count == 0:
+                    print(f"⚠️ No valid updates after security filtering - keeping best client update")
+                    # Keep the first non-None update to prevent complete failure
+                    for i, update in enumerate(client_updates):
+                        if update is not None:
+                            validated_updates[i] = update
+                            break
             else:
                 validated_updates = {}
+                valid_count = 0
                 for client_id, update in client_updates_dict.items():
                     node_id = f"client_{client_id}"
-                    if node_id not in flagged_nodes:
+                    if node_id not in flagged_nodes and update is not None:
                         validated_updates[client_id] = update
+                        valid_count += 1
                     else:
-                        print(f"🛡️ Client {client_id} flagged by security system, excluding from aggregation")
+                        if node_id in flagged_nodes:
+                            print(f"🛡️ Client {client_id} flagged by security system, excluding from aggregation")
+                
+                # Safety check: ensure at least one valid update remains
+                if valid_count == 0:
+                    print(f"⚠️ No valid updates after security filtering - keeping best client update")
+                    for client_id, update in client_updates_dict.items():
+                        if update is not None:
+                            validated_updates[client_id] = update
+                            break
             
             return validated_updates, security_results
             
