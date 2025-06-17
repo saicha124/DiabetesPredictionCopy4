@@ -881,8 +881,44 @@ def main():
                 st.session_state.privacy_status = privacy_status
                 st.session_state.convergence_status = convergence_status
                 
+                # Initialize federated learning manager if not exists
+                if not hasattr(st.session_state, 'fl_manager') or st.session_state.fl_manager is None:
+                    from federated_learning import FederatedLearningManager
+                    
+                    # Get configuration parameters
+                    enable_dp = st.session_state.get('enable_dp', True)
+                    epsilon = st.session_state.get('epsilon', 1.0)
+                    delta = st.session_state.get('delta', 1e-5)
+                    
+                    # Early stopping parameters
+                    early_stopping_config = {
+                        'enable_early_stopping': st.session_state.get('enable_early_stopping', True),
+                        'patience': st.session_state.get('patience', 5),
+                        'early_stop_metric': st.session_state.get('early_stop_metric', 'accuracy'),
+                        'min_improvement': st.session_state.get('min_improvement', 0.001)
+                    }
+                    
+                    # Initialize FL manager
+                    fl_manager = FederatedLearningManager(
+                        num_clients=num_clients,
+                        max_rounds=max_rounds,
+                        aggregation_algorithm='FedAvg',
+                        enable_dp=enable_dp,
+                        epsilon=epsilon,
+                        delta=delta,
+                        model_type=model_type,
+                        enable_early_stopping=early_stopping_config['enable_early_stopping'],
+                        patience=early_stopping_config['patience'],
+                        early_stop_metric=early_stopping_config['early_stop_metric'],
+                        min_improvement=early_stopping_config['min_improvement']
+                    )
+                    
+                    st.session_state.fl_manager = fl_manager
+                else:
+                    fl_manager = st.session_state.fl_manager
+                
                 # Execute actual federated learning training with progress tracking
-                training_results = fl_manager.train(data)
+                training_results = fl_manager.train(client_data)
                 
                 # Process real training results from federated learning
                 for round_idx, real_metrics in enumerate(fl_manager.training_history):
