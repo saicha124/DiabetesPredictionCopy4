@@ -239,7 +239,7 @@ class ByzantineDetector:
                 self.detection_history[node_id] = 0
             
             # Flag as Byzantine if score exceeds threshold
-            if score > 0.6:  # Stricter threshold
+            if score > 0.25:  # Lower threshold for better detection
                 self.detection_history[node_id] += 1
                 byzantine_nodes.append(node_id)
         
@@ -272,7 +272,7 @@ class ByzantineDetector:
         if len(all_deviations) > 1:
             median_deviation = np.median(all_deviations)
             mad = np.median(np.abs(np.array(all_deviations) - median_deviation))
-            dynamic_threshold = median_deviation + 2.5 * mad  # Modified Z-score approach
+            dynamic_threshold = median_deviation + 1.5 * mad  # More sensitive detection
             
             for node_id, deviation in node_deviations_current.items():
                 # Check both current and historical anomalies
@@ -424,30 +424,30 @@ class ByzantineDetector:
     
     def _calculate_byzantine_score(self, node_id: str, node_updates: Dict[str, np.ndarray],
                                  global_update: np.ndarray) -> float:
-        """Calculate comprehensive Byzantine score for a node"""
+        """Calculate enhanced Byzantine score for improved detection"""
         score = 0.0
         
-        # Deviation score (0-0.3)
+        # Enhanced deviation score (0-0.4) - higher weight
         if node_id in self.node_deviations and len(self.node_deviations[node_id]) > 0:
             avg_deviation = np.mean(self.node_deviations[node_id][-5:])
-            score += min(avg_deviation / 10.0, 0.3)
+            score += min(avg_deviation / 5.0, 0.4)  # More sensitive to deviations
         
-        # Historical detection score (0-0.2)
+        # Historical detection score (0-0.3) - increased weight
         if node_id in self.detection_history:
-            detection_rate = min(self.detection_history[node_id] / 10.0, 0.2)
+            detection_rate = min(self.detection_history[node_id] / 5.0, 0.3)  # More weight to history
             score += detection_rate
         
-        # Pattern anomaly score (0-0.25)
+        # Pattern anomaly score (0-0.3) - enhanced
         if node_id in self.node_response_patterns and len(self.node_response_patterns[node_id]) > 2:
             pattern_variance = np.var(self.node_response_patterns[node_id])
-            pattern_score = min(pattern_variance * 0.1, 0.25)
+            pattern_score = min(pattern_variance * 0.2, 0.3)  # Doubled sensitivity
             score += pattern_score
         
-        # Consensus violation score (0-0.25)
+        # Consensus violation score (0-0.3) - enhanced
         if node_updates.get(node_id) is not None:
             update = node_updates[node_id]
             consensus_deviation = np.linalg.norm(update - global_update)
-            consensus_score = min(consensus_deviation / 8.0, 0.25)
+            consensus_score = min(consensus_deviation / 4.0, 0.3)  # More sensitive
             score += consensus_score
         
         return min(score, 1.0)
