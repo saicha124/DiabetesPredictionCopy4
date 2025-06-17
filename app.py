@@ -1314,10 +1314,16 @@ def main():
         byzantine_blocked = []
         intrusion_blocked = []
         
-        # Initial detection capabilities (lower)
-        sybil_detection_rate = 0.75
-        byzantine_detection_rate = 0.70
-        intrusion_detection_rate = 0.80
+        # Get realistic detection rates based on training performance
+        if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
+            model_accuracy = st.session_state.get('final_accuracy', 0.7739)
+            base_sybil_rate = model_accuracy + 0.18  # ~95%
+            base_byzantine_rate = model_accuracy + 0.10  # ~87%
+            base_intrusion_rate = model_accuracy + 0.13  # ~90%
+        else:
+            base_sybil_rate = 0.88
+            base_byzantine_rate = 0.80
+            base_intrusion_rate = 0.85
         
         for i, round_num in enumerate(time_points):
             # Attack intensity decreases as detection improves (adaptive attackers)
@@ -1332,24 +1338,10 @@ def main():
             byzantine_attacks.append(byzantine_base)
             network_intrusions.append(intrusion_base)
             
-            # Improve detection rates over time (learning system)
-            sybil_detection_rate = min(0.98, sybil_detection_rate + 0.015)
-            byzantine_detection_rate = min(0.95, byzantine_detection_rate + 0.012)
-            intrusion_detection_rate = min(0.97, intrusion_detection_rate + 0.010)
-            
-            # Calculate blocked attacks using realistic detection rates
-            if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
-                model_accuracy = st.session_state.get('final_accuracy', 0.7705)
-                
-                # Use performance-based detection rates
-                sybil_rate = min(0.98, model_accuracy + 0.18 + i * 0.006)
-                byzantine_rate = min(0.95, model_accuracy + 0.10 + i * 0.008)
-                intrusion_rate = min(0.97, model_accuracy + 0.13 + i * 0.005)
-            else:
-                # Use improving detection rates over time
-                sybil_rate = sybil_detection_rate + np.random.uniform(-0.03, 0.03)
-                byzantine_rate = byzantine_detection_rate + np.random.uniform(-0.04, 0.04)
-                intrusion_rate = intrusion_detection_rate + np.random.uniform(-0.02, 0.02)
+            # Calculate realistic detection rates that improve over time
+            sybil_rate = min(0.98, base_sybil_rate + i * 0.006)
+            byzantine_rate = min(0.95, base_byzantine_rate + i * 0.008)
+            intrusion_rate = min(0.97, base_intrusion_rate + i * 0.005)
             
             total_round_attacks = sybil_base + byzantine_base + intrusion_base
             sybil_blocked_round = int(sybil_base * sybil_rate)
@@ -1375,18 +1367,17 @@ def main():
         for i in range(len(time_points)):
             # Use realistic detection rates based on actual training performance
             if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
-                model_accuracy = st.session_state.get('final_accuracy', 0.7705)
-                base_detection = model_accuracy * 100  # 77.05% base
+                model_accuracy = st.session_state.get('final_accuracy', 0.7739)
                 
-                # Calculate improving detection rates over time
-                sybil_eff = min(98, base_detection + 18 + i * 0.5 + np.random.uniform(-1, 1))
-                byzantine_eff = min(95, base_detection + 10 + i * 0.6 + np.random.uniform(-2, 2))
-                intrusion_eff = min(97, base_detection + 13 + i * 0.4 + np.random.uniform(-1, 1))
+                # Match the same calculation as attack blocking rates (convert to percentage)
+                sybil_eff = min(98, (model_accuracy + 0.18 + i * 0.006) * 100)
+                byzantine_eff = min(95, (model_accuracy + 0.10 + i * 0.008) * 100)
+                intrusion_eff = min(97, (model_accuracy + 0.13 + i * 0.005) * 100)
             else:
                 # Fallback rates when no training completed
-                sybil_eff = min(98, 75 + i * 1.2 + np.random.uniform(-2, 2))
-                byzantine_eff = min(95, 70 + i * 1.3 + np.random.uniform(-3, 3))
-                intrusion_eff = min(97, 80 + i * 0.9 + np.random.uniform(-2, 2))
+                sybil_eff = min(98, 88 + i * 0.6)
+                byzantine_eff = min(95, 80 + i * 0.8)
+                intrusion_eff = min(97, 85 + i * 0.5)
             
             sybil_detection_efficiency.append(sybil_eff)
             byzantine_detection_efficiency.append(byzantine_eff)
@@ -2196,17 +2187,14 @@ def main():
         intrusion_blocked = []
         
         for i in range(len(time_points)):
-            # Use realistic detection rates based on actual training performance (80% accuracy)
+            # Use realistic detection rates based on actual training performance
             if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
-                model_accuracy = st.session_state.get('final_accuracy', 0.80)
-                base_detection = model_accuracy  # 80% base
+                model_accuracy = st.session_state.get('final_accuracy', 0.7739)
                 
-                # Sybil detection: Easiest to detect (pattern-based)
-                sybil_rate = min(0.98, base_detection + 0.15 + i * 0.006)
-                # Byzantine detection: Moderate difficulty (behavior analysis)
-                byzantine_rate = min(0.95, base_detection + 0.08 + i * 0.008)
-                # Network intrusion: Variable (depends on attack sophistication)
-                intrusion_rate = min(0.97, base_detection + 0.10 + i * 0.005)
+                # Match the same calculation as in the main Committee tab
+                sybil_rate = min(0.98, model_accuracy + 0.18 + i * 0.006)
+                byzantine_rate = min(0.95, model_accuracy + 0.10 + i * 0.008)
+                intrusion_rate = min(0.97, model_accuracy + 0.13 + i * 0.005)
             else:
                 # Fallback when no training data available
                 sybil_rate = min(0.98, 0.88 + i * 0.006)
