@@ -1350,44 +1350,187 @@ def main():
             fig_att = plt.figure(figsize=(10, 5))
             
             # Create stacked bar chart for different attack types
-            width = 0.6
-            p1 = plt.bar(time_points, sybil_attacks, width, label='Sybil Attacks' if st.session_state.language == 'en' else 'Attaques Sybil', 
-                        color='#ff4444', alpha=0.8)
-            p2 = plt.bar(time_points, byzantine_attacks, width, bottom=sybil_attacks, 
-                        label='Byzantine Attacks' if st.session_state.language == 'en' else 'Attaques Byzantines', 
-                        color='#ff8844', alpha=0.8)
-            p3 = plt.bar(time_points, network_intrusions, width, 
-                        bottom=[i+j for i,j in zip(sybil_attacks, byzantine_attacks)],
-                        label='Network Intrusions' if st.session_state.language == 'en' else 'Intrusions Réseau', 
-                        color='#ffaa44', alpha=0.8)
+            plt.bar(time_points, sybil_attacks, label='Sybil Attacks' if st.session_state.language == 'en' else 'Attaques Sybil', 
+                   color='red', alpha=0.8, width=0.8)
+            plt.bar(time_points, byzantine_attacks, bottom=sybil_attacks, 
+                   label='Byzantine Attacks' if st.session_state.language == 'en' else 'Attaques Byzantines', 
+                   color='orange', alpha=0.8, width=0.8)
+            plt.bar(time_points, network_intrusions, 
+                   bottom=[s+b for s,b in zip(sybil_attacks, byzantine_attacks)],
+                   label='Network Intrusions' if st.session_state.language == 'en' else 'Intrusions Réseau', 
+                   color='purple', alpha=0.8, width=0.8)
             
             # Add blocked attacks line
-            plt.plot(time_points, blocked_attacks, 'g-', linewidth=3, marker='s', markersize=5,
-                    label='Successfully Blocked' if st.session_state.language == 'en' else 'Bloquées avec Succès',
+            plt.plot(time_points, blocked_attacks, 'g-', linewidth=3, marker='s', markersize=6,
+                    label='Blocked Attacks' if st.session_state.language == 'en' else 'Attaques Bloquées',
                     markerfacecolor='lightgreen', markeredgecolor='darkgreen')
             
             plt.title('Security Event Detection & Response' if st.session_state.language == 'en' else 'Détection et Réponse aux Événements de Sécurité', 
                      fontsize=14, fontweight='bold')
             plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement', fontsize=12)
-            plt.ylabel('Security Events Count' if st.session_state.language == 'en' else 'Nombre d\'Événements de Sécurité', fontsize=12)
+            plt.ylabel('Number of Events' if st.session_state.language == 'en' else 'Nombre d\'Événements', fontsize=12)
             plt.legend(loc='upper right', fontsize=10)
             plt.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
-            plt.xlim(0.5, 20.5)
+            plt.xlim(1, 20)
             
-            # Add effectiveness metrics
+            # Add success rate annotation
+            total_detected = sum(total_attacks)
             total_blocked = sum(blocked_attacks)
-            total_attempts = sum(total_attacks)
-            effectiveness = (total_blocked / total_attempts) * 100 if total_attempts > 0 else 0
-            
-            plt.text(0.02, 0.98, f'Detection Rate: {effectiveness:.1f}%' if st.session_state.language == 'en' else f'Taux de Détection: {effectiveness:.1f}%',
-                    transform=plt.gca().transAxes, fontsize=11, fontweight='bold',
-                    bbox=dict(boxstyle='round,pad=0.3', facecolor='lightblue', alpha=0.7),
-                    verticalalignment='top')
+            success_rate = (total_blocked / total_detected) * 100 if total_detected > 0 else 0
+            plt.text(15, max(total_attacks)*0.8, 
+                    f'Block Rate: {success_rate:.1f}%' if st.session_state.language == 'en' else f'Taux de Blocage: {success_rate:.1f}%',
+                    fontsize=12, fontweight='bold', 
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgreen", alpha=0.8))
             
             plt.tight_layout()
             st.pyplot(fig_att)
         
+        # Graph Explanations
+        st.markdown("---")
+        if st.session_state.language == 'fr':
+            st.subheader("📊 Explication des Graphiques de Sécurité")
+        else:
+            st.subheader("📊 Security Graph Explanations")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.session_state.language == 'fr':
+                st.markdown("""
+                **📈 Graphique de Réputation du Comité:**
+                - **Ligne verte**: Score de réputation moyen des nœuds du comité (0.75-1.0)
+                - **Zone ombrée**: Variation naturelle de la réputation dans le temps
+                - **Ligne pointillée**: Tendance générale de performance
+                - **Annotations**: Points maximum et minimum pour identifier les pics
+                
+                **Interprétation:**
+                - Score > 0.9: Performance excellente du comité
+                - Score 0.8-0.9: Performance stable et fiable
+                - Score < 0.8: Nécessite surveillance accrue
+                """)
+            else:
+                st.markdown("""
+                **📈 Committee Reputation Graph:**
+                - **Green line**: Average reputation score of committee nodes (0.75-1.0)
+                - **Shaded area**: Natural reputation variation over time
+                - **Dashed line**: Overall performance trend
+                - **Annotations**: Max/min points to identify peaks
+                
+                **Interpretation:**
+                - Score > 0.9: Excellent committee performance
+                - Score 0.8-0.9: Stable and reliable performance
+                - Score < 0.8: Requires increased monitoring
+                """)
+        
+        with col2:
+            if st.session_state.language == 'fr':
+                st.markdown("""
+                **🛡️ Graphique de Détection d'Attaques:**
+                - **Barres rouges**: Attaques Sybil (faux nœuds)
+                - **Barres oranges**: Attaques Byzantines (nœuds malveillants)
+                - **Barres violettes**: Intrusions réseau
+                - **Ligne verte**: Attaques bloquées avec succès
+                
+                **Interprétation:**
+                - Taux de blocage élevé (>90%): Sécurité robuste
+                - Ligne verte proche des barres: Détection efficace
+                - Pics d'attaques: Périodes de menace accrue
+                """)
+            else:
+                st.markdown("""
+                **🛡️ Attack Detection Graph:**
+                - **Red bars**: Sybil attacks (fake nodes)
+                - **Orange bars**: Byzantine attacks (malicious nodes)
+                - **Purple bars**: Network intrusions
+                - **Green line**: Successfully blocked attacks
+                
+                **Interpretation:**
+                - High block rate (>90%): Robust security
+                - Green line close to bars: Effective detection
+                - Attack spikes: Periods of increased threat
+                """)
+        
+        # Additional Security Visualizations
+        st.markdown("---")
+        if st.session_state.language == 'fr':
+            st.subheader("📊 Métriques de Performance du Comité")
+        else:
+            st.subheader("📊 Committee Performance Metrics")
+        
+        # Generate additional committee metrics
+        response_times = [np.random.uniform(0.1, 2.0) for _ in time_points]
+        validation_success = [np.random.uniform(92, 99) for _ in time_points]
+        node_availability = [np.random.uniform(88, 99.5) for _ in time_points]
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # Response Time Chart
+            fig_response = plt.figure(figsize=(8, 4))
+            plt.plot(time_points, response_times, 'b-', linewidth=2, marker='o', markersize=4)
+            plt.fill_between(time_points, response_times, alpha=0.3, color='blue')
+            plt.title('Committee Response Time' if st.session_state.language == 'en' else 'Temps de Réponse du Comité', 
+                     fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
+            plt.ylabel('Time (s)' if st.session_state.language == 'en' else 'Temps (s)')
+            plt.grid(True, alpha=0.3)
+            avg_response = np.mean(response_times)
+            plt.axhline(y=avg_response, color='red', linestyle='--', alpha=0.7)
+            plt.text(15, avg_response+0.1, f'Avg: {avg_response:.2f}s', fontsize=10)
+            plt.tight_layout()
+            st.pyplot(fig_response)
+            
+            if st.session_state.language == 'fr':
+                st.caption("⏱️ Temps de réponse moyen pour validation des transactions")
+            else:
+                st.caption("⏱️ Average response time for transaction validation")
+        
+        with col2:
+            # Validation Success Rate
+            fig_validation = plt.figure(figsize=(8, 4))
+            plt.plot(time_points, validation_success, 'g-', linewidth=2, marker='s', markersize=4)
+            plt.fill_between(time_points, validation_success, alpha=0.3, color='green')
+            plt.title('Validation Success Rate' if st.session_state.language == 'en' else 'Taux de Succès de Validation', 
+                     fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
+            plt.ylabel('Success %' if st.session_state.language == 'en' else 'Succès %')
+            plt.grid(True, alpha=0.3)
+            plt.ylim(90, 100)
+            avg_success = np.mean(validation_success)
+            plt.axhline(y=avg_success, color='red', linestyle='--', alpha=0.7)
+            plt.text(15, avg_success-0.5, f'Avg: {avg_success:.1f}%', fontsize=10)
+            plt.tight_layout()
+            st.pyplot(fig_validation)
+            
+            if st.session_state.language == 'fr':
+                st.caption("✅ Pourcentage de validations réussies par le comité")
+            else:
+                st.caption("✅ Percentage of successful validations by committee")
+        
+        with col3:
+            # Node Availability
+            fig_availability = plt.figure(figsize=(8, 4))
+            plt.plot(time_points, node_availability, 'm-', linewidth=2, marker='^', markersize=4)
+            plt.fill_between(time_points, node_availability, alpha=0.3, color='magenta')
+            plt.title('Node Availability' if st.session_state.language == 'en' else 'Disponibilité des Nœuds', 
+                     fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
+            plt.ylabel('Uptime %' if st.session_state.language == 'en' else 'Disponibilité %')
+            plt.grid(True, alpha=0.3)
+            plt.ylim(85, 100)
+            avg_availability = np.mean(node_availability)
+            plt.axhline(y=avg_availability, color='red', linestyle='--', alpha=0.7)
+            plt.text(15, avg_availability-1, f'Avg: {avg_availability:.1f}%', fontsize=10)
+            plt.tight_layout()
+            st.pyplot(fig_availability)
+            
+            if st.session_state.language == 'fr':
+                st.caption("🟢 Disponibilité moyenne des nœuds du comité")
+            else:
+                st.caption("🟢 Average availability of committee nodes")
+        
         # Security Protocols Details
+        st.markdown("---")
         if st.session_state.language == 'fr':
             st.subheader("🔧 Protocoles de Sécurité Actifs")
             
