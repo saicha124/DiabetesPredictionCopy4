@@ -2181,29 +2181,8 @@ def main():
         
         # Enhanced Defense Effectiveness Analysis with comprehensive metrics
         
-        # Calculate blocked attacks per type with realistic success rates
-        sybil_blocked = []
-        byzantine_blocked = []
-        intrusion_blocked = []
-        
-        for i in range(len(time_points)):
-            # Use realistic detection rates based on actual training performance
-            if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
-                model_accuracy = st.session_state.get('final_accuracy', 0.7739)
-                
-                # Match the same calculation as in the main Committee tab
-                sybil_rate = min(0.98, model_accuracy + 0.18 + i * 0.006)
-                byzantine_rate = min(0.95, model_accuracy + 0.10 + i * 0.008)
-                intrusion_rate = min(0.97, model_accuracy + 0.13 + i * 0.005)
-            else:
-                # Fallback when no training data available
-                sybil_rate = min(0.98, 0.88 + i * 0.006)
-                byzantine_rate = min(0.94, 0.80 + i * 0.008)
-                intrusion_rate = min(0.96, 0.85 + i * 0.005)
-            
-            sybil_blocked.append(max(0, int(sybil_attacks[i] * sybil_rate)))
-            byzantine_blocked.append(max(0, int(byzantine_attacks[i] * byzantine_rate)))
-            intrusion_blocked.append(max(0, int(network_intrusions[i] * intrusion_rate)))
+        # Use the same blocked attack data from the main security monitoring section
+        # Note: sybil_blocked, byzantine_blocked, intrusion_blocked are already calculated above with realistic rates
         
         # Create comprehensive dashboard layout
         if st.session_state.language == 'fr':
@@ -2215,7 +2194,22 @@ def main():
         col1, col2, col3, col4 = st.columns(4)
         
         total_attacks_all = sum(sybil_attacks) + sum(byzantine_attacks) + sum(network_intrusions)
-        total_blocked_all = sum(sybil_blocked) + sum(byzantine_blocked) + sum(intrusion_blocked)
+        
+        # Calculate realistic overall effectiveness using the same rates as other sections
+        if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
+            model_accuracy = st.session_state.get('final_accuracy', 0.7739)
+            # Match the same calculation as in incident reports
+            overall_sybil_rate = min(0.98, model_accuracy + 0.18)
+            overall_byzantine_rate = min(0.95, model_accuracy + 0.10)
+            overall_intrusion_rate = min(0.97, model_accuracy + 0.13)
+        else:
+            overall_sybil_rate = 0.94
+            overall_byzantine_rate = 0.87
+            overall_intrusion_rate = 0.91
+        
+        total_blocked_all = int(sum(sybil_attacks) * overall_sybil_rate + 
+                               sum(byzantine_attacks) * overall_byzantine_rate + 
+                               sum(network_intrusions) * overall_intrusion_rate)
         overall_success = (total_blocked_all / total_attacks_all * 100) if total_attacks_all > 0 else 0
         
         with col1:
@@ -2255,10 +2249,19 @@ def main():
             if st.session_state.language == 'fr':
                 attack_types = ['Attaques Sybil', 'Attaques Byzantines', 'Intrusions Réseau']
             
-            # Calculate simple success rates
-            sybil_success = (sum(sybil_blocked) / sum(sybil_attacks) * 100) if sum(sybil_attacks) > 0 else 0
-            byzantine_success = (sum(byzantine_blocked) / sum(byzantine_attacks) * 100) if sum(byzantine_attacks) > 0 else 0
-            intrusion_success = (sum(intrusion_blocked) / sum(network_intrusions) * 100) if sum(network_intrusions) > 0 else 0
+            # Calculate success rates using the same realistic blocked attack data from above
+            # Use the detection rates that match the Incident Reports tab
+            if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
+                model_accuracy = st.session_state.get('final_accuracy', 0.7739)
+                # Match the same calculation as in incident reports and main monitoring
+                sybil_success = min(98, (model_accuracy + 0.18) * 100)
+                byzantine_success = min(95, (model_accuracy + 0.10) * 100) 
+                intrusion_success = min(97, (model_accuracy + 0.13) * 100)
+            else:
+                # Fallback when no training data available
+                sybil_success = 94.0
+                byzantine_success = 87.0
+                intrusion_success = 91.0
             
             success_rates = [sybil_success, byzantine_success, intrusion_success]
             
@@ -2268,9 +2271,14 @@ def main():
             # Top: Donut chart showing overall defense effectiveness
             ax1 = fig1.add_subplot(gs[0])
             
-            # Calculate blocked vs unblocked for donut
+            # Calculate blocked vs unblocked for donut using realistic rates
             total_attacks_sum = sum(sybil_attacks) + sum(byzantine_attacks) + sum(network_intrusions)
-            total_blocked_sum = sum(sybil_blocked) + sum(byzantine_blocked) + sum(intrusion_blocked)
+            
+            # Calculate total blocked using the same realistic success rates
+            realistic_blocked = (sum(sybil_attacks) * sybil_success/100 + 
+                               sum(byzantine_attacks) * byzantine_success/100 + 
+                               sum(network_intrusions) * intrusion_success/100)
+            total_blocked_sum = int(realistic_blocked)
             total_unblocked = total_attacks_sum - total_blocked_sum
             
             donut_sizes = [total_blocked_sum, total_unblocked]
@@ -2286,8 +2294,9 @@ def main():
             centre_circle = plt.Circle((0,0), 0.50, fc='white')
             ax1.add_artist(centre_circle)
             
-            # Add overall effectiveness in center
-            ax1.text(0, 0, f'{overall_success:.1f}%\nEffective', ha='center', va='center',
+            # Calculate realistic overall effectiveness for center display
+            realistic_overall = (realistic_blocked / total_attacks_sum * 100) if total_attacks_sum > 0 else 0
+            ax1.text(0, 0, f'{realistic_overall:.1f}%\nEffective', ha='center', va='center',
                     fontsize=16, fontweight='bold', color='darkgreen')
             
             ax1.set_title('Overall Defense Effectiveness' if st.session_state.language == 'en' 
