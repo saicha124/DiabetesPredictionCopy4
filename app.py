@@ -1343,6 +1343,20 @@ def main():
         # Recalculate total attacks
         total_attacks = [s + b + n for s, b, n in zip(sybil_attacks, byzantine_attacks, network_intrusions)]
         
+        # Pre-calculate detection efficiencies for all attack types (needed for heatmap)
+        sybil_detection_efficiency = []
+        byzantine_detection_efficiency = []
+        intrusion_detection_efficiency = []
+        
+        for i in range(len(time_points)):
+            sybil_eff = min(98, 75 + i * 1.2 + np.random.uniform(-2, 2))
+            byzantine_eff = min(95, 70 + i * 1.3 + np.random.uniform(-3, 3))
+            intrusion_eff = min(97, 80 + i * 0.9 + np.random.uniform(-2, 2))
+            
+            sybil_detection_efficiency.append(sybil_eff)
+            byzantine_detection_efficiency.append(byzantine_eff)
+            intrusion_detection_efficiency.append(intrusion_eff)
+        
         col1, col2 = st.columns(2)
         
         with col1:
@@ -1586,12 +1600,6 @@ def main():
             # Enhanced Sybil Attacks Analysis
             fig_sybil = plt.figure(figsize=(8, 6))
             
-            # Calculate detection efficiency for Sybil attacks
-            sybil_detection_efficiency = []
-            for i in range(len(sybil_attacks)):
-                efficiency = min(98, 75 + i * 1.2 + np.random.uniform(-2, 2))
-                sybil_detection_efficiency.append(efficiency)
-            
             # Create subplot layout
             gs = fig_sybil.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.3)
             
@@ -1674,13 +1682,10 @@ def main():
             # Enhanced Byzantine Attacks Analysis
             fig_byzantine = plt.figure(figsize=(8, 6))
             
-            # Calculate Byzantine detection patterns
-            byzantine_detection_efficiency = []
+            # Calculate Byzantine severity patterns
             byzantine_severity = []
             for i in range(len(byzantine_attacks)):
-                efficiency = min(95, 70 + i * 1.3 + np.random.uniform(-3, 3))
                 severity = byzantine_attacks[i] * np.random.uniform(0.8, 1.2)  # Impact severity
-                byzantine_detection_efficiency.append(efficiency)
                 byzantine_severity.append(severity)
             
             # Create enhanced subplot layout
@@ -1781,15 +1786,12 @@ def main():
             fig_intrusion = plt.figure(figsize=(8, 6))
             
             # Calculate intrusion characteristics
-            intrusion_detection_efficiency = []
             intrusion_source_diversity = []
             intrusion_impact_score = []
             
             for i in range(len(network_intrusions)):
-                efficiency = min(97, 80 + i * 0.9 + np.random.uniform(-2, 2))
                 diversity = np.random.randint(1, 6)  # Number of different attack sources
                 impact = network_intrusions[i] * np.random.uniform(0.5, 1.5)
-                intrusion_detection_efficiency.append(efficiency)
                 intrusion_source_diversity.append(diversity)
                 intrusion_impact_score.append(impact)
             
