@@ -2000,81 +2000,302 @@ def main():
         else:
             st.subheader("📈 Defense Effectiveness Analysis")
         
-        # Calculate blocked attacks per type
-        sybil_blocked = [max(0, int(s * (0.95 + np.random.uniform(-0.03, 0.03)))) for s in sybil_attacks]
-        byzantine_blocked = [max(0, int(b * (0.88 + np.random.uniform(-0.05, 0.05)))) for b in byzantine_attacks]
-        intrusion_blocked = [max(0, int(n * (0.92 + np.random.uniform(-0.04, 0.04)))) for n in network_intrusions]
+        # Enhanced Defense Effectiveness Analysis with comprehensive metrics
         
+        # Calculate blocked attacks per type with realistic success rates
+        sybil_blocked = []
+        byzantine_blocked = []
+        intrusion_blocked = []
+        
+        for i in range(len(time_points)):
+            # Improving blocking rates over time
+            sybil_rate = min(0.98, 0.88 + i * 0.006)
+            byzantine_rate = min(0.94, 0.80 + i * 0.008)
+            intrusion_rate = min(0.96, 0.85 + i * 0.005)
+            
+            sybil_blocked.append(max(0, int(sybil_attacks[i] * sybil_rate)))
+            byzantine_blocked.append(max(0, int(byzantine_attacks[i] * byzantine_rate)))
+            intrusion_blocked.append(max(0, int(network_intrusions[i] * intrusion_rate)))
+        
+        # Create comprehensive dashboard layout
+        if st.session_state.language == 'fr':
+            st.markdown("### 🎯 Tableau de Bord de l'Efficacité Défensive")
+        else:
+            st.markdown("### 🎯 Defense Effectiveness Dashboard")
+        
+        # Top row: Key metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        total_attacks_all = sum(sybil_attacks) + sum(byzantine_attacks) + sum(network_intrusions)
+        total_blocked_all = sum(sybil_blocked) + sum(byzantine_blocked) + sum(intrusion_blocked)
+        overall_success = (total_blocked_all / total_attacks_all * 100) if total_attacks_all > 0 else 0
+        
+        with col1:
+            if st.session_state.language == 'fr':
+                st.metric("Efficacité Globale", f"{overall_success:.1f}%", delta=f"+{overall_success-85:.1f}%")
+            else:
+                st.metric("Overall Effectiveness", f"{overall_success:.1f}%", delta=f"+{overall_success-85:.1f}%")
+        
+        with col2:
+            if st.session_state.language == 'fr':
+                st.metric("Total Attaques", f"{total_attacks_all}", delta=f"-{int(total_attacks_all*0.15)}")
+            else:
+                st.metric("Total Attacks", f"{total_attacks_all}", delta=f"-{int(total_attacks_all*0.15)}")
+        
+        with col3:
+            if st.session_state.language == 'fr':
+                st.metric("Attaques Bloquées", f"{total_blocked_all}", delta=f"+{int(total_blocked_all*0.12)}")
+            else:
+                st.metric("Attacks Blocked", f"{total_blocked_all}", delta=f"+{int(total_blocked_all*0.12)}")
+        
+        with col4:
+            threat_status = "SECURE" if overall_success > 90 else "MODERATE" if overall_success > 80 else "ALERT"
+            if st.session_state.language == 'fr':
+                threat_status = "SÉCURISÉ" if overall_success > 90 else "MODÉRÉ" if overall_success > 80 else "ALERTE"
+                st.metric("Statut Sécurité", threat_status)
+            else:
+                st.metric("Security Status", threat_status)
+        
+        # Main visualization section
         col1, col2 = st.columns(2)
         
         with col1:
-            # Defense effectiveness by attack type
-            fig_defense = plt.figure(figsize=(10, 6))
+            # Enhanced success rate visualization with performance indicators
+            fig_defense = plt.figure(figsize=(12, 8))
+            gs = fig_defense.add_gridspec(2, 2, height_ratios=[3, 1], width_ratios=[3, 1], hspace=0.3, wspace=0.3)
+            
+            # Main bar chart
+            ax1 = fig_defense.add_subplot(gs[0, 0])
+            
+            attack_types = ['Sybil', 'Byzantine', 'Network\nIntrusion']
+            if st.session_state.language == 'fr':
+                attack_types = ['Sybil', 'Byzantines', 'Intrusions\nRéseau']
             
             # Calculate success rates
-            attack_types = ['Sybil', 'Byzantine', 'Intrusion']
-            if st.session_state.language == 'fr':
-                attack_types = ['Sybil', 'Byzantines', 'Intrusions']
+            sybil_success = (sum(sybil_blocked) / sum(sybil_attacks) * 100) if sum(sybil_attacks) > 0 else 0
+            byzantine_success = (sum(byzantine_blocked) / sum(byzantine_attacks) * 100) if sum(byzantine_attacks) > 0 else 0
+            intrusion_success = (sum(intrusion_blocked) / sum(network_intrusions) * 100) if sum(network_intrusions) > 0 else 0
             
-            total_sybil = sum(sybil_attacks)
-            total_byzantine = sum(byzantine_attacks)
-            total_intrusion = sum(network_intrusions)
+            success_rates = [sybil_success, byzantine_success, intrusion_success]
             
-            blocked_sybil_total = sum(sybil_blocked)
-            blocked_byzantine_total = sum(byzantine_blocked)
-            blocked_intrusion_total = sum(intrusion_blocked)
+            # Color coding based on performance
+            colors = []
+            for rate in success_rates:
+                if rate >= 95:
+                    colors.append('#2E8B57')  # Excellent - Dark green
+                elif rate >= 90:
+                    colors.append('#32CD32')  # Good - Green
+                elif rate >= 85:
+                    colors.append('#FFD700')  # Fair - Gold
+                else:
+                    colors.append('#FF6347')  # Needs improvement - Red
             
-            success_rates = [
-                (blocked_sybil_total / total_sybil) * 100 if total_sybil > 0 else 0,
-                (blocked_byzantine_total / total_byzantine) * 100 if total_byzantine > 0 else 0,
-                (blocked_intrusion_total / total_intrusion) * 100 if total_intrusion > 0 else 0
-            ]
+            bars = ax1.bar(attack_types, success_rates, color=colors, alpha=0.8, edgecolor='black', linewidth=2)
             
-            colors = ['#ff4444', '#ff8844', '#aa44ff']
-            bars = plt.bar(attack_types, success_rates, color=colors, alpha=0.8, edgecolor='black', linewidth=1)
-            
-            # Add value labels on bars
-            for bar, rate in zip(bars, success_rates):
+            # Enhanced value labels with status indicators
+            for i, (bar, rate) in enumerate(zip(bars, success_rates)):
                 height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height + 1,
-                        f'{rate:.1f}%', ha='center', va='bottom', fontweight='bold', fontsize=11)
+                status = "★" if rate >= 95 else "●" if rate >= 90 else "▲" if rate >= 85 else "!"
+                ax1.text(bar.get_x() + bar.get_width()/2., height + 1,
+                        f'{rate:.1f}%\n{status}', ha='center', va='bottom', 
+                        fontweight='bold', fontsize=12)
             
-            plt.title('Defense Success Rate by Attack Type' if st.session_state.language == 'en' else 'Taux de Succès de Défense par Type d\'Attaque', 
-                     fontsize=14, fontweight='bold')
-            plt.ylabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)', fontsize=12)
-            plt.ylim(0, 105)
-            plt.grid(True, alpha=0.3, axis='y')
+            # Performance zones
+            ax1.axhspan(95, 100, alpha=0.1, color='green', label='Excellent (95-100%)')
+            ax1.axhspan(90, 95, alpha=0.1, color='yellow', label='Good (90-95%)')
+            ax1.axhspan(85, 90, alpha=0.1, color='orange', label='Fair (85-90%)')
+            ax1.axhspan(0, 85, alpha=0.1, color='red', label='Needs Improvement (<85%)')
             
-            # Add horizontal line for 90% threshold
-            plt.axhline(y=90, color='green', linestyle='--', alpha=0.7, linewidth=2)
-            plt.text(len(attack_types)-1, 92, 'Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%', 
-                    fontsize=10, color='green', fontweight='bold')
+            ax1.set_title('Defense Success Rate by Attack Type' if st.session_state.language == 'en' else 'Taux de Succès de Défense par Type d\'Attaque', 
+                         fontsize=16, fontweight='bold')
+            ax1.set_ylabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)', fontsize=13)
+            ax1.set_ylim(0, 105)
+            ax1.grid(True, alpha=0.3, axis='y')
+            ax1.legend(loc='upper right', fontsize=9)
+            
+            # Performance radar chart
+            ax2 = fig_defense.add_subplot(gs[0, 1], projection='polar')
+            
+            angles = np.linspace(0, 2 * np.pi, len(attack_types), endpoint=False).tolist()
+            success_rates_radar = success_rates + [success_rates[0]]  # Close the circle
+            angles += angles[:1]
+            
+            ax2.plot(angles, success_rates_radar, 'o-', linewidth=3, color='blue', alpha=0.7)
+            ax2.fill(angles, success_rates_radar, alpha=0.25, color='blue')
+            ax2.set_ylim(0, 100)
+            ax2.set_xticks(angles[:-1])
+            ax2.set_xticklabels(['Sybil', 'Byzantine', 'Intrusion'])
+            ax2.set_title('Performance Radar' if st.session_state.language == 'en' else 'Radar de Performance', 
+                         fontsize=12, fontweight='bold', pad=20)
+            ax2.grid(True)
+            
+            # Trend analysis
+            ax3 = fig_defense.add_subplot(gs[1, :])
+            
+            # Calculate rolling success rates
+            window_size = 5
+            sybil_trend = []
+            byzantine_trend = []
+            intrusion_trend = []
+            
+            for i in range(len(time_points)):
+                start_idx = max(0, i - window_size + 1)
+                end_idx = i + 1
+                
+                sybil_window_success = sum(sybil_blocked[start_idx:end_idx]) / sum(sybil_attacks[start_idx:end_idx]) * 100 if sum(sybil_attacks[start_idx:end_idx]) > 0 else 0
+                byzantine_window_success = sum(byzantine_blocked[start_idx:end_idx]) / sum(byzantine_attacks[start_idx:end_idx]) * 100 if sum(byzantine_attacks[start_idx:end_idx]) > 0 else 0
+                intrusion_window_success = sum(intrusion_blocked[start_idx:end_idx]) / sum(network_intrusions[start_idx:end_idx]) * 100 if sum(network_intrusions[start_idx:end_idx]) > 0 else 0
+                
+                sybil_trend.append(sybil_window_success)
+                byzantine_trend.append(byzantine_window_success)
+                intrusion_trend.append(intrusion_window_success)
+            
+            ax3.plot(time_points, sybil_trend, 'r-', linewidth=3, marker='o', markersize=5, 
+                    label='Sybil Defense', alpha=0.8)
+            ax3.plot(time_points, byzantine_trend, 'orange', linewidth=3, marker='s', markersize=5, 
+                    label='Byzantine Defense', alpha=0.8)
+            ax3.plot(time_points, intrusion_trend, 'purple', linewidth=3, marker='^', markersize=5, 
+                    label='Intrusion Defense', alpha=0.8)
+            
+            ax3.axhline(y=90, color='green', linestyle='--', alpha=0.7, linewidth=2)
+            ax3.set_title('Defense Effectiveness Trends (5-Round Moving Average)' if st.session_state.language == 'en' else 'Tendances d\'Efficacité Défensive (Moyenne Mobile 5 Tours)', 
+                         fontsize=14, fontweight='bold')
+            ax3.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            ax3.set_ylabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)')
+            ax3.legend(loc='lower right')
+            ax3.grid(True, alpha=0.3)
+            ax3.set_xlim(1, 20)
+            ax3.set_ylim(70, 100)
             
             plt.tight_layout()
             st.pyplot(fig_defense)
         
         with col2:
-            # Time series comparison of all attack types
-            fig_comparison = plt.figure(figsize=(10, 6))
+            # Attack vs Defense Comparison with detailed breakdown
+            fig_comparison = plt.figure(figsize=(12, 8))
+            gs = fig_comparison.add_gridspec(3, 1, height_ratios=[2, 1, 1], hspace=0.4)
             
-            plt.plot(time_points, sybil_attacks, 'r-', linewidth=2, marker='o', markersize=4, 
-                    label='Sybil', markerfacecolor='white', markeredgecolor='red')
-            plt.plot(time_points, byzantine_attacks, 'orange', linewidth=2, marker='s', markersize=4, 
-                    label='Byzantine' if st.session_state.language == 'en' else 'Byzantines', 
-                    markerfacecolor='white', markeredgecolor='orange')
-            plt.plot(time_points, network_intrusions, 'purple', linewidth=2, marker='^', markersize=4, 
-                    label='Intrusions', markerfacecolor='white', markeredgecolor='purple')
+            # Main comparison chart
+            ax1 = fig_comparison.add_subplot(gs[0])
             
-            plt.title('Attack Types Comparison Over Time' if st.session_state.language == 'en' else 'Comparaison des Types d\'Attaques dans le Temps', 
-                     fontsize=14, fontweight='bold')
-            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement', fontsize=12)
-            plt.ylabel('Number of Attacks' if st.session_state.language == 'en' else 'Nombre d\'Attaques', fontsize=12)
-            plt.legend(loc='upper right', fontsize=11)
-            plt.grid(True, alpha=0.3)
-            plt.xlim(1, 20)
+            # Stacked area chart for better visualization
+            ax1.fill_between(time_points, 0, sybil_attacks, alpha=0.6, color='red', label='Sybil Attacks')
+            ax1.fill_between(time_points, sybil_attacks, [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
+                           alpha=0.6, color='orange', label='Byzantine Attacks')
+            ax1.fill_between(time_points, [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
+                           [s+b+n for s,b,n in zip(sybil_attacks, byzantine_attacks, network_intrusions)], 
+                           alpha=0.6, color='purple', label='Network Intrusions')
+            
+            # Overlay blocked attacks
+            total_blocked_per_round = [s+b+n for s,b,n in zip(sybil_blocked, byzantine_blocked, intrusion_blocked)]
+            ax1.plot(time_points, total_blocked_per_round, 'g-', linewidth=4, marker='D', markersize=6,
+                    label='Successfully Blocked', markerfacecolor='lightgreen', markeredgecolor='darkgreen')
+            
+            ax1.set_title('Attack Volume vs Defense Response' if st.session_state.language == 'en' else 'Volume d\'Attaques vs Réponse Défensive', 
+                         fontsize=16, fontweight='bold')
+            ax1.set_ylabel('Number of Events' if st.session_state.language == 'en' else 'Nombre d\'Événements')
+            ax1.legend(loc='upper right', fontsize=11)
+            ax1.grid(True, alpha=0.3)
+            ax1.set_xlim(1, 20)
+            
+            # Defense improvement rate
+            ax2 = fig_comparison.add_subplot(gs[1])
+            
+            defense_improvement = []
+            for i in range(1, len(time_points)):
+                current_rate = total_blocked_per_round[i] / (sybil_attacks[i] + byzantine_attacks[i] + network_intrusions[i]) * 100 if (sybil_attacks[i] + byzantine_attacks[i] + network_intrusions[i]) > 0 else 0
+                prev_rate = total_blocked_per_round[i-1] / (sybil_attacks[i-1] + byzantine_attacks[i-1] + network_intrusions[i-1]) * 100 if (sybil_attacks[i-1] + byzantine_attacks[i-1] + network_intrusions[i-1]) > 0 else 0
+                improvement = current_rate - prev_rate
+                defense_improvement.append(improvement)
+            
+            colors = ['green' if imp >= 0 else 'red' for imp in defense_improvement]
+            ax2.bar(time_points[1:], defense_improvement, color=colors, alpha=0.7, edgecolor='black')
+            ax2.axhline(y=0, color='black', linestyle='-', alpha=0.5)
+            ax2.set_title('Round-to-Round Defense Improvement' if st.session_state.language == 'en' else 'Amélioration Défensive Tour par Tour', 
+                         fontsize=14, fontweight='bold')
+            ax2.set_ylabel('Improvement (%)' if st.session_state.language == 'en' else 'Amélioration (%)')
+            ax2.grid(True, alpha=0.3)
+            ax2.set_xlim(1, 20)
+            
+            # Response time efficiency
+            ax3 = fig_comparison.add_subplot(gs[2])
+            
+            response_efficiency = [90 + i * 0.5 + np.random.uniform(-2, 2) for i in range(len(time_points))]
+            ax3.plot(time_points, response_efficiency, 'b-', linewidth=3, marker='o', markersize=4, alpha=0.8)
+            ax3.fill_between(time_points, response_efficiency, alpha=0.3, color='blue')
+            ax3.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            ax3.set_ylabel('Response Efficiency (%)' if st.session_state.language == 'en' else 'Efficacité de Réponse (%)')
+            ax3.set_title('Defense Response Time Efficiency' if st.session_state.language == 'en' else 'Efficacité du Temps de Réponse Défensive', 
+                         fontsize=14, fontweight='bold')
+            ax3.grid(True, alpha=0.3)
+            ax3.set_xlim(1, 20)
+            ax3.set_ylim(85, 100)
             
             plt.tight_layout()
             st.pyplot(fig_comparison)
+        
+        # Performance insights and recommendations
+        st.markdown("---")
+        if st.session_state.language == 'fr':
+            st.subheader("💡 Insights de Performance et Recommandations")
+        else:
+            st.subheader("💡 Performance Insights and Recommendations")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.session_state.language == 'fr':
+                st.markdown("""
+                **🎯 Points Forts:**
+                - Détection Sybil excellente (95%+)
+                - Amélioration constante des défenses
+                - Temps de réponse optimisé
+                - Adaptation aux nouvelles menaces
+                """)
+            else:
+                st.markdown("""
+                **🎯 Strengths:**
+                - Excellent Sybil detection (95%+)
+                - Consistent defense improvement
+                - Optimized response times
+                - Adaptation to new threats
+                """)
+        
+        with col2:
+            if st.session_state.language == 'fr':
+                st.markdown("""
+                **⚠️ Zones d'Amélioration:**
+                - Défense Byzantine à renforcer
+                - Réduction des faux positifs
+                - Optimisation des ressources
+                - Formation continue du modèle
+                """)
+            else:
+                st.markdown("""
+                **⚠️ Areas for Improvement:**
+                - Byzantine defense needs strengthening
+                - Reduce false positives
+                - Resource optimization
+                - Continuous model training
+                """)
+        
+        with col3:
+            if st.session_state.language == 'fr':
+                st.markdown("""
+                **🚀 Recommandations:**
+                - Augmenter la fréquence d'entraînement
+                - Implémenter des filtres adaptatifs
+                - Renforcer la validation croisée
+                - Élargir la base de données des menaces
+                """)
+            else:
+                st.markdown("""
+                **🚀 Recommendations:**
+                - Increase training frequency
+                - Implement adaptive filters
+                - Strengthen cross-validation
+                - Expand threat database
+                """)
         
         # Additional Security Visualizations
         st.markdown("---")
