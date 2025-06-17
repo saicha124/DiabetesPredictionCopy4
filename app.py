@@ -1309,6 +1309,11 @@ def main():
         network_intrusions = []
         blocked_attacks = []
         
+        # Lists to store blocked attacks by type
+        sybil_blocked = []
+        byzantine_blocked = []
+        intrusion_blocked = []
+        
         # Initial detection capabilities (lower)
         sybil_detection_rate = 0.75
         byzantine_detection_rate = 0.70
@@ -1334,11 +1339,16 @@ def main():
             
             # Calculate blocked attacks with improving rates
             total_round_attacks = sybil_base + byzantine_base + intrusion_base
-            sybil_blocked = int(sybil_base * (sybil_detection_rate + np.random.uniform(-0.03, 0.03)))
-            byzantine_blocked = int(byzantine_base * (byzantine_detection_rate + np.random.uniform(-0.04, 0.04)))
-            intrusion_blocked = int(intrusion_base * (intrusion_detection_rate + np.random.uniform(-0.02, 0.02)))
+            sybil_blocked_round = int(sybil_base * (sybil_detection_rate + np.random.uniform(-0.03, 0.03)))
+            byzantine_blocked_round = int(byzantine_base * (byzantine_detection_rate + np.random.uniform(-0.04, 0.04)))
+            intrusion_blocked_round = int(intrusion_base * (intrusion_detection_rate + np.random.uniform(-0.02, 0.02)))
             
-            total_blocked = min(total_round_attacks, sybil_blocked + byzantine_blocked + intrusion_blocked)
+            # Append to lists
+            sybil_blocked.append(sybil_blocked_round)
+            byzantine_blocked.append(byzantine_blocked_round)
+            intrusion_blocked.append(intrusion_blocked_round)
+            
+            total_blocked = min(total_round_attacks, sybil_blocked_round + byzantine_blocked_round + intrusion_blocked_round)
             blocked_attacks.append(max(0, total_blocked))
         
         # Recalculate total attacks
