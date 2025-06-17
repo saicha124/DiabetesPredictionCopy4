@@ -1346,30 +1346,26 @@ def main():
             st.pyplot(fig_rep)
         
         with col2:
-            # Enhanced security event detection chart with stacked visualization
-            fig_att = plt.figure(figsize=(10, 5))
+            # Overall Security Summary Chart
+            fig_summary = plt.figure(figsize=(10, 5))
             
-            # Create stacked bar chart for different attack types
-            plt.bar(time_points, sybil_attacks, label='Sybil Attacks' if st.session_state.language == 'en' else 'Attaques Sybil', 
-                   color='red', alpha=0.8, width=0.8)
-            plt.bar(time_points, byzantine_attacks, bottom=sybil_attacks, 
-                   label='Byzantine Attacks' if st.session_state.language == 'en' else 'Attaques Byzantines', 
-                   color='orange', alpha=0.8, width=0.8)
-            plt.bar(time_points, network_intrusions, 
-                   bottom=[s+b for s,b in zip(sybil_attacks, byzantine_attacks)],
-                   label='Network Intrusions' if st.session_state.language == 'en' else 'Intrusions Réseau', 
-                   color='purple', alpha=0.8, width=0.8)
+            # Total events line with area fill
+            plt.plot(time_points, total_attacks, 'r-', linewidth=3, marker='o', markersize=6,
+                    label='Total Attacks' if st.session_state.language == 'en' else 'Total Attaques',
+                    markerfacecolor='lightcoral', markeredgecolor='darkred')
+            plt.fill_between(time_points, total_attacks, alpha=0.3, color='red')
             
-            # Add blocked attacks line
+            # Blocked attacks line
             plt.plot(time_points, blocked_attacks, 'g-', linewidth=3, marker='s', markersize=6,
                     label='Blocked Attacks' if st.session_state.language == 'en' else 'Attaques Bloquées',
                     markerfacecolor='lightgreen', markeredgecolor='darkgreen')
+            plt.fill_between(time_points, blocked_attacks, alpha=0.3, color='green')
             
-            plt.title('Security Event Detection & Response' if st.session_state.language == 'en' else 'Détection et Réponse aux Événements de Sécurité', 
+            plt.title('Overall Security Performance' if st.session_state.language == 'en' else 'Performance Globale de Sécurité', 
                      fontsize=14, fontweight='bold')
             plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement', fontsize=12)
             plt.ylabel('Number of Events' if st.session_state.language == 'en' else 'Nombre d\'Événements', fontsize=12)
-            plt.legend(loc='upper right', fontsize=10)
+            plt.legend(loc='upper right', fontsize=11)
             plt.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
             plt.xlim(1, 20)
             
@@ -1378,12 +1374,12 @@ def main():
             total_blocked = sum(blocked_attacks)
             success_rate = (total_blocked / total_detected) * 100 if total_detected > 0 else 0
             plt.text(15, max(total_attacks)*0.8, 
-                    f'Block Rate: {success_rate:.1f}%' if st.session_state.language == 'en' else f'Taux de Blocage: {success_rate:.1f}%',
+                    f'Protection Rate: {success_rate:.1f}%' if st.session_state.language == 'en' else f'Taux de Protection: {success_rate:.1f}%',
                     fontsize=12, fontweight='bold', 
-                    bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgreen", alpha=0.8))
+                    bbox=dict(boxstyle="round,pad=0.5", facecolor="lightblue", alpha=0.9))
             
             plt.tight_layout()
-            st.pyplot(fig_att)
+            st.pyplot(fig_summary)
         
         # Graph Explanations
         st.markdown("---")
@@ -1425,30 +1421,227 @@ def main():
         with col2:
             if st.session_state.language == 'fr':
                 st.markdown("""
-                **🛡️ Graphique de Détection d'Attaques:**
-                - **Barres rouges**: Attaques Sybil (faux nœuds)
-                - **Barres oranges**: Attaques Byzantines (nœuds malveillants)
-                - **Barres violettes**: Intrusions réseau
+                **🛡️ Graphique de Performance Globale:**
+                - **Ligne rouge**: Total des attaques détectées
+                - **Zone rouge**: Intensité des menaces
                 - **Ligne verte**: Attaques bloquées avec succès
+                - **Zone verte**: Efficacité de protection
                 
                 **Interprétation:**
-                - Taux de blocage élevé (>90%): Sécurité robuste
-                - Ligne verte proche des barres: Détection efficace
-                - Pics d'attaques: Périodes de menace accrue
+                - Taux de protection élevé (>90%): Sécurité robuste
+                - Zone verte proche de la rouge: Détection efficace
+                - Écart entre lignes: Attaques non bloquées
                 """)
             else:
                 st.markdown("""
-                **🛡️ Attack Detection Graph:**
-                - **Red bars**: Sybil attacks (fake nodes)
-                - **Orange bars**: Byzantine attacks (malicious nodes)
-                - **Purple bars**: Network intrusions
+                **🛡️ Overall Performance Graph:**
+                - **Red line**: Total detected attacks
+                - **Red area**: Threat intensity
                 - **Green line**: Successfully blocked attacks
+                - **Green area**: Protection effectiveness
                 
                 **Interpretation:**
-                - High block rate (>90%): Robust security
-                - Green line close to bars: Effective detection
-                - Attack spikes: Periods of increased threat
+                - High protection rate (>90%): Robust security
+                - Green area close to red: Effective detection
+                - Gap between lines: Unblocked attacks
                 """)
+        
+        # Individual Attack Type Analysis
+        st.markdown("---")
+        if st.session_state.language == 'fr':
+            st.subheader("🎯 Analyse Détaillée par Type d'Attaque")
+        else:
+            st.subheader("🎯 Detailed Analysis by Attack Type")
+        
+        # Create individual attack graphs
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # Sybil Attacks Graph
+            fig_sybil = plt.figure(figsize=(8, 5))
+            plt.bar(time_points, sybil_attacks, color='#ff4444', alpha=0.8, width=0.7, edgecolor='darkred', linewidth=1)
+            plt.plot(time_points, sybil_attacks, 'ro-', linewidth=2, markersize=5, markerfacecolor='white', markeredgecolor='darkred')
+            
+            # Add trend line
+            z_sybil = np.polyfit(time_points, sybil_attacks, 1)
+            p_sybil = np.poly1d(z_sybil)
+            plt.plot(time_points, p_sybil(time_points), "--", alpha=0.8, color='darkred', linewidth=2)
+            
+            plt.title('Sybil Attacks Detection' if st.session_state.language == 'en' else 'Détection d\'Attaques Sybil', 
+                     fontsize=13, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour', fontsize=11)
+            plt.ylabel('Attacks' if st.session_state.language == 'en' else 'Attaques', fontsize=11)
+            plt.grid(True, alpha=0.3)
+            plt.xlim(0.5, 20.5)
+            
+            # Add statistics
+            avg_sybil = np.mean(sybil_attacks)
+            max_sybil = max(sybil_attacks)
+            plt.text(0.02, 0.98, f'Avg: {avg_sybil:.1f}\nMax: {max_sybil}', 
+                    transform=plt.gca().transAxes, fontsize=10, 
+                    bbox=dict(boxstyle='round,pad=0.3', facecolor='lightcoral', alpha=0.8),
+                    verticalalignment='top')
+            
+            plt.tight_layout()
+            st.pyplot(fig_sybil)
+            
+            if st.session_state.language == 'fr':
+                st.caption("🔴 Tentatives de création de faux nœuds pour corrompre le réseau")
+            else:
+                st.caption("🔴 Attempts to create fake nodes to corrupt the network")
+        
+        with col2:
+            # Byzantine Attacks Graph
+            fig_byzantine = plt.figure(figsize=(8, 5))
+            plt.bar(time_points, byzantine_attacks, color='#ff8844', alpha=0.8, width=0.7, edgecolor='darkorange', linewidth=1)
+            plt.plot(time_points, byzantine_attacks, 'o-', color='darkorange', linewidth=2, markersize=5, 
+                    markerfacecolor='white', markeredgecolor='darkorange')
+            
+            # Add trend line
+            z_byzantine = np.polyfit(time_points, byzantine_attacks, 1)
+            p_byzantine = np.poly1d(z_byzantine)
+            plt.plot(time_points, p_byzantine(time_points), "--", alpha=0.8, color='darkorange', linewidth=2)
+            
+            plt.title('Byzantine Attacks Detection' if st.session_state.language == 'en' else 'Détection d\'Attaques Byzantines', 
+                     fontsize=13, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour', fontsize=11)
+            plt.ylabel('Attacks' if st.session_state.language == 'en' else 'Attaques', fontsize=11)
+            plt.grid(True, alpha=0.3)
+            plt.xlim(0.5, 20.5)
+            
+            # Add statistics
+            avg_byzantine = np.mean(byzantine_attacks)
+            max_byzantine = max(byzantine_attacks)
+            plt.text(0.02, 0.98, f'Avg: {avg_byzantine:.1f}\nMax: {max_byzantine}', 
+                    transform=plt.gca().transAxes, fontsize=10, 
+                    bbox=dict(boxstyle='round,pad=0.3', facecolor='moccasin', alpha=0.8),
+                    verticalalignment='top')
+            
+            plt.tight_layout()
+            st.pyplot(fig_byzantine)
+            
+            if st.session_state.language == 'fr':
+                st.caption("🟠 Nœuds malveillants envoyant des mises à jour corrompues")
+            else:
+                st.caption("🟠 Malicious nodes sending corrupted model updates")
+        
+        with col3:
+            # Network Intrusion Graph
+            fig_intrusion = plt.figure(figsize=(8, 5))
+            plt.bar(time_points, network_intrusions, color='#aa44ff', alpha=0.8, width=0.7, edgecolor='purple', linewidth=1)
+            plt.plot(time_points, network_intrusions, 'o-', color='purple', linewidth=2, markersize=5, 
+                    markerfacecolor='white', markeredgecolor='purple')
+            
+            # Add trend line
+            z_intrusion = np.polyfit(time_points, network_intrusions, 1)
+            p_intrusion = np.poly1d(z_intrusion)
+            plt.plot(time_points, p_intrusion(time_points), "--", alpha=0.8, color='purple', linewidth=2)
+            
+            plt.title('Network Intrusions Detection' if st.session_state.language == 'en' else 'Détection d\'Intrusions Réseau', 
+                     fontsize=13, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour', fontsize=11)
+            plt.ylabel('Intrusions' if st.session_state.language == 'en' else 'Intrusions', fontsize=11)
+            plt.grid(True, alpha=0.3)
+            plt.xlim(0.5, 20.5)
+            
+            # Add statistics
+            avg_intrusion = np.mean(network_intrusions)
+            max_intrusion = max(network_intrusions)
+            plt.text(0.02, 0.98, f'Avg: {avg_intrusion:.1f}\nMax: {max_intrusion}', 
+                    transform=plt.gca().transAxes, fontsize=10, 
+                    bbox=dict(boxstyle='round,pad=0.3', facecolor='plum', alpha=0.8),
+                    verticalalignment='top')
+            
+            plt.tight_layout()
+            st.pyplot(fig_intrusion)
+            
+            if st.session_state.language == 'fr':
+                st.caption("🟣 Tentatives d'accès non autorisé au réseau de communication")
+            else:
+                st.caption("🟣 Unauthorized access attempts to communication network")
+        
+        # Attack Effectiveness Analysis
+        st.markdown("---")
+        if st.session_state.language == 'fr':
+            st.subheader("📈 Analyse d'Efficacité de la Défense")
+        else:
+            st.subheader("📈 Defense Effectiveness Analysis")
+        
+        # Calculate blocked attacks per type
+        sybil_blocked = [max(0, int(s * (0.95 + np.random.uniform(-0.03, 0.03)))) for s in sybil_attacks]
+        byzantine_blocked = [max(0, int(b * (0.88 + np.random.uniform(-0.05, 0.05)))) for b in byzantine_attacks]
+        intrusion_blocked = [max(0, int(n * (0.92 + np.random.uniform(-0.04, 0.04)))) for n in network_intrusions]
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Defense effectiveness by attack type
+            fig_defense = plt.figure(figsize=(10, 6))
+            
+            # Calculate success rates
+            attack_types = ['Sybil', 'Byzantine', 'Intrusion']
+            if st.session_state.language == 'fr':
+                attack_types = ['Sybil', 'Byzantines', 'Intrusions']
+            
+            total_sybil = sum(sybil_attacks)
+            total_byzantine = sum(byzantine_attacks)
+            total_intrusion = sum(network_intrusions)
+            
+            blocked_sybil_total = sum(sybil_blocked)
+            blocked_byzantine_total = sum(byzantine_blocked)
+            blocked_intrusion_total = sum(intrusion_blocked)
+            
+            success_rates = [
+                (blocked_sybil_total / total_sybil) * 100 if total_sybil > 0 else 0,
+                (blocked_byzantine_total / total_byzantine) * 100 if total_byzantine > 0 else 0,
+                (blocked_intrusion_total / total_intrusion) * 100 if total_intrusion > 0 else 0
+            ]
+            
+            colors = ['#ff4444', '#ff8844', '#aa44ff']
+            bars = plt.bar(attack_types, success_rates, color=colors, alpha=0.8, edgecolor='black', linewidth=1)
+            
+            # Add value labels on bars
+            for bar, rate in zip(bars, success_rates):
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width()/2., height + 1,
+                        f'{rate:.1f}%', ha='center', va='bottom', fontweight='bold', fontsize=11)
+            
+            plt.title('Defense Success Rate by Attack Type' if st.session_state.language == 'en' else 'Taux de Succès de Défense par Type d\'Attaque', 
+                     fontsize=14, fontweight='bold')
+            plt.ylabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)', fontsize=12)
+            plt.ylim(0, 105)
+            plt.grid(True, alpha=0.3, axis='y')
+            
+            # Add horizontal line for 90% threshold
+            plt.axhline(y=90, color='green', linestyle='--', alpha=0.7, linewidth=2)
+            plt.text(len(attack_types)-1, 92, 'Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%', 
+                    fontsize=10, color='green', fontweight='bold')
+            
+            plt.tight_layout()
+            st.pyplot(fig_defense)
+        
+        with col2:
+            # Time series comparison of all attack types
+            fig_comparison = plt.figure(figsize=(10, 6))
+            
+            plt.plot(time_points, sybil_attacks, 'r-', linewidth=2, marker='o', markersize=4, 
+                    label='Sybil', markerfacecolor='white', markeredgecolor='red')
+            plt.plot(time_points, byzantine_attacks, 'orange', linewidth=2, marker='s', markersize=4, 
+                    label='Byzantine' if st.session_state.language == 'en' else 'Byzantines', 
+                    markerfacecolor='white', markeredgecolor='orange')
+            plt.plot(time_points, network_intrusions, 'purple', linewidth=2, marker='^', markersize=4, 
+                    label='Intrusions', markerfacecolor='white', markeredgecolor='purple')
+            
+            plt.title('Attack Types Comparison Over Time' if st.session_state.language == 'en' else 'Comparaison des Types d\'Attaques dans le Temps', 
+                     fontsize=14, fontweight='bold')
+            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement', fontsize=12)
+            plt.ylabel('Number of Attacks' if st.session_state.language == 'en' else 'Nombre d\'Attaques', fontsize=12)
+            plt.legend(loc='upper right', fontsize=11)
+            plt.grid(True, alpha=0.3)
+            plt.xlim(1, 20)
+            
+            plt.tight_layout()
+            st.pyplot(fig_comparison)
         
         # Additional Security Visualizations
         st.markdown("---")
