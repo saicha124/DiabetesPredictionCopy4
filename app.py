@@ -1816,7 +1816,7 @@ def main():
                 
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
-                    st.metric(get_translation("final_accuracy", st.session_state.language), f"{results.get('accuracy', 0):.3f}")
+                    st.metric(get_translation("final_accuracy", st.session_state.language), f"{results.get('accuracy', 0):.1%}")
                 with col2:
                     st.metric(get_translation("rounds_completed", st.session_state.language), results.get('rounds_completed', 0))
                 with col3:
