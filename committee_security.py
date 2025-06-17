@@ -182,43 +182,275 @@ class SybilDetector:
 
 
 class ByzantineDetector:
-    """Detects and mitigates Byzantine attacks"""
+    """Enhanced Byzantine attack detection with multi-layered security"""
     
     def __init__(self, byzantine_threshold: float = 0.33):
         self.byzantine_threshold = byzantine_threshold
-        self.deviation_threshold = 3.0  # Allow larger deviations for legitimate FL
+        self.deviation_threshold = 1.5  # Stricter threshold
         self.node_deviations: Dict[str, List[float]] = {}
+        self.node_consistency_scores: Dict[str, List[float]] = {}
+        self.node_response_patterns: Dict[str, List[float]] = {}
+        self.consensus_history: List[np.ndarray] = []
+        self.detection_history: Dict[str, int] = {}  # Track detection counts
+        self.anomaly_scores: Dict[str, List[float]] = {}
     
     def detect_byzantine_behavior(self, node_updates: Dict[str, np.ndarray],
                                 global_update: np.ndarray) -> List[str]:
-        """Detect nodes exhibiting Byzantine behavior"""
+        """Enhanced Byzantine detection with multiple validation layers"""
         byzantine_nodes = []
         
-        # Calculate deviations from global update
-        for node_id, update in node_updates.items():
-            if update is not None:
-                deviation = np.linalg.norm(update - global_update)
-                
-                if node_id not in self.node_deviations:
-                    self.node_deviations[node_id] = []
-                
-                self.node_deviations[node_id].append(deviation)
-                
-                # Keep only recent deviations
-                if len(self.node_deviations[node_id]) > 10:
-                    self.node_deviations[node_id] = self.node_deviations[node_id][-10:]
-                
-                # Check if node consistently deviates beyond reasonable thresholds
-                if len(self.node_deviations[node_id]) >= 5:
-                    avg_deviation = np.mean(self.node_deviations[node_id])
-                    std_deviation = np.std(self.node_deviations[node_id])
-                    
-                    # More lenient threshold for federated learning variations
-                    # Only flag if deviation is extremely high (10x standard deviation + base threshold)
-                    if avg_deviation > max(self.deviation_threshold, std_deviation * 10):
-                        byzantine_nodes.append(node_id)
+        if len(node_updates) == 0 or global_update is None:
+            return byzantine_nodes
+        
+        # Store consensus history for trend analysis
+        self.consensus_history.append(global_update.copy())
+        if len(self.consensus_history) > 20:
+            self.consensus_history = self.consensus_history[-20:]
+        
+        # Multi-layer detection system
+        suspects = set()
+        
+        # 1. Statistical deviation analysis
+        deviation_suspects = self._detect_statistical_anomalies(node_updates, global_update)
+        suspects.update(deviation_suspects)
+        
+        # 2. Consensus violation detection
+        consensus_suspects = self._detect_consensus_violations(node_updates, global_update)
+        suspects.update(consensus_suspects)
+        
+        # 3. Pattern-based anomaly detection
+        pattern_suspects = self._detect_pattern_anomalies(node_updates)
+        suspects.update(pattern_suspects)
+        
+        # 4. Cross-validation with peer nodes
+        peer_suspects = self._detect_peer_validation_failures(node_updates)
+        suspects.update(peer_suspects)
+        
+        # 5. Temporal consistency analysis
+        temporal_suspects = self._detect_temporal_inconsistencies(node_updates)
+        suspects.update(temporal_suspects)
+        
+        # Apply weighted scoring system
+        for node_id in suspects:
+            score = self._calculate_byzantine_score(node_id, node_updates, global_update)
+            
+            # Track detection history
+            if node_id not in self.detection_history:
+                self.detection_history[node_id] = 0
+            
+            # Flag as Byzantine if score exceeds threshold
+            if score > 0.6:  # Stricter threshold
+                self.detection_history[node_id] += 1
+                byzantine_nodes.append(node_id)
         
         return byzantine_nodes
+    
+    def _detect_statistical_anomalies(self, node_updates: Dict[str, np.ndarray], 
+                                     global_update: np.ndarray) -> List[str]:
+        """Detect statistical anomalies in node updates"""
+        suspects = []
+        
+        # Calculate statistical metrics for all updates
+        all_deviations = []
+        node_deviations_current = {}
+        
+        for node_id, update in node_updates.items():
+            if update is not None and len(update) > 0:
+                deviation = np.linalg.norm(update - global_update)
+                all_deviations.append(deviation)
+                node_deviations_current[node_id] = deviation
+                
+                # Store in history
+                if node_id not in self.node_deviations:
+                    self.node_deviations[node_id] = []
+                self.node_deviations[node_id].append(deviation)
+                
+                if len(self.node_deviations[node_id]) > 15:
+                    self.node_deviations[node_id] = self.node_deviations[node_id][-15:]
+        
+        # Calculate dynamic threshold based on current round statistics
+        if len(all_deviations) > 1:
+            median_deviation = np.median(all_deviations)
+            mad = np.median(np.abs(np.array(all_deviations) - median_deviation))
+            dynamic_threshold = median_deviation + 2.5 * mad  # Modified Z-score approach
+            
+            for node_id, deviation in node_deviations_current.items():
+                # Check both current and historical anomalies
+                if deviation > dynamic_threshold:
+                    suspects.append(node_id)
+                
+                # Check historical consistency
+                if len(self.node_deviations[node_id]) >= 3:
+                    recent_trend = np.mean(self.node_deviations[node_id][-3:])
+                    if recent_trend > self.deviation_threshold:
+                        suspects.append(node_id)
+        
+        return suspects
+    
+    def _detect_consensus_violations(self, node_updates: Dict[str, np.ndarray],
+                                   global_update: np.ndarray) -> List[str]:
+        """Detect violations of consensus protocols"""
+        suspects = []
+        
+        if len(self.consensus_history) < 3:
+            return suspects
+        
+        # Analyze consensus stability
+        recent_consensus = self.consensus_history[-3:]
+        consensus_trend = np.mean([np.linalg.norm(c) for c in recent_consensus])
+        
+        for node_id, update in node_updates.items():
+            if update is None:
+                continue
+            
+            # Check if update would significantly destabilize consensus
+            simulated_consensus = (global_update + update) / 2
+            stability_impact = np.linalg.norm(simulated_consensus - global_update)
+            
+            # Flag if impact is disproportionately high
+            if stability_impact > consensus_trend * 1.8:
+                suspects.append(node_id)
+            
+            # Check directional consistency
+            if len(self.consensus_history) >= 2:
+                prev_consensus = self.consensus_history[-2]
+                expected_direction = global_update - prev_consensus
+                update_direction = update - prev_consensus
+                
+                # Calculate angle between expected and actual direction
+                if np.linalg.norm(expected_direction) > 0 and np.linalg.norm(update_direction) > 0:
+                    cosine_sim = np.dot(expected_direction, update_direction) / (
+                        np.linalg.norm(expected_direction) * np.linalg.norm(update_direction))
+                    
+                    if cosine_sim < -0.5:  # Opposing direction
+                        suspects.append(node_id)
+        
+        return suspects
+    
+    def _detect_pattern_anomalies(self, node_updates: Dict[str, np.ndarray]) -> List[str]:
+        """Detect anomalous patterns in node behavior"""
+        suspects = []
+        
+        for node_id, update in node_updates.items():
+            if update is None or len(update) == 0:
+                continue
+            
+            # Calculate pattern metrics
+            update_magnitude = np.linalg.norm(update)
+            update_sparsity = np.count_nonzero(update) / len(update)
+            update_entropy = -np.sum(np.abs(update) * np.log(np.abs(update) + 1e-10))
+            
+            # Store pattern metrics
+            if node_id not in self.node_response_patterns:
+                self.node_response_patterns[node_id] = []
+            
+            pattern_score = update_magnitude * update_sparsity * (1 + update_entropy)
+            self.node_response_patterns[node_id].append(pattern_score)
+            
+            if len(self.node_response_patterns[node_id]) > 10:
+                self.node_response_patterns[node_id] = self.node_response_patterns[node_id][-10:]
+            
+            # Detect anomalous patterns
+            if len(self.node_response_patterns[node_id]) >= 5:
+                pattern_variance = np.var(self.node_response_patterns[node_id])
+                pattern_mean = np.mean(self.node_response_patterns[node_id])
+                
+                # Flag nodes with either too consistent or too erratic patterns
+                if pattern_variance < 0.01 or pattern_variance > pattern_mean * 5:
+                    suspects.append(node_id)
+        
+        return suspects
+    
+    def _detect_peer_validation_failures(self, node_updates: Dict[str, np.ndarray]) -> List[str]:
+        """Cross-validate nodes against their peers"""
+        suspects = []
+        node_ids = list(node_updates.keys())
+        
+        if len(node_ids) < 3:
+            return suspects
+        
+        # Calculate pairwise similarities
+        similarities = {}
+        for i, node1 in enumerate(node_ids):
+            similarities[node1] = []
+            
+            for j, node2 in enumerate(node_ids):
+                if i != j and node_updates[node1] is not None and node_updates[node2] is not None:
+                    # Cosine similarity
+                    update1, update2 = node_updates[node1], node_updates[node2]
+                    similarity = np.dot(update1, update2) / (
+                        np.linalg.norm(update1) * np.linalg.norm(update2) + 1e-10)
+                    similarities[node1].append(similarity)
+        
+        # Flag nodes with consistently low peer similarity
+        for node_id, sims in similarities.items():
+            if len(sims) > 0:
+                avg_similarity = np.mean(sims)
+                if avg_similarity < 0.3:  # Low similarity threshold
+                    suspects.append(node_id)
+        
+        return suspects
+    
+    def _detect_temporal_inconsistencies(self, node_updates: Dict[str, np.ndarray]) -> List[str]:
+        """Detect temporal inconsistencies in node behavior"""
+        suspects = []
+        
+        for node_id, update in node_updates.items():
+            if update is None:
+                continue
+            
+            # Store anomaly scores for temporal analysis
+            if node_id not in self.anomaly_scores:
+                self.anomaly_scores[node_id] = []
+            
+            # Calculate current anomaly score
+            update_norm = np.linalg.norm(update)
+            self.anomaly_scores[node_id].append(update_norm)
+            
+            if len(self.anomaly_scores[node_id]) > 12:
+                self.anomaly_scores[node_id] = self.anomaly_scores[node_id][-12:]
+            
+            # Detect temporal anomalies
+            if len(self.anomaly_scores[node_id]) >= 5:
+                recent_scores = self.anomaly_scores[node_id][-5:]
+                score_trend = np.polyfit(range(len(recent_scores)), recent_scores, 1)[0]
+                score_variance = np.var(recent_scores)
+                
+                # Flag nodes with suspicious trends or high variance
+                if abs(score_trend) > 0.5 or score_variance > np.mean(recent_scores):
+                    suspects.append(node_id)
+        
+        return suspects
+    
+    def _calculate_byzantine_score(self, node_id: str, node_updates: Dict[str, np.ndarray],
+                                 global_update: np.ndarray) -> float:
+        """Calculate comprehensive Byzantine score for a node"""
+        score = 0.0
+        
+        # Deviation score (0-0.3)
+        if node_id in self.node_deviations and len(self.node_deviations[node_id]) > 0:
+            avg_deviation = np.mean(self.node_deviations[node_id][-5:])
+            score += min(avg_deviation / 10.0, 0.3)
+        
+        # Historical detection score (0-0.2)
+        if node_id in self.detection_history:
+            detection_rate = min(self.detection_history[node_id] / 10.0, 0.2)
+            score += detection_rate
+        
+        # Pattern anomaly score (0-0.25)
+        if node_id in self.node_response_patterns and len(self.node_response_patterns[node_id]) > 2:
+            pattern_variance = np.var(self.node_response_patterns[node_id])
+            pattern_score = min(pattern_variance * 0.1, 0.25)
+            score += pattern_score
+        
+        # Consensus violation score (0-0.25)
+        if node_updates.get(node_id) is not None:
+            update = node_updates[node_id]
+            consensus_deviation = np.linalg.norm(update - global_update)
+            consensus_score = min(consensus_deviation / 8.0, 0.25)
+            score += consensus_score
+        
+        return min(score, 1.0)
 
 
 class CommitteeManager:
