@@ -258,8 +258,12 @@ class FederatedLearningManager:
     def train(self, data):
         """Main federated training loop"""
         try:
-            # Setup clients
-            self.setup_clients(data)
+            # Only setup clients if they haven't been setup already
+            if not hasattr(self, 'clients') or not self.clients:
+                self.setup_clients(data)
+            
+            # Initialize training history
+            self.training_history = []
             
             # Training loop
             for round_num in range(self.max_rounds):
@@ -269,8 +273,11 @@ class FederatedLearningManager:
                 progress_percentage = (round_num + 1) / self.max_rounds
                 
                 # Create enhanced progress text with visual indicators
-                if st.session_state.language == 'fr':
-                    progress_text = f"🚀 {progress_percentage:.0%} - Ronde {self.current_round}/{self.max_rounds} - Formation en cours..."
+                if hasattr(st, 'session_state') and hasattr(st.session_state, 'language'):
+                    if st.session_state.language == 'fr':
+                        progress_text = f"🚀 {progress_percentage:.0%} - Ronde {self.current_round}/{self.max_rounds} - Formation en cours..."
+                    else:
+                        progress_text = f"🚀 {progress_percentage:.0%} - Round {self.current_round}/{self.max_rounds} - Training in progress..."
                 else:
                     progress_text = f"🚀 {progress_percentage:.0%} - Round {self.current_round}/{self.max_rounds} - Training in progress..."
                 
@@ -280,24 +287,18 @@ class FederatedLearningManager:
                         st.session_state.training_progress.progress(progress_percentage, text=progress_text)
                     
                     if hasattr(st.session_state, 'current_round_display'):
-                        if st.session_state.language == 'fr':
+                        if hasattr(st.session_state, 'language') and st.session_state.language == 'fr':
                             round_text = f"🔄 **Ronde d'entraînement {self.current_round} sur {self.max_rounds}**"
                         else:
                             round_text = f"🔄 **Training Round {self.current_round} of {self.max_rounds}**"
                         st.session_state.current_round_display.markdown(round_text)
-                    
-                    if hasattr(st.session_state, 'round_counter'):
-                        st.session_state.round_counter.metric(
-                            "Current Round" if st.session_state.language == 'en' else "Ronde Actuelle", 
-                            f"{self.current_round}/{self.max_rounds}"
-                        )
                 
                 start_time = time.time()
                 
                 # Update client status indicator
                 if hasattr(st, 'session_state') and hasattr(st.session_state, 'client_status'):
                     active_clients = len([c for c in self.clients if c is not None])
-                    if st.session_state.language == 'fr':
+                    if hasattr(st.session_state, 'language') and st.session_state.language == 'fr':
                         client_text = f"👥 Stations: {active_clients}/{self.num_clients}"
                     else:
                         client_text = f"👥 Clients: {active_clients}/{self.num_clients}"

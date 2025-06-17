@@ -916,8 +916,15 @@ def main():
                 else:
                     fl_manager = st.session_state.fl_manager
                 
-                # Execute actual federated learning training with progress tracking
-                training_results = fl_manager.train(client_data)
+                # Use the pre-distributed client data directly
+                # Create a dummy DataFrame for the train method signature
+                dummy_data = pd.DataFrame({'feature': [1, 2, 3], 'target': [0, 1, 0]})
+                
+                # Setup clients with the actual distributed data
+                fl_manager.setup_clients_with_data(client_data)
+                
+                # Execute training with dummy data (clients already have real data)
+                training_results = fl_manager.train(dummy_data)
                 
                 # Process real training results from federated learning
                 for round_idx, real_metrics in enumerate(fl_manager.training_history):
