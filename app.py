@@ -2403,8 +2403,8 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            # Simple Success Rate Bar Chart
-            fig1 = plt.figure(figsize=(10, 6))
+            # Donut Chart for Defense Success Rates
+            fig1 = plt.figure(figsize=(10, 8))
             
             attack_types = ['Sybil Attacks', 'Byzantine Attacks', 'Network Intrusions']
             if st.session_state.language == 'fr':
@@ -2416,52 +2416,129 @@ def main():
             intrusion_success = (sum(intrusion_blocked) / sum(network_intrusions) * 100) if sum(network_intrusions) > 0 else 0
             
             success_rates = [sybil_success, byzantine_success, intrusion_success]
-            colors = ['#4CAF50', '#FF9800', '#2196F3']  # Green, Orange, Blue
             
-            bars = plt.bar(attack_types, success_rates, color=colors, alpha=0.8, edgecolor='black', linewidth=1)
+            # Create two subplots - donut chart and bar chart
+            gs = fig1.add_gridspec(2, 1, height_ratios=[1.5, 1], hspace=0.4)
+            
+            # Top: Donut chart showing overall defense effectiveness
+            ax1 = fig1.add_subplot(gs[0])
+            
+            # Calculate blocked vs unblocked for donut
+            total_attacks_sum = sum(sybil_attacks) + sum(byzantine_attacks) + sum(network_intrusions)
+            total_blocked_sum = sum(sybil_blocked) + sum(byzantine_blocked) + sum(intrusion_blocked)
+            total_unblocked = total_attacks_sum - total_blocked_sum
+            
+            donut_sizes = [total_blocked_sum, total_unblocked]
+            donut_labels = ['Blocked', 'Unblocked'] if st.session_state.language == 'en' else ['Bloquées', 'Non Bloquées']
+            donut_colors = ['#4CAF50', '#FF5722']  # Green for blocked, red for unblocked
+            
+            # Create donut chart
+            wedges, texts, autotexts = ax1.pie(donut_sizes, labels=donut_labels, colors=donut_colors,
+                                              autopct='%1.1f%%', startangle=90, pctdistance=0.85,
+                                              textprops={'fontsize': 12, 'fontweight': 'bold'})
+            
+            # Add center circle to make it a donut
+            centre_circle = plt.Circle((0,0), 0.50, fc='white')
+            ax1.add_artist(centre_circle)
+            
+            # Add overall effectiveness in center
+            ax1.text(0, 0, f'{overall_success:.1f}%\nEffective', ha='center', va='center',
+                    fontsize=16, fontweight='bold', color='darkgreen')
+            
+            ax1.set_title('Overall Defense Effectiveness' if st.session_state.language == 'en' 
+                         else 'Efficacité Globale de Défense', fontsize=16, fontweight='bold', pad=20)
+            
+            # Bottom: Horizontal bar chart for individual attack types
+            ax2 = fig1.add_subplot(gs[1])
+            
+            colors = ['#4CAF50', '#FF9800', '#2196F3']  # Green, Orange, Blue
+            y_pos = range(len(attack_types))
+            
+            bars = ax2.barh(y_pos, success_rates, color=colors, alpha=0.8, edgecolor='black', linewidth=1)
             
             # Add percentage labels on bars
-            for bar, rate in zip(bars, success_rates):
-                height = bar.get_height()
-                plt.text(bar.get_x() + bar.get_width()/2., height + 1,
-                        f'{rate:.1f}%', ha='center', va='bottom', fontweight='bold', fontsize=12)
+            for i, (bar, rate) in enumerate(zip(bars, success_rates)):
+                width = bar.get_width()
+                ax2.text(width + 1, bar.get_y() + bar.get_height()/2,
+                        f'{rate:.1f}%', ha='left', va='center', fontweight='bold', fontsize=11)
             
             # Add target line
-            plt.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7, 
+            ax2.axvline(x=90, color='red', linestyle='--', linewidth=2, alpha=0.7, 
                        label='Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%')
             
-            plt.title('Defense Success Rate by Attack Type' if st.session_state.language == 'en' 
-                     else 'Taux de Succès de Défense par Type d\'Attaque', 
-                     fontsize=14, fontweight='bold')
-            plt.ylabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)')
-            plt.ylim(0, 105)
-            plt.legend()
-            plt.grid(True, alpha=0.3, axis='y')
-            plt.xticks(rotation=45, ha='right')
+            ax2.set_yticks(y_pos)
+            ax2.set_yticklabels(attack_types)
+            ax2.set_xlabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)')
+            ax2.set_title('Defense Success by Attack Type' if st.session_state.language == 'en' 
+                         else 'Succès de Défense par Type d\'Attaque', fontsize=14, fontweight='bold')
+            ax2.set_xlim(0, 105)
+            ax2.legend(loc='lower right')
+            ax2.grid(True, alpha=0.3, axis='x')
+            
             plt.tight_layout()
             st.pyplot(fig1)
         
         with col2:
-            # Simple Attack vs Blocked Comparison
-            fig2 = plt.figure(figsize=(10, 6))
+            # Stacked Area Chart for Attack Trends
+            fig2 = plt.figure(figsize=(10, 8))
+            gs2 = fig2.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.4)
             
-            # Calculate totals
-            total_attacks_per_round = [s+b+n for s,b,n in zip(sybil_attacks, byzantine_attacks, network_intrusions)]
+            # Top: Stacked area chart showing attack composition
+            ax1 = fig2.add_subplot(gs2[0])
+            
+            # Create stacked area chart
+            ax1.fill_between(time_points, 0, sybil_attacks, alpha=0.7, color='#FF6B6B', 
+                           label='Sybil Attacks' if st.session_state.language == 'en' else 'Attaques Sybil')
+            ax1.fill_between(time_points, sybil_attacks, 
+                           [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
+                           alpha=0.7, color='#4ECDC4', 
+                           label='Byzantine Attacks' if st.session_state.language == 'en' else 'Attaques Byzantines')
+            ax1.fill_between(time_points, [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
+                           [s+b+n for s,b,n in zip(sybil_attacks, byzantine_attacks, network_intrusions)], 
+                           alpha=0.7, color='#45B7D1', 
+                           label='Network Intrusions' if st.session_state.language == 'en' else 'Intrusions Réseau')
+            
+            # Overlay total blocked attacks as a bold line
             total_blocked_per_round = [s+b+n for s,b,n in zip(sybil_blocked, byzantine_blocked, intrusion_blocked)]
+            ax1.plot(time_points, total_blocked_per_round, 'darkgreen', linewidth=4, marker='D', markersize=6,
+                    label='Total Blocked' if st.session_state.language == 'en' else 'Total Bloquées', 
+                    markerfacecolor='lightgreen', markeredgecolor='darkgreen')
             
-            # Simple line plot
-            plt.plot(time_points, total_attacks_per_round, 'r-', linewidth=3, marker='o', 
-                    label='Total Attacks' if st.session_state.language == 'en' else 'Total Attaques', markersize=6)
-            plt.plot(time_points, total_blocked_per_round, 'g-', linewidth=3, marker='s', 
-                    label='Attacks Blocked' if st.session_state.language == 'en' else 'Attaques Bloquées', markersize=6)
+            ax1.set_title('Attack Composition and Defense Response' if st.session_state.language == 'en' 
+                         else 'Composition des Attaques et Réponse Défensive', fontsize=14, fontweight='bold')
+            ax1.set_ylabel('Number of Attacks' if st.session_state.language == 'en' else 'Nombre d\'Attaques')
+            ax1.legend(loc='upper left', fontsize=10)
+            ax1.grid(True, alpha=0.3)
+            ax1.set_xlim(1, 20)
             
-            plt.title('Attacks vs Defense Over Time' if st.session_state.language == 'en' 
-                     else 'Attaques vs Défense dans le Temps', fontsize=14, fontweight='bold')
-            plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-            plt.ylabel('Number of Events' if st.session_state.language == 'en' else 'Nombre d\'Événements')
-            plt.legend(fontsize=12)
-            plt.grid(True, alpha=0.3)
-            plt.xlim(1, 20)
+            # Bottom: Defense effectiveness percentage over time
+            ax2 = fig2.add_subplot(gs2[1])
+            
+            # Calculate defense effectiveness per round
+            effectiveness_per_round = []
+            for i in range(len(time_points)):
+                total_attacks_round = sybil_attacks[i] + byzantine_attacks[i] + network_intrusions[i]
+                total_blocked_round = sybil_blocked[i] + byzantine_blocked[i] + intrusion_blocked[i]
+                effectiveness = (total_blocked_round / total_attacks_round * 100) if total_attacks_round > 0 else 0
+                effectiveness_per_round.append(effectiveness)
+            
+            # Create area chart for effectiveness
+            ax2.fill_between(time_points, effectiveness_per_round, alpha=0.6, color='#96CEB4')
+            ax2.plot(time_points, effectiveness_per_round, 'darkgreen', linewidth=3, marker='o', markersize=5)
+            
+            # Add effectiveness target line
+            ax2.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7, 
+                       label='Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%')
+            
+            ax2.set_title('Defense Effectiveness Trend' if st.session_state.language == 'en' 
+                         else 'Tendance d\'Efficacité Défensive', fontsize=14, fontweight='bold')
+            ax2.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            ax2.set_ylabel('Effectiveness (%)' if st.session_state.language == 'en' else 'Efficacité (%)')
+            ax2.legend(loc='lower right')
+            ax2.grid(True, alpha=0.3)
+            ax2.set_xlim(1, 20)
+            ax2.set_ylim(70, 105)
+            
             plt.tight_layout()
             st.pyplot(fig2)
         
@@ -2477,70 +2554,82 @@ def main():
         with col1:
             if st.session_state.language == 'fr':
                 st.markdown("""
-                **📊 Graphique 1: Taux de Succès de Défense**
+                **🍩 Graphique 1: Efficacité Globale de Défense**
                 
-                Ce graphique montre à quel point notre système bloque différents types d'attaques:
+                **Graphique en Donut (cercle):**
+                - La partie verte montre les attaques bloquées
+                - La partie rouge montre les attaques non bloquées
+                - Le chiffre au centre = efficacité totale: {:.1f}%
                 
+                **Barres horizontales en dessous:**
                 - **Attaques Sybil**: {:.1f}% bloquées
                 - **Attaques Byzantines**: {:.1f}% bloquées  
                 - **Intrusions Réseau**: {:.1f}% bloquées
                 
-                **Comment lire ce graphique:**
-                - Plus la barre est haute, mieux c'est
-                - La ligne rouge à 90% est notre objectif
-                - Les barres vertes sont excellentes
-                - Les barres orange/rouges ont besoin d'amélioration
-                """.format(sybil_success, byzantine_success, intrusion_success))
+                **Comment lire ces graphiques:**
+                - Plus la partie verte est grande, mieux c'est
+                - Plus les barres sont longues, mieux c'est
+                - La ligne rouge = objectif de 90%
+                """.format(overall_success, sybil_success, byzantine_success, intrusion_success))
             else:
                 st.markdown("""
-                **📊 Graph 1: Defense Success Rate**
+                **🍩 Graph 1: Overall Defense Effectiveness**
                 
-                This graph shows how well our system blocks different types of attacks:
+                **Donut Chart (circle):**
+                - Green part shows blocked attacks
+                - Red part shows unblocked attacks  
+                - Number in center = total effectiveness: {:.1f}%
                 
+                **Horizontal bars below:**
                 - **Sybil Attacks**: {:.1f}% blocked
                 - **Byzantine Attacks**: {:.1f}% blocked
                 - **Network Intrusions**: {:.1f}% blocked
                 
-                **How to read this graph:**
-                - Higher bars are better
-                - The red line at 90% is our target
-                - Green bars are excellent
-                - Orange/red bars need improvement
-                """.format(sybil_success, byzantine_success, intrusion_success))
+                **How to read these graphs:**
+                - Bigger green part is better
+                - Longer bars are better
+                - Red line = 90% target
+                """.format(overall_success, sybil_success, byzantine_success, intrusion_success))
         
         with col2:
             if st.session_state.language == 'fr':
                 st.markdown("""
-                **📈 Graphique 2: Attaques vs Défense**
+                **📊 Graphique 2: Composition des Attaques et Tendances**
                 
-                Ce graphique montre l'évolution des attaques et de nos défenses:
+                **Graphique en Aires Empilées (en haut):**
+                - Zones colorées = différents types d'attaques
+                - Rose = Attaques Sybil
+                - Turquoise = Attaques Byzantines  
+                - Bleu = Intrusions Réseau
+                - Ligne verte épaisse = Total d'attaques bloquées
                 
-                - **Ligne rouge**: Nombre total d'attaques par tour
-                - **Ligne verte**: Nombre d'attaques bloquées
+                **Graphique d'Efficacité (en bas):**
+                - Zone verte = pourcentage d'efficacité par tour
+                - Ligne rouge pointillée = objectif de 90%
                 
-                **Ce que cela signifie:**
-                - Quand les lignes sont proches = bonne défense
-                - Si la ligne verte monte = nos défenses s'améliorent
-                - Si la ligne rouge monte = plus d'attaques détectées
-                
-                **Efficacité globale**: {:.1f}%
-                """.format(overall_success))
+                **Comment lire ces graphiques:**
+                - Plus la ligne verte est haute dans le premier graphique = plus d'attaques bloquées
+                - Plus la zone verte est haute dans le second = meilleure efficacité
+                """)
             else:
                 st.markdown("""
-                **📈 Graph 2: Attacks vs Defense**
+                **📊 Graph 2: Attack Composition and Trends**
                 
-                This graph shows how attacks and our defenses change over time:
+                **Stacked Area Chart (top):**
+                - Colored areas = different attack types
+                - Pink = Sybil Attacks
+                - Teal = Byzantine Attacks
+                - Blue = Network Intrusions  
+                - Thick green line = Total attacks blocked
                 
-                - **Red line**: Total attacks per round
-                - **Green line**: Attacks successfully blocked
+                **Effectiveness Chart (bottom):**
+                - Green area = effectiveness percentage per round
+                - Red dashed line = 90% target
                 
-                **What this means:**
-                - When lines are close = good defense
-                - If green line goes up = our defenses improve
-                - If red line goes up = more attacks detected
-                
-                **Overall effectiveness**: {:.1f}%
-                """.format(overall_success))
+                **How to read these graphs:**
+                - Higher green line in first chart = more attacks blocked
+                - Higher green area in second chart = better effectiveness
+                """)
         
         # Simple Summary
         st.markdown("---")
