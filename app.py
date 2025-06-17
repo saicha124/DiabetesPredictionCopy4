@@ -1360,486 +1360,296 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            # Revolutionary Real-Time Security Command Center
-            fig_security = plt.figure(figsize=(16, 12))
-            gs = fig_security.add_gridspec(4, 3, height_ratios=[1.5, 1, 1, 1], width_ratios=[2, 1, 1], hspace=0.4, wspace=0.3)
+            # Simple Security Status Overview
+            fig_simple = plt.figure(figsize=(12, 8))
+            gs = fig_simple.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.4, wspace=0.3)
             
-            # Multi-dimensional threat landscape overview
-            ax_main = fig_security.add_subplot(gs[0, :])
+            # Top Left: Simple Security Score Meter
+            ax1 = fig_simple.add_subplot(gs[0, 0])
             
-            # Create comprehensive threat timeline with multiple attack vectors
-            time_extended = np.linspace(1, 20, 20)
+            # Calculate simple security score
+            total_attacks_simple = sum(sybil_attacks) + sum(byzantine_attacks) + sum(network_intrusions)
+            total_blocked_simple = sum(sybil_blocked) + sum(byzantine_blocked) + sum(intrusion_blocked)
+            security_percentage = (total_blocked_simple / total_attacks_simple * 100) if total_attacks_simple > 0 else 0
             
-            # Stacked area visualization for comprehensive threat view
-            ax_main.fill_between(time_extended, 0, sybil_attacks, alpha=0.7, color='#FF4444', label='Sybil Threats')
-            ax_main.fill_between(time_extended, sybil_attacks, 
-                               [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
-                               alpha=0.7, color='#FF8844', label='Byzantine Threats')
-            ax_main.fill_between(time_extended, [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
-                               [s+b+n for s,b,n in zip(sybil_attacks, byzantine_attacks, network_intrusions)], 
-                               alpha=0.7, color='#AA44FF', label='Network Intrusions')
+            # Create simple bar chart for security level
+            security_levels = ['Poor', 'Fair', 'Good', 'Excellent']
+            if st.session_state.language == 'fr':
+                security_levels = ['Faible', 'Moyen', 'Bon', 'Excellent']
             
-            # Overlay defense response effectiveness
-            total_threats = [s+b+n for s,b,n in zip(sybil_attacks, byzantine_attacks, network_intrusions)]
-            defense_response = [t * (0.85 + i*0.007) for i, t in enumerate(total_threats)]
-            ax_main.plot(time_extended, defense_response, 'g-', linewidth=5, marker='D', markersize=8,
-                        markerfacecolor='lightgreen', markeredgecolor='darkgreen', alpha=0.9,
-                        label='Defense Response' if st.session_state.language == 'en' else 'Réponse Défensive')
+            level_values = [25, 50, 75, 100]
+            colors = ['red', 'orange', 'yellow', 'green']
             
-            # Critical threshold indicators
-            max_threat = max(total_threats)
-            ax_main.axhline(y=max_threat*0.8, color='orange', linestyle='--', linewidth=3, alpha=0.8)
-            ax_main.axhline(y=max_threat*0.9, color='red', linestyle='--', linewidth=3, alpha=0.8)
+            bars = ax1.bar(security_levels, level_values, color=colors, alpha=0.3, edgecolor='black')
             
-            # Real-time alerts simulation
-            alert_points = [5, 12, 18]
-            for alert in alert_points:
-                ax_main.annotate('ALERT!', xy=(alert, total_threats[alert-1]), xytext=(alert, total_threats[alert-1]+15),
-                               arrowprops=dict(arrowstyle='->', color='red', lw=2),
-                               fontsize=12, fontweight='bold', color='red',
-                               bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.8))
-            
-            ax_main.set_title('🚨 Real-Time Security Command Center - Threat Landscape' if st.session_state.language == 'en' 
-                            else '🚨 Centre de Commande de Sécurité en Temps Réel - Paysage des Menaces', 
-                            fontsize=18, fontweight='bold', color='darkred')
-            ax_main.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement', fontsize=14)
-            ax_main.set_ylabel('Threat Volume' if st.session_state.language == 'en' else 'Volume de Menaces', fontsize=14)
-            ax_main.legend(loc='upper left', fontsize=12)
-            ax_main.grid(True, alpha=0.3)
-            ax_main.set_xlim(1, 20)
-            
-            # Committee Member Performance Matrix
-            ax_committee = fig_security.add_subplot(gs[1, 0])
-            
-            # Generate committee member performance data
-            committee_members = ['Node-01', 'Node-02', 'Node-03', 'Node-04', 'Node-05', 'Node-06', 'Node-07']
-            performance_matrix = []
-            
-            for i, member in enumerate(committee_members):
-                member_performance = [85 + i*2 + j*0.8 + np.random.uniform(-3, 5) for j in range(20)]
-                performance_matrix.append(member_performance)
-            
-            performance_array = np.array(performance_matrix)
-            im_committee = ax_committee.imshow(performance_array, cmap='RdYlGn', aspect='auto', vmin=80, vmax=100)
-            
-            ax_committee.set_title('Committee Member Performance Matrix' if st.session_state.language == 'en' 
-                                 else 'Matrice de Performance des Membres du Comité', fontsize=14, fontweight='bold')
-            ax_committee.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-            ax_committee.set_ylabel('Committee Members' if st.session_state.language == 'en' else 'Membres du Comité')
-            ax_committee.set_yticks(range(len(committee_members)))
-            ax_committee.set_yticklabels(committee_members, fontsize=10)
-            
-            # Security Threat Classification Pie Chart
-            ax_pie = fig_security.add_subplot(gs[1, 1])
-            
-            threat_categories = ['Sybil', 'Byzantine', 'Network', 'Unknown']
-            threat_values = [sum(sybil_attacks), sum(byzantine_attacks), sum(network_intrusions), 25]
-            colors = ['#FF4444', '#FF8844', '#AA44FF', '#CCCCCC']
-            
-            wedges, texts, autotexts = ax_pie.pie(threat_values, labels=threat_categories, colors=colors,
-                                                 autopct='%1.1f%%', startangle=90, explode=(0.05, 0.05, 0.05, 0))
-            ax_pie.set_title('Threat Distribution' if st.session_state.language == 'en' else 'Distribution des Menaces',
-                           fontsize=14, fontweight='bold')
-            
-            # Security Score Gauge
-            ax_gauge = fig_security.add_subplot(gs[1, 2])
-            
-            # Calculate overall security score
-            total_detected = sum(defense_response)
-            total_threats_sum = sum(total_threats)
-            security_score = (total_detected / total_threats_sum * 100) if total_threats_sum > 0 else 0
-            
-            # Create gauge visualization
-            theta = np.linspace(0, np.pi, 100)
-            radius = 1
-            
-            # Background arc
-            ax_gauge.plot(radius * np.cos(theta), radius * np.sin(theta), 'k-', linewidth=8, alpha=0.3)
-            
-            # Score arc
-            score_theta = np.linspace(0, np.pi * (security_score/100), 50)
-            if security_score >= 90:
-                gauge_color = 'green'
-            elif security_score >= 75:
-                gauge_color = 'orange'
+            # Highlight current security level
+            if security_percentage >= 90:
+                current_level = 3
+            elif security_percentage >= 75:
+                current_level = 2
+            elif security_percentage >= 50:
+                current_level = 1
             else:
-                gauge_color = 'red'
-                
-            ax_gauge.plot(radius * np.cos(score_theta), radius * np.sin(score_theta), 
-                         color=gauge_color, linewidth=12, alpha=0.8)
+                current_level = 0
             
-            # Add score text
-            ax_gauge.text(0, -0.3, f'{security_score:.1f}%', ha='center', va='center',
-                         fontsize=20, fontweight='bold', color=gauge_color)
-            ax_gauge.text(0, -0.5, 'Security Score' if st.session_state.language == 'en' else 'Score de Sécurité',
-                         ha='center', va='center', fontsize=12, fontweight='bold')
+            bars[current_level].set_alpha(0.8)
+            bars[current_level].set_linewidth(3)
             
-            ax_gauge.set_xlim(-1.2, 1.2)
-            ax_gauge.set_ylim(-0.7, 1.2)
-            ax_gauge.set_aspect('equal')
-            ax_gauge.axis('off')
+            # Add current score
+            ax1.text(current_level, level_values[current_level] + 5, f'{security_percentage:.1f}%',
+                    ha='center', fontsize=16, fontweight='bold', color='darkgreen')
             
-            # Advanced Detection Efficiency Trends
-            ax_trends = fig_security.add_subplot(gs[2, :])
+            ax1.set_title('Current Security Level' if st.session_state.language == 'en' 
+                         else 'Niveau de Sécurité Actuel', fontsize=14, fontweight='bold')
+            ax1.set_ylabel('Security Score' if st.session_state.language == 'en' else 'Score de Sécurité')
+            ax1.set_ylim(0, 110)
+            ax1.grid(True, alpha=0.3, axis='y')
             
-            # Multi-layer detection efficiency with confidence intervals
-            sybil_std = np.std(sybil_detection_efficiency) * 0.3
-            byzantine_std = np.std(byzantine_detection_efficiency) * 0.3
-            intrusion_std = np.std(intrusion_detection_efficiency) * 0.3
+            # Top Right: Attack Types Breakdown (Simple Pie Chart)
+            ax2 = fig_simple.add_subplot(gs[0, 1])
             
-            # Plot with confidence bands
-            ax_trends.fill_between(time_extended, 
-                                 [s - sybil_std for s in sybil_detection_efficiency],
-                                 [s + sybil_std for s in sybil_detection_efficiency],
-                                 alpha=0.2, color='red')
-            ax_trends.plot(time_extended, sybil_detection_efficiency, 'r-', linewidth=3, marker='o',
-                          label='Sybil Detection', markersize=6)
+            attack_counts = [sum(sybil_attacks), sum(byzantine_attacks), sum(network_intrusions)]
+            attack_labels = ['Sybil', 'Byzantine', 'Network']
+            if st.session_state.language == 'fr':
+                attack_labels = ['Sybil', 'Byzantines', 'Réseau']
             
-            ax_trends.fill_between(time_extended, 
-                                 [b - byzantine_std for b in byzantine_detection_efficiency],
-                                 [b + byzantine_std for b in byzantine_detection_efficiency],
-                                 alpha=0.2, color='orange')
-            ax_trends.plot(time_extended, byzantine_detection_efficiency, 'orange', linewidth=3, marker='s',
-                          label='Byzantine Detection', markersize=6)
+            colors_pie = ['#FF6B6B', '#4ECDC4', '#45B7D1']
             
-            ax_trends.fill_between(time_extended, 
-                                 [i - intrusion_std for i in intrusion_detection_efficiency],
-                                 [i + intrusion_std for i in intrusion_detection_efficiency],
-                                 alpha=0.2, color='purple')
-            ax_trends.plot(time_extended, intrusion_detection_efficiency, 'purple', linewidth=3, marker='^',
-                          label='Intrusion Detection', markersize=6)
+            wedges, texts, autotexts = ax2.pie(attack_counts, labels=attack_labels, colors=colors_pie,
+                                              autopct='%1.0f%%', startangle=90,
+                                              textprops={'fontsize': 12, 'fontweight': 'bold'})
             
-            # Performance benchmarks
-            ax_trends.axhline(y=95, color='green', linestyle=':', linewidth=2, alpha=0.8, label='Target: 95%')
-            ax_trends.axhline(y=90, color='orange', linestyle=':', linewidth=2, alpha=0.8, label='Minimum: 90%')
+            ax2.set_title('Attack Types Distribution' if st.session_state.language == 'en' 
+                         else 'Distribution des Types d\'Attaques', fontsize=14, fontweight='bold')
             
-            ax_trends.set_title('🎯 Advanced Detection Efficiency Analytics' if st.session_state.language == 'en'
-                              else '🎯 Analytiques Avancées d\'Efficacité de Détection', fontsize=16, fontweight='bold')
-            ax_trends.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-            ax_trends.set_ylabel('Detection Efficiency (%)' if st.session_state.language == 'en' else 'Efficacité de Détection (%)')
-            ax_trends.legend(loc='lower right', fontsize=11)
-            ax_trends.grid(True, alpha=0.3)
-            ax_trends.set_xlim(1, 20)
-            ax_trends.set_ylim(65, 105)
+            # Middle Left: Simple Detection Rate Trend
+            ax3 = fig_simple.add_subplot(gs[1, 0])
             
-            # Network Topology Security Map
-            ax_network = fig_security.add_subplot(gs[3, 0])
+            # Calculate simple detection rates
+            detection_rates_simple = []
+            for i in range(len(time_points)):
+                total_round = sybil_attacks[i] + byzantine_attacks[i] + network_intrusions[i]
+                blocked_round = sybil_blocked[i] + byzantine_blocked[i] + intrusion_blocked[i]
+                rate = (blocked_round / total_round * 100) if total_round > 0 else 0
+                detection_rates_simple.append(rate)
             
-            # Simulate network nodes and connections
-            np.random.seed(42)  # For consistent visualization
-            num_nodes = 15
-            node_x = np.random.uniform(0, 10, num_nodes)
-            node_y = np.random.uniform(0, 10, num_nodes)
+            ax3.plot(time_points, detection_rates_simple, 'g-', linewidth=4, marker='o', markersize=6,
+                    markerfacecolor='lightgreen', markeredgecolor='darkgreen')
+            ax3.fill_between(time_points, detection_rates_simple, alpha=0.3, color='green')
             
-            # Color nodes based on security status
-            node_colors = []
-            for i in range(num_nodes):
-                security_level = np.random.uniform(0.7, 1.0)
-                if security_level > 0.9:
-                    node_colors.append('green')
-                elif security_level > 0.8:
-                    node_colors.append('yellow')
-                else:
-                    node_colors.append('red')
+            # Add target line
+            ax3.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7,
+                       label='Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%')
             
-            # Draw network connections
-            for i in range(num_nodes):
-                for j in range(i+1, min(i+4, num_nodes)):
-                    ax_network.plot([node_x[i], node_x[j]], [node_y[i], node_y[j]], 
-                                   'gray', alpha=0.3, linewidth=1)
+            ax3.set_title('Detection Rate Over Time' if st.session_state.language == 'en' 
+                         else 'Taux de Détection dans le Temps', fontsize=14, fontweight='bold')
+            ax3.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            ax3.set_ylabel('Detection Rate (%)' if st.session_state.language == 'en' else 'Taux de Détection (%)')
+            ax3.legend()
+            ax3.grid(True, alpha=0.3)
+            ax3.set_xlim(1, 20)
+            ax3.set_ylim(70, 105)
             
-            # Draw nodes
-            ax_network.scatter(node_x, node_y, c=node_colors, s=200, alpha=0.8, edgecolors='black', linewidth=2)
+            # Middle Right: Committee Status (Simple)
+            ax4 = fig_simple.add_subplot(gs[1, 1])
             
-            # Add committee nodes (larger, special marking)
-            committee_indices = [0, 3, 6, 9, 12, 14, 7]
-            for idx in committee_indices:
-                ax_network.scatter(node_x[idx], node_y[idx], c='blue', s=400, alpha=0.9, 
-                                 edgecolors='navy', linewidth=3, marker='*')
+            # Simple committee health visualization
+            committee_names = ['Node 1', 'Node 2', 'Node 3', 'Node 4', 'Node 5']
+            committee_health = [92, 88, 95, 85, 90]  # Simple health percentages
             
-            ax_network.set_title('🔗 Network Security Topology' if st.session_state.language == 'en'
-                               else '🔗 Topologie de Sécurité Réseau', fontsize=14, fontweight='bold')
-            ax_network.set_xlim(-0.5, 10.5)
-            ax_network.set_ylim(-0.5, 10.5)
-            ax_network.grid(True, alpha=0.3)
-            ax_network.set_aspect('equal')
+            colors_committee = ['green' if h >= 90 else 'orange' if h >= 80 else 'red' for h in committee_health]
             
-            # Real-time metrics dashboard
-            ax_metrics = fig_security.add_subplot(gs[3, 1:])
+            bars_committee = ax4.barh(committee_names, committee_health, color=colors_committee, alpha=0.7)
             
-            # Create metrics visualization
-            metrics_data = {
-                'Active Threats': len([t for t in total_threats if t > 5]),
-                'Blocked Attacks': int(sum(defense_response)),
-                'Committee Health': f'{np.mean([85, 92, 88, 94, 87, 91, 89]):.1f}%',
-                'Network Uptime': '99.7%',
-                'Response Time': '0.23s',
-                'False Positives': '2.1%'
-            }
+            # Add percentage labels
+            for bar, health in zip(bars_committee, committee_health):
+                ax4.text(bar.get_width() + 1, bar.get_y() + bar.get_height()/2,
+                        f'{health}%', va='center', fontweight='bold')
             
-            y_pos = np.arange(len(metrics_data))
-            metric_names = list(metrics_data.keys())
-            metric_values = [str(v) for v in metrics_data.values()]
+            ax4.set_title('Committee Node Health' if st.session_state.language == 'en' 
+                         else 'Santé des Nœuds du Comité', fontsize=14, fontweight='bold')
+            ax4.set_xlabel('Health Score (%)' if st.session_state.language == 'en' else 'Score de Santé (%)')
+            ax4.set_xlim(0, 105)
+            ax4.grid(True, alpha=0.3, axis='x')
             
-            # Create horizontal bar chart for metrics
-            bars = ax_metrics.barh(y_pos, [100, 95, 90, 99, 85, 98], 
-                                  color=['red', 'green', 'blue', 'cyan', 'orange', 'purple'], alpha=0.7)
+            # Bottom: Simple Attack Timeline
+            ax5 = fig_simple.add_subplot(gs[2, :])
             
-            # Add value labels
-            for i, (bar, value) in enumerate(zip(bars, metric_values)):
-                ax_metrics.text(bar.get_width() + 1, bar.get_y() + bar.get_height()/2,
-                               value, va='center', fontweight='bold', fontsize=11)
+            # Simple stacked bar chart
+            width = 0.8
+            ax5.bar(time_points, sybil_attacks, width, label='Sybil', color='#FF6B6B', alpha=0.7)
+            ax5.bar(time_points, byzantine_attacks, width, bottom=sybil_attacks, 
+                   label='Byzantine', color='#4ECDC4', alpha=0.7)
             
-            ax_metrics.set_yticks(y_pos)
-            ax_metrics.set_yticklabels(metric_names, fontsize=11)
-            ax_metrics.set_xlabel('Performance Level' if st.session_state.language == 'en' else 'Niveau de Performance')
-            ax_metrics.set_title('📊 Real-Time Security Metrics' if st.session_state.language == 'en'
-                               else '📊 Métriques de Sécurité en Temps Réel', fontsize=14, fontweight='bold')
-            ax_metrics.set_xlim(0, 110)
-            ax_metrics.grid(True, alpha=0.3, axis='x')
+            bottom_values = [s + b for s, b in zip(sybil_attacks, byzantine_attacks)]
+            ax5.bar(time_points, network_intrusions, width, bottom=bottom_values,
+                   label='Network', color='#45B7D1', alpha=0.7)
+            
+            # Overlay blocked attacks line
+            total_blocked_timeline = [s+b+n for s,b,n in zip(sybil_blocked, byzantine_blocked, intrusion_blocked)]
+            ax5.plot(time_points, total_blocked_timeline, 'darkgreen', linewidth=4, marker='D', markersize=6,
+                    label='Total Blocked' if st.session_state.language == 'en' else 'Total Bloquées')
+            
+            ax5.set_title('Attack Timeline and Defense Response' if st.session_state.language == 'en' 
+                         else 'Chronologie des Attaques et Réponse Défensive', fontsize=14, fontweight='bold')
+            ax5.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            ax5.set_ylabel('Number of Events' if st.session_state.language == 'en' else 'Nombre d\'Événements')
+            ax5.legend(loc='upper left')
+            ax5.grid(True, alpha=0.3)
+            ax5.set_xlim(0.5, 20.5)
             
             plt.tight_layout()
-            st.pyplot(fig_security)
+            st.pyplot(fig_simple)
         
         with col2:
-            # Advanced Multi-Panel Security Analytics Suite
-            fig_analytics = plt.figure(figsize=(14, 12))
-            gs_analytics = fig_analytics.add_gridspec(4, 2, height_ratios=[1.2, 1, 1, 0.8], hspace=0.4, wspace=0.3)
-            
-            # Dynamic Security Score Evolution
-            ax_score = fig_analytics.add_subplot(gs_analytics[0, :])
-            
-            # Calculate comprehensive security scores with multiple factors
-            security_scores = []
-            threat_level_scores = []
-            response_time_scores = []
-            
-            for i in range(len(time_points)):
-                # Multi-factor security calculation
-                detection_factor = (sybil_detection_efficiency[i] + byzantine_detection_efficiency[i] + intrusion_detection_efficiency[i]) / 3
-                threat_pressure = (sybil_attacks[i] + byzantine_attacks[i] + network_intrusions[i]) / 3
-                response_efficiency = min(100, 85 + i * 0.8 + np.random.uniform(-3, 5))
-                
-                # Composite security score
-                composite_score = (detection_factor * 0.5 + response_efficiency * 0.3 + (100 - threat_pressure) * 0.2)
-                security_scores.append(composite_score)
-                threat_level_scores.append(100 - threat_pressure)
-                response_time_scores.append(response_efficiency)
-            
-            # Multi-layer security visualization
-            ax_score.fill_between(time_points, 0, threat_level_scores, alpha=0.3, color='blue', 
-                                label='Threat Resistance' if st.session_state.language == 'en' else 'Résistance aux Menaces')
-            ax_score.fill_between(time_points, threat_level_scores, 
-                                [t + r for t, r in zip(threat_level_scores, response_time_scores)], 
-                                alpha=0.3, color='orange', 
-                                label='Response Capability' if st.session_state.language == 'en' else 'Capacité de Réponse')
-            
-            # Main security score line
-            ax_score.plot(time_points, security_scores, 'r-', linewidth=4, marker='o', markersize=8,
-                         markerfacecolor='yellow', markeredgecolor='darkred', markeredgewidth=2,
-                         label='Overall Security Score' if st.session_state.language == 'en' else 'Score de Sécurité Global')
-            
-            # Critical thresholds with colored zones
-            ax_score.axhspan(90, 100, alpha=0.1, color='green', label='Secure Zone')
-            ax_score.axhspan(75, 90, alpha=0.1, color='yellow', label='Caution Zone')
-            ax_score.axhspan(0, 75, alpha=0.1, color='red', label='Critical Zone')
-            
-            # Predictive trend analysis
-            if len(security_scores) >= 10:
-                z_security = np.polyfit(time_points[-10:], security_scores[-10:], 2)
-                p_security = np.poly1d(z_security)
-                future_points = np.linspace(20, 25, 5)
-                future_scores = p_security(future_points)
-                ax_score.plot(future_points, future_scores, ':', color='darkred', linewidth=3, alpha=0.7,
-                             label='Forecast' if st.session_state.language == 'en' else 'Prévision')
-            
-            ax_score.set_title('🛡️ Comprehensive Security Score Evolution & Forecast' if st.session_state.language == 'en'
-                              else '🛡️ Évolution et Prévision du Score de Sécurité Complet', 
-                              fontsize=16, fontweight='bold')
-            ax_score.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-            ax_score.set_ylabel('Security Score' if st.session_state.language == 'en' else 'Score de Sécurité')
-            ax_score.legend(loc='lower right', fontsize=10)
-            ax_score.grid(True, alpha=0.3)
-            ax_score.set_xlim(1, 25)
-            ax_score.set_ylim(60, 110)
-            
-            # Real-time attack pattern recognition
-            ax_pattern = fig_analytics.add_subplot(gs_analytics[1, 0])
-            
-            # Calculate attack patterns and correlations
-            attack_correlations = []
-            for i in range(1, len(time_points)):
-                sybil_change = sybil_attacks[i] - sybil_attacks[i-1]
-                byzantine_change = byzantine_attacks[i] - byzantine_attacks[i-1]
-                correlation = np.corrcoef([sybil_change], [byzantine_change])[0,1] if not np.isnan(np.corrcoef([sybil_change], [byzantine_change])[0,1]) else 0
-                attack_correlations.append(abs(correlation) * 100)
-            
-            # Pattern recognition visualization
-            colors = ['green' if corr < 30 else 'orange' if corr < 60 else 'red' for corr in attack_correlations]
-            bars = ax_pattern.bar(time_points[1:], attack_correlations, color=colors, alpha=0.7, edgecolor='black')
-            
-            # Add pattern indicators
-            for i, (bar, corr) in enumerate(zip(bars, attack_correlations)):
-                if corr > 70:
-                    ax_pattern.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2,
-                                   '⚠️', ha='center', fontsize=12)
-            
-            ax_pattern.axhline(y=50, color='orange', linestyle='--', alpha=0.7, label='Coordination Threshold')
-            ax_pattern.set_title('Attack Pattern Correlation' if st.session_state.language == 'en'
-                               else 'Corrélation des Modèles d\'Attaque', fontsize=14, fontweight='bold')
-            ax_pattern.set_ylabel('Correlation %' if st.session_state.language == 'en' else 'Corrélation %')
-            ax_pattern.set_xlim(1.5, 20.5)
-            ax_pattern.grid(True, alpha=0.3)
-            ax_pattern.legend(fontsize=9)
-            
-            # Defense system adaptive learning visualization
-            ax_learning = fig_analytics.add_subplot(gs_analytics[1, 1])
-            
-            # Calculate learning acceleration metrics
-            learning_velocity = []
-            for i in range(1, len(time_points)):
-                current_avg = (sybil_detection_efficiency[i] + byzantine_detection_efficiency[i] + intrusion_detection_efficiency[i]) / 3
-                prev_avg = (sybil_detection_efficiency[i-1] + byzantine_detection_efficiency[i-1] + intrusion_detection_efficiency[i-1]) / 3
-                velocity = current_avg - prev_avg
-                learning_velocity.append(velocity)
-            
-            # Create learning velocity plot with color coding
-            velocity_colors = ['green' if v > 0 else 'red' for v in learning_velocity]
-            ax_learning.bar(time_points[1:], learning_velocity, color=velocity_colors, alpha=0.8, edgecolor='black')
-            ax_learning.axhline(y=0, color='black', linestyle='-', alpha=0.5)
-            
-            # Add learning phase indicators
-            learning_phases = ['Initial', 'Rapid', 'Stable', 'Optimized']
-            phase_colors = ['red', 'orange', 'yellow', 'green']
-            phase_ranges = [(2, 5), (6, 10), (11, 15), (16, 20)]
-            
-            for i, (phase, color, (start, end)) in enumerate(zip(learning_phases, phase_colors, phase_ranges)):
-                ax_learning.axvspan(start, end, alpha=0.1, color=color)
-                if st.session_state.language == 'en':
-                    ax_learning.text((start + end) / 2, max(learning_velocity) * 0.8, phase, 
-                                   ha='center', fontsize=10, fontweight='bold', rotation=0)
-            
-            ax_learning.set_title('Adaptive Learning Velocity' if st.session_state.language == 'en'
-                                else 'Vélocité d\'Apprentissage Adaptatif', fontsize=14, fontweight='bold')
-            ax_learning.set_ylabel('Learning Rate' if st.session_state.language == 'en' else 'Taux d\'Apprentissage')
-            ax_learning.grid(True, alpha=0.3)
-            ax_learning.set_xlim(1.5, 20.5)
-            
-            # Committee consensus and disagreement analysis
-            ax_consensus = fig_analytics.add_subplot(gs_analytics[2, 0])
-            
-            # Simulate committee decision consensus
-            consensus_scores = []
-            for i in range(len(time_points)):
-                base_consensus = 85 + i * 0.7  # Improving consensus over time
-                noise = np.random.uniform(-8, 5)  # Some variability in decisions
-                consensus = min(100, max(60, base_consensus + noise))
-                consensus_scores.append(consensus)
-            
-            # Plot consensus with uncertainty bands
-            consensus_std = np.std(consensus_scores) * 0.2
-            upper_consensus = [c + consensus_std for c in consensus_scores]
-            lower_consensus = [c - consensus_std for c in consensus_scores]
-            
-            ax_consensus.fill_between(time_points, lower_consensus, upper_consensus, alpha=0.3, color='blue')
-            ax_consensus.plot(time_points, consensus_scores, 'b-', linewidth=3, marker='s', markersize=6,
-                            markerfacecolor='lightblue', markeredgecolor='darkblue')
-            
-            # Consensus quality indicators
-            ax_consensus.axhspan(90, 100, alpha=0.1, color='green', label='Strong Consensus')
-            ax_consensus.axhspan(75, 90, alpha=0.1, color='yellow', label='Moderate Consensus')
-            ax_consensus.axhspan(0, 75, alpha=0.1, color='red', label='Weak Consensus')
-            
-            ax_consensus.set_title('Committee Decision Consensus' if st.session_state.language == 'en'
-                                 else 'Consensus de Décision du Comité', fontsize=14, fontweight='bold')
-            ax_consensus.set_ylabel('Consensus %' if st.session_state.language == 'en' else 'Consensus %')
-            ax_consensus.legend(fontsize=9)
-            ax_consensus.grid(True, alpha=0.3)
-            ax_consensus.set_xlim(1, 20)
-            ax_consensus.set_ylim(50, 105)
-            
-            # Resource utilization and efficiency monitoring
-            ax_resources = fig_analytics.add_subplot(gs_analytics[2, 1])
-            
-            # Calculate resource efficiency metrics
-            cpu_utilization = [60 + i * 1.2 + np.random.uniform(-5, 8) for i in range(len(time_points))]
-            memory_usage = [45 + i * 0.8 + np.random.uniform(-3, 6) for i in range(len(time_points))]
-            network_load = [35 + i * 0.5 + np.random.uniform(-4, 7) for i in range(len(time_points))]
-            
-            # Normalize and cap values
-            cpu_utilization = [min(95, max(40, cpu)) for cpu in cpu_utilization]
-            memory_usage = [min(85, max(30, mem)) for mem in memory_usage]
-            network_load = [min(75, max(20, net)) for net in network_load]
-            
-            # Stacked area chart for resource monitoring
-            ax_resources.fill_between(time_points, 0, cpu_utilization, alpha=0.6, color='red', label='CPU %')
-            ax_resources.fill_between(time_points, 0, memory_usage, alpha=0.6, color='blue', label='Memory %')
-            ax_resources.fill_between(time_points, 0, network_load, alpha=0.6, color='green', label='Network %')
-            
-            # Resource efficiency trend
-            efficiency = [(100-c)*(100-m)*(100-n)/10000*100 for c,m,n in zip(cpu_utilization, memory_usage, network_load)]
-            ax_resources.plot(time_points, efficiency, 'k-', linewidth=3, marker='D', markersize=5,
-                            label='Efficiency Score', alpha=0.8)
-            
-            ax_resources.set_title('Resource Utilization Monitor' if st.session_state.language == 'en'
-                                 else 'Moniteur d\'Utilisation des Ressources', fontsize=14, fontweight='bold')
-            ax_resources.set_ylabel('Utilization %' if st.session_state.language == 'en' else 'Utilisation %')
-            ax_resources.legend(loc='upper left', fontsize=9)
-            ax_resources.grid(True, alpha=0.3)
-            ax_resources.set_xlim(1, 20)
-            ax_resources.set_ylim(0, 100)
-            
-            # Security incident timeline and severity analysis
-            ax_incidents = fig_analytics.add_subplot(gs_analytics[3, :])
-            
-            # Generate security incident data
-            incident_rounds = [3, 7, 11, 14, 18]
-            incident_severities = [75, 60, 85, 45, 70]
-            incident_types = ['Sybil Burst', 'Byzantine Attack', 'DDoS Attempt', 'Data Breach Try', 'Protocol Exploit']
-            incident_colors = ['red', 'orange', 'purple', 'darkred', 'brown']
-            
+            # Simple Security Summary and Explanations
             if st.session_state.language == 'fr':
-                incident_types = ['Explosion Sybil', 'Attaque Byzantine', 'Tentative DDoS', 'Tentative de Violation', 'Exploit de Protocole']
+                st.subheader("📋 Résumé des Métriques de Sécurité")
+            else:
+                st.subheader("📋 Security Metrics Summary")
             
-            # Create incident scatter plot with size representing severity
-            scatter = ax_incidents.scatter(incident_rounds, [50] * len(incident_rounds), 
-                                         s=[sev * 5 for sev in incident_severities], 
-                                         c=incident_colors, alpha=0.7, edgecolors='black', linewidth=2)
+            # Simple Key Metrics Cards
+            col_a, col_b = st.columns(2)
             
-            # Add incident labels
-            for i, (round_num, severity, inc_type) in enumerate(zip(incident_rounds, incident_severities, incident_types)):
-                ax_incidents.annotate(f'{inc_type}\n(Severity: {severity})', 
-                                    xy=(round_num, 50), xytext=(round_num, 70 + i*10),
-                                    arrowprops=dict(arrowstyle='->', color=incident_colors[i], alpha=0.7),
-                                    fontsize=9, ha='center', 
-                                    bbox=dict(boxstyle='round,pad=0.3', facecolor=incident_colors[i], alpha=0.3))
+            with col_a:
+                if st.session_state.language == 'fr':
+                    st.metric("🛡️ Sécurité Globale", f"{security_percentage:.1f}%", 
+                             delta=f"+{security_percentage-85:.1f}%" if security_percentage > 85 else f"{security_percentage-85:.1f}%")
+                    st.metric("🔍 Détections Totales", f"{total_blocked_simple}", 
+                             delta=f"+{int(total_blocked_simple*0.1)}")
+                else:
+                    st.metric("🛡️ Overall Security", f"{security_percentage:.1f}%", 
+                             delta=f"+{security_percentage-85:.1f}%" if security_percentage > 85 else f"{security_percentage-85:.1f}%")
+                    st.metric("🔍 Total Detections", f"{total_blocked_simple}", 
+                             delta=f"+{int(total_blocked_simple*0.1)}")
             
-            # Add resolution timeline
-            resolution_times = [2, 1.5, 3, 1, 2.5]  # Hours to resolve
-            for i, (round_num, res_time) in enumerate(zip(incident_rounds, resolution_times)):
-                ax_incidents.plot([round_num, round_num + res_time], [40, 30], 
-                                color=incident_colors[i], linewidth=4, alpha=0.8)
-                ax_incidents.text(round_num + res_time/2, 25, f'{res_time}h', 
-                                ha='center', fontsize=9, fontweight='bold')
+            with col_b:
+                if st.session_state.language == 'fr':
+                    st.metric("⚠️ Attaques Totales", f"{total_attacks_simple}", 
+                             delta=f"-{int(total_attacks_simple*0.05)}")
+                    st.metric("👥 Nœuds Actifs", "5/5", delta="0")
+                else:
+                    st.metric("⚠️ Total Attacks", f"{total_attacks_simple}", 
+                             delta=f"-{int(total_attacks_simple*0.05)}")
+                    st.metric("👥 Active Nodes", "5/5", delta="0")
             
-            ax_incidents.set_title('🚨 Security Incident Timeline & Resolution Analysis' if st.session_state.language == 'en'
-                                 else '🚨 Chronologie des Incidents de Sécurité et Analyse de Résolution', 
-                                 fontsize=16, fontweight='bold')
-            ax_incidents.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-            ax_incidents.set_ylabel('Incident Level' if st.session_state.language == 'en' else 'Niveau d\'Incident')
-            ax_incidents.set_xlim(0, 21)
-            ax_incidents.set_ylim(10, 120)
-            ax_incidents.grid(True, alpha=0.3)
+            # Simple System Status
+            st.markdown("---")
+            if st.session_state.language == 'fr':
+                st.subheader("🔴 Statut du Système")
+                
+                if security_percentage >= 90:
+                    status_color = "🟢"
+                    status_text = "SYSTÈME SÉCURISÉ"
+                    status_desc = "Toutes les défenses fonctionnent parfaitement"
+                elif security_percentage >= 75:
+                    status_color = "🟡"
+                    status_text = "SYSTÈME PROTÉGÉ"
+                    status_desc = "Défenses actives avec surveillance recommandée"
+                else:
+                    status_color = "🔴"
+                    status_text = "ATTENTION REQUISE"
+                    status_desc = "Amélioration des défenses nécessaire"
+                
+                st.markdown(f"""
+                ### {status_color} {status_text}
+                
+                **État actuel:** {status_desc}
+                
+                **Performances par type d'attaque:**
+                - 🔴 Attaques Sybil: {sum(sybil_attacks)} détectées, {sum(sybil_blocked)} bloquées
+                - 🟠 Attaques Byzantines: {sum(byzantine_attacks)} détectées, {sum(byzantine_blocked)} bloquées  
+                - 🔵 Intrusions Réseau: {sum(network_intrusions)} détectées, {sum(intrusion_blocked)} bloquées
+                """)
+            else:
+                st.subheader("🔴 System Status")
+                
+                if security_percentage >= 90:
+                    status_color = "🟢"
+                    status_text = "SYSTEM SECURE"
+                    status_desc = "All defenses working perfectly"
+                elif security_percentage >= 75:
+                    status_color = "🟡" 
+                    status_text = "SYSTEM PROTECTED"
+                    status_desc = "Active defenses with monitoring recommended"
+                else:
+                    status_color = "🔴"
+                    status_text = "ATTENTION REQUIRED"
+                    status_desc = "Defense improvements needed"
+                
+                st.markdown(f"""
+                ### {status_color} {status_text}
+                
+                **Current state:** {status_desc}
+                
+                **Performance by attack type:**
+                - 🔴 Sybil Attacks: {sum(sybil_attacks)} detected, {sum(sybil_blocked)} blocked
+                - 🟠 Byzantine Attacks: {sum(byzantine_attacks)} detected, {sum(byzantine_blocked)} blocked
+                - 🔵 Network Intrusions: {sum(network_intrusions)} detected, {sum(intrusion_blocked)} blocked
+                """)
             
-            # Add legend for incident severity
-            severity_legend = [plt.scatter([], [], s=sev*5, c=color, alpha=0.7, edgecolors='black') 
-                             for sev, color in zip([30, 60, 90], ['green', 'orange', 'red'])]
-            ax_incidents.legend(severity_legend, ['Low', 'Medium', 'High'] if st.session_state.language == 'en' else ['Faible', 'Moyen', 'Élevé'], 
-                              title='Severity' if st.session_state.language == 'en' else 'Sévérité', 
-                              loc='upper right', fontsize=9)
-            
-            plt.tight_layout()
-            st.pyplot(fig_analytics)
+            # Simple Explanations Section
+            st.markdown("---")
+            if st.session_state.language == 'fr':
+                st.subheader("📖 Explication Simple des Graphiques")
+                
+                st.markdown("""
+                **🔋 Niveau de Sécurité Actuel (Barres colorées):**
+                - Montre où se situe notre sécurité sur une échelle simple
+                - Vert = Excellent, Jaune = Bon, Orange = Moyen, Rouge = Faible
+                - Le pourcentage affiché = notre score actuel
+                
+                **🥧 Distribution des Types d'Attaques (Graphique en secteurs):**
+                - Montre quels types d'attaques sont les plus fréquents
+                - Plus la part est grande, plus ce type d'attaque est commun
+                - Aide à identifier les menaces principales
+                
+                **📈 Taux de Détection dans le Temps (Ligne verte):**
+                - Montre si nos défenses s'améliorent avec le temps
+                - Ligne qui monte = défenses qui s'améliorent
+                - Ligne rouge = objectif à atteindre (90%)
+                
+                **👥 Santé des Nœuds du Comité (Barres horizontales):**
+                - Montre la performance de chaque nœud de sécurité
+                - Vert = Nœud en bonne santé (>90%)
+                - Orange = Nœud correct (80-90%)
+                - Rouge = Nœud nécessitant attention (<80%)
+                
+                **📊 Chronologie des Attaques (Barres empilées):**
+                - Montre l'évolution des attaques au fil du temps
+                - Différentes couleurs = différents types d'attaques
+                - Ligne verte = nombre d'attaques bloquées avec succès
+                """)
+            else:
+                st.subheader("📖 Simple Graph Explanations")
+                
+                st.markdown("""
+                **🔋 Current Security Level (Colored bars):**
+                - Shows where our security stands on a simple scale
+                - Green = Excellent, Yellow = Good, Orange = Fair, Red = Poor
+                - Percentage shown = our current score
+                
+                **🥧 Attack Types Distribution (Pie chart):**
+                - Shows which attack types are most frequent
+                - Bigger slice = more common attack type
+                - Helps identify main threats
+                
+                **📈 Detection Rate Over Time (Green line):**
+                - Shows if our defenses improve over time
+                - Line going up = defenses improving
+                - Red line = target to reach (90%)
+                
+                **👥 Committee Node Health (Horizontal bars):**
+                - Shows performance of each security node
+                - Green = Healthy node (>90%)
+                - Orange = Fair node (80-90%)
+                - Red = Node needs attention (<80%)
+                
+                **📊 Attack Timeline (Stacked bars):**
+                - Shows how attacks evolve over time
+                - Different colors = different attack types
+                - Green line = attacks successfully blocked
+                """)
         
         # Graph Explanations
         st.markdown("---")
