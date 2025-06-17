@@ -1058,9 +1058,13 @@ def main():
                         except Exception as analytics_error:
                             print(f"Analytics update error: {analytics_error}")
                     
-                    # Synchronize with FL manager's actual accuracy
+                    # Don't overwrite FL manager's best accuracy if early stopping occurred
+                    # The FL manager handles its own best accuracy tracking with early stopping
                     if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
-                        st.session_state.fl_manager.best_accuracy = global_accuracy
+                        # Only update if FL manager doesn't have early stopping or better accuracy
+                        if not hasattr(st.session_state.fl_manager, 'early_stopped') or not st.session_state.fl_manager.early_stopped:
+                            if global_accuracy > st.session_state.fl_manager.best_accuracy:
+                                st.session_state.fl_manager.best_accuracy = global_accuracy
                 
                 # Training completed - all rounds executed
                 st.session_state.training_completed = True

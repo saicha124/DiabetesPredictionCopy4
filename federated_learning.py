@@ -601,6 +601,8 @@ class FederatedLearningManager:
             if self.early_stopped and self.best_metric_value is not None:
                 # Use the best metric value when early stopping occurred
                 final_accuracy = self.best_metric_value
+                # Also ensure best_accuracy is synchronized with the restored model
+                self.best_accuracy = self.best_metric_value
                 final_loss = None
                 final_f1 = None
                 
