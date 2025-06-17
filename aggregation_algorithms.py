@@ -15,8 +15,15 @@ class FedAvgAggregator:
             return global_model
         
         try:
-            # Calculate total samples
-            total_samples = sum(update['num_samples'] for update in client_updates)
+            # Filter out None updates
+            valid_updates = [update for update in client_updates if update is not None and 'num_samples' in update and 'parameters' in update]
+            
+            if not valid_updates:
+                print("No valid client updates for aggregation")
+                return global_model
+            
+            # Calculate total samples from valid updates only
+            total_samples = sum(update['num_samples'] for update in valid_updates)
             
             if total_samples == 0:
                 return global_model
@@ -25,7 +32,7 @@ class FedAvgAggregator:
             aggregated_params = None
             
             # Weighted aggregation - ensure consistent parameter shapes
-            for update in client_updates:
+            for update in valid_updates:
                 weight = update['num_samples'] / total_samples
                 params = update['parameters']
                 
@@ -83,11 +90,18 @@ class FedProxAggregator:
             return global_model
         
         try:
+            # Filter out None updates
+            valid_updates = [update for update in client_updates if update is not None and 'num_samples' in update and 'parameters' in update]
+            
+            if not valid_updates:
+                print("No valid client updates for FedProx aggregation")
+                return global_model
+            
             # Get global model parameters for proximal term
             global_params = self._extract_model_parameters(global_model)
             
-            # Calculate total samples
-            total_samples = sum(update['num_samples'] for update in client_updates)
+            # Calculate total samples from valid updates only
+            total_samples = sum(update['num_samples'] for update in valid_updates)
             
             if total_samples == 0:
                 return global_model
@@ -96,7 +110,7 @@ class FedProxAggregator:
             aggregated_params = None
             
             # Weighted aggregation with proximal regularization
-            for update in client_updates:
+            for update in valid_updates:
                 weight = update['num_samples'] / total_samples
                 params = update['parameters']
                 
