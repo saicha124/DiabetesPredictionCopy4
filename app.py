@@ -2199,14 +2199,25 @@ def main():
         
         # Get actual training metrics if available
         actual_training_completed = hasattr(st.session_state, 'training_completed') and st.session_state.training_completed
-        if actual_training_completed:
-            final_accuracy = st.session_state.get('final_accuracy', st.session_state.get('best_accuracy', 0.78))
+        current_best_accuracy = st.session_state.get('best_accuracy', 0.0)
+        
+        # Use current session data even if training not completed
+        if actual_training_completed or current_best_accuracy > 0:
+            if actual_training_completed:
+                final_accuracy = st.session_state.get('final_accuracy', current_best_accuracy)
+            else:
+                final_accuracy = current_best_accuracy
             training_rounds = len(st.session_state.get('training_metrics', []))
-            base_rate = max(70, final_accuracy * 100 - 8)  # Base security from model accuracy
+            base_rate = max(70, final_accuracy * 100 - 5)  # Base security from model accuracy
+            
+            # Debug info
+            st.info(f"Debug: Using real training data - Accuracy: {final_accuracy:.4f}, Base rate: {base_rate:.1f}%")
         else:
-            final_accuracy = 0.78  # Use current session best accuracy
+            # Only use fallback when no training data exists at all
+            final_accuracy = 0.75
             training_rounds = 20
             base_rate = 70
+            st.warning("Debug: No training data found, using fallback values")
         
         for i in range(len(time_points)):
             # Calculate detection rate based on actual federated learning performance
