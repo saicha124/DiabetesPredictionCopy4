@@ -335,6 +335,24 @@ def main():
                 }
                 internal_model_type = model_mapping[model_type]
                 
+                # Local Training Configuration
+                st.subheader("🔄 " + get_translation("local_training_config", st.session_state.language))
+                default_epochs = 1 if 'reset_requested' not in st.session_state else 1
+                
+                local_epochs = st.slider(
+                    get_translation("local_epochs", st.session_state.language),
+                    min_value=1,
+                    max_value=10,
+                    value=st.session_state.get('local_epochs', default_epochs),
+                    help=get_translation("local_epochs_help", st.session_state.language)
+                )
+                st.session_state.local_epochs = local_epochs
+                
+                if st.session_state.language == 'fr':
+                    st.info(f"💡 Chaque station médicale effectuera **{local_epochs}** époque(s) d'entraînement local avant d'envoyer le modèle vers les nœuds fog.")
+                else:
+                    st.info(f"💡 Each medical station will perform **{local_epochs}** epoch(s) of local training before sending the model to fog nodes.")
+                
                 st.subheader(get_translation("fog_computing_setup", st.session_state.language))
                 default_fog = True if 'reset_requested' not in st.session_state else True
                 enable_fog = st.checkbox(get_translation("enable_fog_nodes", st.session_state.language), value=st.session_state.get('enable_fog', default_fog))
