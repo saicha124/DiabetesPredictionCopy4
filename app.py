@@ -2268,11 +2268,17 @@ def main():
         plt.plot(time_points, detection_rates, 'ko-', linewidth=3, markersize=8, 
                 markerfacecolor='white', markeredgecolor='black', markeredgewidth=2)
         
-        # Add phase annotations
-        phase_centers = [3, 9, 15, 19]
-        phase_rates = [detection_rates[2], detection_rates[8], detection_rates[14], detection_rates[18]]
+        # Add phase annotations using dynamic boundaries
+        phase_centers = []
+        phase_rates = []
         
-        for center, rate, name in zip(phase_centers, phase_rates, phase_names):
+        for i, (phase, (start, end, color)) in enumerate(phases.items()):
+            center = int((start + end) / 2)
+            if center < len(detection_rates):
+                phase_centers.append(center)
+                phase_rates.append(detection_rates[center-1])  # Array is 0-indexed
+        
+        for center, rate, name in zip(phase_centers, phase_rates, phase_names[:len(phase_centers)]):
             plt.annotate(f'{name}\n{rate:.1f}%', xy=(center, rate), xytext=(center, rate+8),
                         arrowprops=dict(arrowstyle='->', color='black', alpha=0.7),
                         ha='center', fontsize=10, fontweight='bold',
