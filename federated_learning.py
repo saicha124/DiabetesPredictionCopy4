@@ -728,8 +728,13 @@ class FederatedLearningManager:
                 # Send global model parameters to client
                 client.receive_global_model(self.global_model)
                 
-                # Train client model
-                update = client.train()
+                # Get local epochs from session state
+                local_epochs = 1
+                if hasattr(st, 'session_state') and hasattr(st.session_state, 'local_epochs'):
+                    local_epochs = st.session_state.local_epochs
+                
+                # Train client model with configured epochs
+                update = client.train(local_epochs=local_epochs)
                 
                 # Update client status
                 with self.lock:
