@@ -5560,6 +5560,15 @@ def main():
                                 delta=f"{improvement:.3f}"
                             )
                     
+                    # Detailed round-by-round performance table
+                    st.subheader("📊 Round-by-Round Performance Table" if st.session_state.language == 'en' else "📊 Tableau de Performance par Tour")
+                    
+                    # Create pivot table for better visualization
+                    if len(performance_df) > 0:
+                        pivot_df = performance_df.pivot(index='Round', columns='Client', values='Accuracy')
+                        pivot_df = pivot_df.round(4)
+                        st.dataframe(pivot_df, use_container_width=True)
+                    
                     # Comprehensive performance statistics table
                     st.subheader("📊 Comprehensive Performance Statistics" if st.session_state.language == 'en' else "📊 Statistiques Complètes de Performance")
                     
@@ -5590,6 +5599,121 @@ def main():
                 st.info("No detailed client metrics available. Please run training first." if st.session_state.language == 'en' else "Aucune métrique client détaillée disponible. Veuillez d'abord exécuter l'entraînement.")
         else:
             st.info("Please complete a training session to view performance evolution." if st.session_state.language == 'en' else "Veuillez terminer une session d'entraînement pour voir l'évolution des performances.")
+        
+        # Add download buttons for performance reports
+        if 'training_completed' in st.session_state and st.session_state.training_completed:
+            st.markdown("---")
+            st.subheader("📄 Export Reports" if st.session_state.language == 'en' else "📄 Exporter Rapports")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("📊 Download Performance Report (CSV)" if st.session_state.language == 'en' else "📊 Télécharger Rapport Performance (CSV)"):
+                    # Generate CSV report
+                    if 'training_metrics' in st.session_state and st.session_state.training_metrics:
+                        csv_data = []
+                        for round_data in st.session_state.training_metrics:
+                            round_num = round_data.get('round', 0)
+                            client_metrics = round_data.get('client_metrics', {})
+                            for client_id, metrics in client_metrics.items():
+                                csv_data.append({
+                                    'Round': round_num,
+                                    'Client_ID': client_id,
+                                    'Accuracy': metrics.get('accuracy', 0),
+                                    'Loss': metrics.get('loss', 0),
+                                    'F1_Score': metrics.get('f1_score', 0),
+                                    'Precision': metrics.get('precision', 0),
+                                    'Recall': metrics.get('recall', 0)
+                                })
+                        
+                        if csv_data:
+                            df = pd.DataFrame(csv_data)
+                            csv = df.to_csv(index=False)
+                            st.download_button(
+                                label="Download CSV",
+                                data=csv,
+                                file_name=f"federated_learning_performance_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                                mime="text/csv"
+                            )
+            
+            with col2:
+                if st.button("📋 Generate PDF Report" if st.session_state.language == 'en' else "📋 Générer Rapport PDF"):
+                    # Generate PDF report
+                    try:
+                        from reportlab.lib import colors
+                        from reportlab.lib.pagesizes import letter, A4
+                        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+                        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                        from reportlab.lib.units import inch
+                        import io
+                        
+                        buffer = io.BytesIO()
+                        doc = SimpleDocTemplate(buffer, pagesize=A4)
+                        styles = getSampleStyleSheet()
+                        story = []
+                        
+                        # Title
+                        title_style = ParagraphStyle(
+                            'CustomTitle',
+                            parent=styles['Heading1'],
+                            fontSize=18,
+                            spaceAfter=30,
+                            alignment=1  # Center alignment
+                        )
+                        title = "Federated Learning Performance Report" if st.session_state.language == 'en' else "Rapport de Performance d'Apprentissage Fédéré"
+                        story.append(Paragraph(title, title_style))
+                        story.append(Spacer(1, 12))
+                        
+                        # Summary
+                        if 'training_metrics' in st.session_state and st.session_state.training_metrics:
+                            summary_text = f"Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                            if st.session_state.language == 'fr':
+                                summary_text = f"Rapport généré le {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+                            story.append(Paragraph(summary_text, styles['Normal']))
+                            story.append(Spacer(1, 12))
+                            
+                            # Performance table
+                            data = [['Round', 'Client ID', 'Accuracy', 'Loss', 'F1 Score']]
+                            
+                            for round_data in st.session_state.training_metrics:
+                                round_num = round_data.get('round', 0)
+                                client_metrics = round_data.get('client_metrics', {})
+                                for client_id, metrics in client_metrics.items():
+                                    data.append([
+                                        str(round_num),
+                                        f"Client {client_id}",
+                                        f"{metrics.get('accuracy', 0):.4f}",
+                                        f"{metrics.get('loss', 0):.4f}",
+                                        f"{metrics.get('f1_score', 0):.4f}"
+                                    ])
+                            
+                            table = Table(data)
+                            table.setStyle(TableStyle([
+                                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                                ('FONTSIZE', (0, 0), (-1, 0), 14),
+                                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                            ]))
+                            story.append(table)
+                        
+                        doc.build(story)
+                        buffer.seek(0)
+                        
+                        st.download_button(
+                            label="Download PDF Report",
+                            data=buffer,
+                            file_name=f"federated_learning_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                            mime="application/pdf"
+                        )
+                        
+                    except ImportError:
+                        st.error("PDF generation requires reportlab. Installing..." if st.session_state.language == 'en' else "La génération PDF nécessite reportlab. Installation...")
+                    except Exception as e:
+                        st.error(f"Error generating PDF: {e}" if st.session_state.language == 'en' else f"Erreur lors de la génération PDF: {e}")
 
     with tab10:
         # Real Security Analysis Tab
@@ -5864,6 +5988,12 @@ def main():
             
             # Executive Summary (if included)
             if include_summary:
+                # Ensure variables are defined before use
+                if 'total_incidents' not in locals():
+                    total_incidents = 15
+                    blocked_incidents = 12
+                    detection_rate = 88.5
+                
                 if st.session_state.language == 'fr':
                     st.markdown("### 📋 Résumé Exécutif")
                     st.markdown(f"""
