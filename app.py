@@ -5480,15 +5480,26 @@ def main():
             st.markdown("### 📈 Accuracy Progression for Each Client")
         
         if 'training_completed' in st.session_state and st.session_state.training_completed:
-            # Create performance evolution visualizations using training_metrics data
-            if 'training_metrics' in st.session_state and st.session_state.training_metrics:
-                # Prepare data for visualization from training history
-                rounds = []
-                clients = []
-                accuracies = []
-                losses = []
-                f1_scores = []
-                
+            # Collect performance data from training session
+            rounds = []
+            clients = []
+            accuracies = []
+            losses = []
+            f1_scores = []
+            
+            # Use round_client_metrics which stores real training data
+            if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
+                for round_num, client_data in st.session_state.round_client_metrics.items():
+                    for client_id, metrics in client_data.items():
+                        rounds.append(round_num)
+                        clients.append(f"Client {client_id}")
+                        # Use local_accuracy which is the actual stored metric
+                        accuracies.append(metrics.get('local_accuracy', metrics.get('accuracy', 0)))
+                        losses.append(metrics.get('loss', 0))
+                        f1_scores.append(metrics.get('f1_score', 0))
+            
+            # Alternative: Use training_metrics summary data
+            elif 'training_metrics' in st.session_state and st.session_state.training_metrics:
                 for round_data in st.session_state.training_metrics:
                     round_num = round_data.get('round', 0)
                     client_metrics = round_data.get('client_metrics', {})
@@ -5496,7 +5507,8 @@ def main():
                     for client_id, metrics in client_metrics.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
-                        accuracies.append(metrics.get('accuracy', 0))
+                        # Use local_accuracy which is the actual stored metric
+                        accuracies.append(metrics.get('local_accuracy', metrics.get('accuracy', 0)))
                         losses.append(metrics.get('loss', 0))
                         f1_scores.append(metrics.get('f1_score', 0))
                 
@@ -5522,7 +5534,7 @@ def main():
                         fig_acc = px.line(performance_df, x='Round', y='Accuracy', color='Client',
                                     title='Client Accuracy Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution de la Précision des Clients',
                                     markers=True)
-                        fig_acc.update_layout(height=500)
+                        fig_acc.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
                         st.plotly_chart(fig_acc, use_container_width=True)
                     
                     with perf_tab2:
@@ -5530,7 +5542,7 @@ def main():
                         fig_loss = px.line(performance_df, x='Round', y='Loss', color='Client',
                                      title='Client Loss Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution de la Perte des Clients',
                                      markers=True)
-                        fig_loss.update_layout(height=500)
+                        fig_loss.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
                         st.plotly_chart(fig_loss, use_container_width=True)
                     
                     with perf_tab3:
@@ -5538,7 +5550,7 @@ def main():
                         fig_f1 = px.line(performance_df, x='Round', y='F1_Score', color='Client',
                                    title='Client F1-Score Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution du F1-Score des Clients',
                                    markers=True)
-                        fig_f1.update_layout(height=500)
+                        fig_f1.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
                         st.plotly_chart(fig_f1, use_container_width=True)
                     
                     # Individual client performance cards
