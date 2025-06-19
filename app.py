@@ -132,26 +132,15 @@ def main():
         # Store selected tab in session state
         st.session_state.selected_tab = selected_tab
         
-        # Proper tab navigation using session state
-        if 'current_tab_index' not in st.session_state:
-            st.session_state.current_tab_index = 0
+        # Initialize navigation state
+        if 'selected_tab_name' not in st.session_state:
+            st.session_state.selected_tab_name = "Configuration"
             
-        tab_mapping = {
-            "Entraînement FL": 0, "FL Training": 0,
-            "Sécurité Comité": 1, "Committee Security": 1,
-            "Surveillance Médicale": 2, "Medical Surveillance": 2,
-            "Parcours de Formation": 3, "Training Journey": 3,
-            "Analytiques": 4, "Analytics": 4,
-            "Station Médicale": 5, "Medical Station": 5,
-            "Évaluation des Risques": 6, "Risk Assessment": 6,
-            "Visualisation Graphique": 7, "Graph Visualization": 7,
-            "Évolution Performance": 8, "Performance Evolution": 8,
-            "Analyse Sécurité Réelle": 9, "Real Security Analysis": 9,
-            "Rapports d'Incidents": 10, "Incident Reports": 10
-        }
-        
-        if selected_tab in tab_mapping and selected_tab != "Configuration":
-            st.session_state.current_tab_index = tab_mapping[selected_tab]
+        # Update selected tab if changed
+        if selected_tab != st.session_state.selected_tab_name:
+            st.session_state.selected_tab_name = selected_tab
+            if selected_tab != "Configuration":
+                st.rerun()
         
         st.markdown("---")
         st.header("🔧 " + get_translation("system_configuration", st.session_state.language))
@@ -218,8 +207,8 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
+    # Determine which tab to show based on navigation selection
+    tab_names = [
         get_translation("tab_training", st.session_state.language),
         "🛡️ Committee Security" if st.session_state.language == 'en' else "🛡️ Sécurité Comité",
         get_translation("tab_monitoring", st.session_state.language), 
@@ -231,7 +220,28 @@ def main():
         "📊 Performance Evolution" if st.session_state.language == 'en' else "📊 Évolution Performance",
         "🎯 Real Security Analysis" if st.session_state.language == 'en' else "🎯 Analyse Sécurité Réelle",
         "📋 Incident Reports" if st.session_state.language == 'en' else "📋 Rapports d'Incidents"
-    ])
+    ]
+    
+    # Map navigation selections to tab indices
+    nav_to_tab = {
+        "FL Training": 0, "Entraînement FL": 0,
+        "Committee Security": 1, "Sécurité Comité": 1,
+        "Medical Surveillance": 2, "Surveillance Médicale": 2,
+        "Training Journey": 3, "Parcours de Formation": 3,
+        "Analytics": 4, "Analytiques": 4,
+        "Medical Station": 5, "Station Médicale": 5,
+        "Risk Assessment": 6, "Évaluation des Risques": 6,
+        "Graph Visualization": 7, "Visualisation Graphique": 7,
+        "Performance Evolution": 8, "Évolution Performance": 8,
+        "Real Security Analysis": 9, "Analyse Sécurité Réelle": 9,
+        "Incident Reports": 10, "Rapports d'Incidents": 10
+    }
+    
+    # Determine default tab index
+    default_tab = nav_to_tab.get(st.session_state.get('selected_tab', 'Configuration'), 0)
+    
+    # Main tabs
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs(tab_names)
 
     with tab1:
         st.header("🎛️ " + get_translation("tab_training", st.session_state.language))
@@ -5470,61 +5480,109 @@ def main():
             st.markdown("### 📈 Accuracy Progression for Each Client")
         
         if 'training_completed' in st.session_state and st.session_state.training_completed:
-            # Create performance evolution visualizations
-            if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
-                # Prepare data for visualization
+            # Create performance evolution visualizations using training_metrics data
+            if 'training_metrics' in st.session_state and st.session_state.training_metrics:
+                # Prepare data for visualization from training history
                 rounds = []
                 clients = []
                 accuracies = []
+                losses = []
+                f1_scores = []
                 
-                for round_num, client_data in st.session_state.round_client_metrics.items():
-                    for client_id, metrics in client_data.items():
+                for round_data in st.session_state.training_metrics:
+                    round_num = round_data.get('round', 0)
+                    client_metrics = round_data.get('client_metrics', {})
+                    
+                    for client_id, metrics in client_metrics.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
                         accuracies.append(metrics.get('accuracy', 0))
+                        losses.append(metrics.get('loss', 0))
+                        f1_scores.append(metrics.get('f1_score', 0))
                 
                 if rounds:
                     # Create DataFrame for plotting
                     performance_df = pd.DataFrame({
                         'Round': rounds,
                         'Client': clients,
-                        'Accuracy': accuracies
+                        'Accuracy': accuracies,
+                        'Loss': losses,
+                        'F1_Score': f1_scores
                     })
                     
-                    # Line chart showing accuracy progression
-                    fig = px.line(performance_df, x='Round', y='Accuracy', color='Client',
-                                title='Client Accuracy Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution de la Précision des Clients',
-                                markers=True)
-                    fig.update_layout(height=500)
-                    st.plotly_chart(fig, use_container_width=True)
+                    # Multiple visualization tabs
+                    perf_tab1, perf_tab2, perf_tab3 = st.tabs([
+                        "📈 Accuracy Evolution" if st.session_state.language == 'en' else "📈 Évolution Précision",
+                        "📉 Loss Evolution" if st.session_state.language == 'en' else "📉 Évolution Perte", 
+                        "🎯 F1-Score Evolution" if st.session_state.language == 'en' else "🎯 Évolution F1-Score"
+                    ])
+                    
+                    with perf_tab1:
+                        # Accuracy line chart
+                        fig_acc = px.line(performance_df, x='Round', y='Accuracy', color='Client',
+                                    title='Client Accuracy Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution de la Précision des Clients',
+                                    markers=True)
+                        fig_acc.update_layout(height=500)
+                        st.plotly_chart(fig_acc, use_container_width=True)
+                    
+                    with perf_tab2:
+                        # Loss line chart
+                        fig_loss = px.line(performance_df, x='Round', y='Loss', color='Client',
+                                     title='Client Loss Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution de la Perte des Clients',
+                                     markers=True)
+                        fig_loss.update_layout(height=500)
+                        st.plotly_chart(fig_loss, use_container_width=True)
+                    
+                    with perf_tab3:
+                        # F1-Score line chart
+                        fig_f1 = px.line(performance_df, x='Round', y='F1_Score', color='Client',
+                                   title='Client F1-Score Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution du F1-Score des Clients',
+                                   markers=True)
+                        fig_f1.update_layout(height=500)
+                        st.plotly_chart(fig_f1, use_container_width=True)
                     
                     # Individual client performance cards
                     st.subheader("📋 Individual Client Performance Summary" if st.session_state.language == 'en' else "📋 Résumé des Performances Individuelles")
                     
                     unique_clients = performance_df['Client'].unique()
-                    cols = st.columns(min(len(unique_clients), 3))
+                    cols = st.columns(min(len(unique_clients), 4))
                     
                     for idx, client in enumerate(unique_clients):
                         client_data = performance_df[performance_df['Client'] == client]
-                        with cols[idx % 3]:
+                        with cols[idx % len(cols)]:
+                            final_acc = client_data['Accuracy'].iloc[-1] if len(client_data) > 0 else 0
+                            initial_acc = client_data['Accuracy'].iloc[0] if len(client_data) > 0 else 0
+                            improvement = final_acc - initial_acc if len(client_data) > 1 else 0
+                            
                             st.metric(
                                 label=client,
-                                value=f"{client_data['Accuracy'].iloc[-1]:.3f}",
-                                delta=f"{client_data['Accuracy'].iloc[-1] - client_data['Accuracy'].iloc[0]:.3f}" if len(client_data) > 1 else None
+                                value=f"{final_acc:.3f}",
+                                delta=f"{improvement:.3f}"
                             )
                     
-                    # Performance statistics table
-                    st.subheader("📊 Performance Statistics" if st.session_state.language == 'en' else "📊 Statistiques de Performance")
+                    # Comprehensive performance statistics table
+                    st.subheader("📊 Comprehensive Performance Statistics" if st.session_state.language == 'en' else "📊 Statistiques Complètes de Performance")
                     
-                    stats_df = performance_df.groupby('Client')['Accuracy'].agg([
-                        ('Initial', 'first'),
-                        ('Final', 'last'), 
-                        ('Best', 'max'),
-                        ('Average', 'mean'),
-                        ('Improvement', lambda x: x.iloc[-1] - x.iloc[0])
-                    ]).round(4)
+                    # Calculate statistics for all metrics
+                    stats_data = []
+                    for client in unique_clients:
+                        client_data = performance_df[performance_df['Client'] == client]
+                        if len(client_data) > 0:
+                            stats_data.append({
+                                'Client': client,
+                                'Final Accuracy': f"{client_data['Accuracy'].iloc[-1]:.4f}",
+                                'Best Accuracy': f"{client_data['Accuracy'].max():.4f}",
+                                'Avg Accuracy': f"{client_data['Accuracy'].mean():.4f}",
+                                'Final Loss': f"{client_data['Loss'].iloc[-1]:.4f}",
+                                'Best Loss': f"{client_data['Loss'].min():.4f}",
+                                'Final F1': f"{client_data['F1_Score'].iloc[-1]:.4f}",
+                                'Best F1': f"{client_data['F1_Score'].max():.4f}",
+                                'Rounds Participated': len(client_data)
+                            })
                     
-                    st.dataframe(stats_df, use_container_width=True)
+                    if stats_data:
+                        stats_df = pd.DataFrame(stats_data)
+                        st.dataframe(stats_df, use_container_width=True)
                     
                 else:
                     st.info("No performance data available. Please run training first." if st.session_state.language == 'en' else "Aucune donnée de performance disponible. Veuillez d'abord exécuter l'entraînement.")
