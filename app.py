@@ -5498,9 +5498,11 @@ def main():
                     st.write(f"Sample data structure for round {sample_round}:")
                     for client_id, metrics in list(sample_data.items())[:2]:  # Show first 2 clients
                         st.write(f"Client {client_id}: {list(metrics.keys())}")
-                        st.write(f"  - local_accuracy: {metrics.get('local_accuracy', 'N/A')}")
+                        st.write(f"  - accuracy: {metrics.get('accuracy', 'N/A')}")
                         st.write(f"  - loss: {metrics.get('loss', 'N/A')}")
                         st.write(f"  - f1_score: {metrics.get('f1_score', 'N/A')}")
+                        st.write(f"  - precision: {metrics.get('precision', 'N/A')}")
+                        st.write(f"  - recall: {metrics.get('recall', 'N/A')}")
             
             # Use round_client_metrics which stores real training data
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
@@ -5508,9 +5510,9 @@ def main():
                     for client_id, metrics in client_data.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
-                        # Use local_accuracy which is the actual stored metric
-                        local_acc = metrics.get('local_accuracy', 0)
-                        accuracies.append(local_acc)
+                        # Use accuracy field as shown in the debug output
+                        accuracy = metrics.get('accuracy', 0)
+                        accuracies.append(accuracy)
                         losses.append(metrics.get('loss', 0))
                         f1_scores.append(metrics.get('f1_score', 0))
             
@@ -5523,8 +5525,8 @@ def main():
                     for client_id, metrics in client_metrics.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
-                        # Use local_accuracy which is the actual stored metric
-                        accuracies.append(metrics.get('local_accuracy', metrics.get('accuracy', 0)))
+                        # Use accuracy field as shown in the debug output
+                        accuracies.append(metrics.get('accuracy', 0))
                         losses.append(metrics.get('loss', 0))
                         f1_scores.append(metrics.get('f1_score', 0))
                 
@@ -5541,14 +5543,40 @@ def main():
                     # Display raw data table first
                     st.subheader("📋 Client Performance Data Table" if st.session_state.language == 'en' else "📋 Tableau des Données de Performance")
                     
-                    # Create detailed table showing Client, Round, Accuracy, Loss
-                    display_df = performance_df[['Client', 'Round', 'Accuracy', 'Loss', 'F1_Score']].copy()
-                    display_df = display_df.sort_values(['Round', 'Client'])
+                    # Add precision and recall data if available
+                    precisions = []
+                    recalls = []
+                    
+                    # Collect precision and recall data
+                    if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
+                        for round_num, client_data in st.session_state.round_client_metrics.items():
+                            for client_id, metrics in client_data.items():
+                                precisions.append(metrics.get('precision', 0))
+                                recalls.append(metrics.get('recall', 0))
+                    else:
+                        precisions = [0] * len(rounds)
+                        recalls = [0] * len(rounds)
+                    
+                    # Create comprehensive table
+                    comprehensive_df = pd.DataFrame({
+                        'Round': rounds,
+                        'Client': clients,
+                        'Accuracy': accuracies,
+                        'Loss': losses,
+                        'F1_Score': f1_scores,
+                        'Precision': precisions,
+                        'Recall': recalls
+                    })
+                    
+                    # Sort and format
+                    display_df = comprehensive_df.sort_values(['Round', 'Client'])
                     display_df['Accuracy'] = display_df['Accuracy'].round(4)
                     display_df['Loss'] = display_df['Loss'].round(4)
                     display_df['F1_Score'] = display_df['F1_Score'].round(4)
+                    display_df['Precision'] = display_df['Precision'].round(4)
+                    display_df['Recall'] = display_df['Recall'].round(4)
                     
-                    st.dataframe(display_df, use_container_width=True, height=400)
+                    st.dataframe(display_df, use_container_width=True, height=500)
                     
                     # Multiple visualization tabs
                     perf_tab1, perf_tab2, perf_tab3 = st.tabs([
