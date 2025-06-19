@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "libiconv", "libxcrypt", "openssl", "pkg-config", "qhull", "rustc", "tcl", "tk", "xsimd"]
+packages = ["cairo", "cargo", "ffmpeg-full", "freetype", "gcc-unwrapped", "ghostscript", "glibc", "glibcLocales", "gobject-introspection", "gtk3", "libiconv", "libstdcxx5", "libxcrypt", "openssl", "pkg-config", "python311Packages.cryptography", "python311Packages.matplotlib", "python311Packages.networkx", "python311Packages.numpy", "python311Packages.pandas", "python311Packages.plotly", "python311Packages.reportlab", "python311Packages.requests", "python311Packages.scikit-learn", "python311Packages.scipy", "python311Packages.seaborn", "python311Packages.streamlit", "qhull", "rustc", "tcl", "tk", "xsimd"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -25,13 +25,13 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Streamlit Server"
+args = "Simple Streamlit Test"
 
 [[workflows.workflow]]
-name = "Streamlit Server"
+name = "Simple Streamlit Test"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run app.py --server.port 5000"
+args = "streamlit run simple_app.py --server.port 5000"
 waitForPort = 5000
