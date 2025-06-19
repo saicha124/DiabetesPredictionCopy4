@@ -5490,6 +5490,17 @@ def main():
             # Show data source information
             if 'round_client_metrics' in st.session_state:
                 st.info(f"Found {len(st.session_state.round_client_metrics)} rounds of client data")
+                
+                # Debug: Show a sample of the data structure
+                if st.session_state.round_client_metrics:
+                    sample_round = list(st.session_state.round_client_metrics.keys())[0]
+                    sample_data = st.session_state.round_client_metrics[sample_round]
+                    st.write(f"Sample data structure for round {sample_round}:")
+                    for client_id, metrics in list(sample_data.items())[:2]:  # Show first 2 clients
+                        st.write(f"Client {client_id}: {list(metrics.keys())}")
+                        st.write(f"  - local_accuracy: {metrics.get('local_accuracy', 'N/A')}")
+                        st.write(f"  - loss: {metrics.get('loss', 'N/A')}")
+                        st.write(f"  - f1_score: {metrics.get('f1_score', 'N/A')}")
             
             # Use round_client_metrics which stores real training data
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
@@ -5526,6 +5537,18 @@ def main():
                         'Loss': losses,
                         'F1_Score': f1_scores
                     })
+                    
+                    # Display raw data table first
+                    st.subheader("📋 Client Performance Data Table" if st.session_state.language == 'en' else "📋 Tableau des Données de Performance")
+                    
+                    # Create detailed table showing Client, Round, Accuracy, Loss
+                    display_df = performance_df[['Client', 'Round', 'Accuracy', 'Loss', 'F1_Score']].copy()
+                    display_df = display_df.sort_values(['Round', 'Client'])
+                    display_df['Accuracy'] = display_df['Accuracy'].round(4)
+                    display_df['Loss'] = display_df['Loss'].round(4)
+                    display_df['F1_Score'] = display_df['F1_Score'].round(4)
+                    
+                    st.dataframe(display_df, use_container_width=True, height=400)
                     
                     # Multiple visualization tabs
                     perf_tab1, perf_tab2, perf_tab3 = st.tabs([
