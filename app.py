@@ -5585,6 +5585,9 @@ def main():
                         "🎯 F1-Score Evolution" if st.session_state.language == 'en' else "🎯 Évolution F1-Score"
                     ])
                     
+                    # Create performance_df for visualizations (rename comprehensive_df)
+                    performance_df = comprehensive_df.copy()
+                    
                     with perf_tab1:
                         # Accuracy line chart
                         fig_acc = px.line(performance_df, x='Round', y='Accuracy', color='Client',
@@ -5734,8 +5737,15 @@ def main():
             st.subheader("📄 Export Performance Data" if st.session_state.language == 'en' else "📄 Exporter Données Performance")
             
             if st.button("📊 Download Performance Data (CSV)" if st.session_state.language == 'en' else "📊 Télécharger Données Performance (CSV)"):
-                # Generate CSV from performance DataFrame
-                csv = performance_df.to_csv(index=False)
+                # Create export DataFrame from collected data
+                export_df = pd.DataFrame({
+                    'Round': rounds,
+                    'Client': clients,
+                    'Accuracy': accuracies,
+                    'Loss': losses,
+                    'F1_Score': f1_scores if f1_scores else [0] * len(rounds)
+                })
+                csv = export_df.to_csv(index=False)
                 st.download_button(
                     label="Download CSV",
                     data=csv,
