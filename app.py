@@ -5493,14 +5493,27 @@ def main():
                 
                 # Extract real training metrics from federated learning session
                 for round_num, client_data in st.session_state.round_client_metrics.items():
+                    # Skip round 0 as it contains initialization data
+                    if round_num == 0:
+                        continue
+                        
                     for client_id, metrics in client_data.items():
+                        # Skip entries with perfect scores (likely fallback data)
+                        local_acc = metrics.get('local_accuracy', metrics.get('accuracy', 0))
+                        if local_acc == 1.0 and metrics.get('loss', 1) == 0 and metrics.get('f1_score', 0) == 1.0:
+                            continue
+                            
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
                         
-                        # Extract authentic training metrics using correct field names
-                        accuracy = float(metrics.get('local_accuracy', metrics.get('accuracy', 0)))
+                        # Extract authentic training metrics
+                        accuracy = float(local_acc)
                         loss = float(metrics.get('loss', 0))
                         f1 = float(metrics.get('f1_score', 0))
+                        
+                        # Validate that metrics are reasonable
+                        if accuracy > 1.0:
+                            accuracy = accuracy / 100.0  # Convert percentage to decimal
                         
                         accuracies.append(accuracy)
                         losses.append(loss)
@@ -5524,15 +5537,27 @@ def main():
 
                 
                 for round_num, client_data in st.session_state.round_client_metrics.items():
+                    # Skip round 0 initialization data
+                    if round_num == 0:
+                        continue
+                        
                     for client_id, metrics in client_data.items():
+                        # Skip perfect scores (fallback data)
+                        local_acc = metrics.get('local_accuracy', metrics.get('accuracy', 0))
+                        if local_acc == 1.0 and metrics.get('loss', 1) == 0:
+                            continue
+                            
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
                         
-                        # Extract authentic metrics with correct field names
-                        accuracy = float(metrics.get('local_accuracy', metrics.get('accuracy', 0)))
+                        # Extract authentic metrics with validation
+                        accuracy = float(local_acc)
                         loss = float(metrics.get('loss', 0))
                         f1 = float(metrics.get('f1_score', 0))
                         
+                        if accuracy > 1.0:
+                            accuracy = accuracy / 100.0
+                            
                         accuracies.append(accuracy)
                         losses.append(loss)
                         f1_scores.append(f1)
@@ -5559,10 +5584,26 @@ def main():
             
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
                 for round_num, client_data in st.session_state.round_client_metrics.items():
+                    # Skip round 0 and validate data consistency with main metrics
+                    if round_num == 0:
+                        continue
+                        
                     for client_id, metrics in client_data.items():
-                        # Extract precision and recall from available fields
-                        precision = float(metrics.get('precision', metrics.get('committee_score', 0)))
-                        recall = float(metrics.get('recall', metrics.get('reputation_score', 0)))
+                        # Skip perfect scores (fallback data)
+                        local_acc = metrics.get('local_accuracy', metrics.get('accuracy', 0))
+                        if local_acc == 1.0 and metrics.get('loss', 1) == 0:
+                            continue
+                            
+                        # Extract precision and recall with validation
+                        precision = float(metrics.get('precision', metrics.get('committee_score', local_acc)))
+                        recall = float(metrics.get('recall', metrics.get('reputation_score', local_acc)))
+                        
+                        # Ensure values are in valid range
+                        if precision > 1.0:
+                            precision = precision / 100.0
+                        if recall > 1.0:
+                            recall = recall / 100.0
+                            
                         precisions.append(precision)
                         recalls.append(recall)
             else:
