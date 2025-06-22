@@ -5520,16 +5520,25 @@ def main():
                 
                 st.success(f"Loaded {len(rounds)} data points from training session")
             
-        # Display client metrics tables regardless of training completion status
-        elif 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
-            st.warning("Training in progress - showing current data")
-            for round_num, client_data in st.session_state.round_client_metrics.items():
-                for client_id, metrics in client_data.items():
-                    rounds.append(round_num)
-                    clients.append(f"Client {client_id}")
-                    accuracies.append(metrics.get('accuracy', 0))
-                    losses.append(metrics.get('loss', 0))
-                    f1_scores.append(metrics.get('f1_score', 0))
+        # Handle case where training is not marked complete but data exists
+        else:
+            # Initialize all variables to ensure they exist
+            rounds = []
+            clients = []
+            accuracies = []
+            losses = []
+            f1_scores = []
+            
+            # Check for training data in session state
+            if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
+                st.info("Processing available training data")
+                for round_num, client_data in st.session_state.round_client_metrics.items():
+                    for client_id, metrics in client_data.items():
+                        rounds.append(round_num)
+                        clients.append(f"Client {client_id}")
+                        accuracies.append(metrics.get('accuracy', 0))
+                        losses.append(metrics.get('loss', 0))
+                        f1_scores.append(metrics.get('f1_score', 0))
 
         # Create and display performance analysis tables
         if rounds:
