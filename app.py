@@ -1047,7 +1047,7 @@ def main():
                             for client_id, client_metric in client_round_metrics.items():
                                 # Generate synthetic prediction data for analytics based on real performance
                                 num_samples = max(10, int(client_metric['total_samples']))  # Ensure minimum samples
-                                accuracy = float(client_metric['local_accuracy'])
+                                accuracy = float(client_metric.get('local_accuracy', client_metric.get('accuracy', 0)))
                                 
                                 # Create synthetic true/predicted labels based on accuracy
                                 y_true = np.random.choice([0, 1], size=num_samples, p=[0.65, 0.35])
@@ -3102,7 +3102,7 @@ def main():
                     for client_id, metrics in latest_metrics['client_metrics'].items():
                         client_data.append({
                             'Client ID': f"Medical Station {client_id + 1}",
-                            'Local Accuracy': f"{metrics['local_accuracy']:.3f}",
+                            'Local Accuracy': f"{metrics.get('local_accuracy', metrics.get('accuracy', 0)):.3f}",
                             'F1 Score': f"{metrics['f1_score']:.3f}",
                             'Samples Used': f"{metrics['samples_used']}/{metrics['total_samples']}",
                             'Fog Node': f"Fog {metrics['fog_node_assigned'] + 1}",
@@ -3170,7 +3170,8 @@ def main():
                         
                         for round_data in st.session_state.training_metrics:
                             if 'client_metrics' in round_data and client_id in round_data['client_metrics']:
-                                client_accuracies.append(round_data['client_metrics'][client_id]['local_accuracy'])
+                                local_acc = round_data['client_metrics'][client_id].get('local_accuracy', round_data['client_metrics'][client_id].get('accuracy', 0))
+                                client_accuracies.append(local_acc)
                                 client_rounds.append(round_data['round'])
                         
                         if client_accuracies:
@@ -3249,11 +3250,16 @@ def main():
                         
                         summary_data = []
                         for client_id, metrics in final_client_data.items():
+                            # Safe extraction with fallbacks
+                            accuracy = metrics.get('local_accuracy', metrics.get('accuracy', 0))
+                            fog_node = metrics.get('fog_node_assigned', 0)
+                            selection_ratio = metrics.get('selection_ratio', 0)
+                            
                             summary_data.append({
                                 'Medical Station': f"Station {client_id + 1}",
-                                'Final Accuracy': f"{metrics['local_accuracy']:.3f}",
-                                'Fog Node': f"Fog {metrics['fog_node_assigned'] + 1}",
-                                'Data Utilization': f"{metrics['selection_ratio']:.0%}"
+                                'Final Accuracy': f"{accuracy:.3f}",
+                                'Fog Node': f"Fog {fog_node + 1}",
+                                'Data Utilization': f"{selection_ratio:.0%}"
                             })
                         
                         summary_df = pd.DataFrame(summary_data)
