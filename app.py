@@ -5491,29 +5491,16 @@ def main():
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
                 st.info(f"Processing authentic federated learning data from {len(st.session_state.round_client_metrics)} training rounds")
                 
-                # Debug: Show the actual data structure
-                st.write("Session state round_client_metrics keys:", list(st.session_state.round_client_metrics.keys()))
-                if st.session_state.round_client_metrics:
-                    first_round = list(st.session_state.round_client_metrics.keys())[0]
-                    first_round_data = st.session_state.round_client_metrics[first_round]
-                    st.write(f"Round {first_round} data:", first_round_data)
-                
                 # Extract real training metrics from federated learning session
                 for round_num, client_data in st.session_state.round_client_metrics.items():
-                    st.write(f"Processing round {round_num} with {len(client_data)} clients")
                     for client_id, metrics in client_data.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
                         
-                        # Show actual metric values
-                        st.write(f"Round {round_num}, Client {client_id} raw metrics:", metrics)
-                        
-                        # Extract authentic training metrics
-                        accuracy = float(metrics.get('accuracy', 0))
+                        # Extract authentic training metrics using correct field names
+                        accuracy = float(metrics.get('local_accuracy', metrics.get('accuracy', 0)))
                         loss = float(metrics.get('loss', 0))
                         f1 = float(metrics.get('f1_score', 0))
-                        
-                        st.write(f"Extracted values - accuracy: {accuracy}, loss: {loss}, f1: {f1}")
                         
                         accuracies.append(accuracy)
                         losses.append(loss)
@@ -5534,16 +5521,15 @@ def main():
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
                 st.info("Processing authentic federated learning training data")
                 
-                # Also debug the else branch data
-                st.write("Processing fallback data from round_client_metrics")
+
                 
                 for round_num, client_data in st.session_state.round_client_metrics.items():
                     for client_id, metrics in client_data.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
                         
-                        # Extract authentic metrics with proper type conversion
-                        accuracy = float(metrics.get('accuracy', 0))
+                        # Extract authentic metrics with correct field names
+                        accuracy = float(metrics.get('local_accuracy', metrics.get('accuracy', 0)))
                         loss = float(metrics.get('loss', 0))
                         f1 = float(metrics.get('f1_score', 0))
                         
@@ -5574,8 +5560,9 @@ def main():
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
                 for round_num, client_data in st.session_state.round_client_metrics.items():
                     for client_id, metrics in client_data.items():
-                        precision = float(metrics.get('precision', 0))
-                        recall = float(metrics.get('recall', 0))
+                        # Extract precision and recall from available fields
+                        precision = float(metrics.get('precision', metrics.get('committee_score', 0)))
+                        recall = float(metrics.get('recall', metrics.get('reputation_score', 0)))
                         precisions.append(precision)
                         recalls.append(recall)
             else:
