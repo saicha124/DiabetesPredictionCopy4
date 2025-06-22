@@ -5487,36 +5487,24 @@ def main():
             losses = []
             f1_scores = []
             
-            # Show data source information
-            if 'round_client_metrics' in st.session_state:
-                st.info(f"Found {len(st.session_state.round_client_metrics)} rounds of client data")
-                
-                # Debug: Show a sample of the data structure
-                if st.session_state.round_client_metrics:
-                    sample_round = list(st.session_state.round_client_metrics.keys())[0]
-                    sample_data = st.session_state.round_client_metrics[sample_round]
-                    st.write(f"Sample data structure for round {sample_round}:")
-                    for client_id, metrics in list(sample_data.items())[:2]:  # Show first 2 clients
-                        st.write(f"Client {client_id}: {list(metrics.keys())}")
-                        st.write(f"  - accuracy: {metrics.get('accuracy', 'N/A')}")
-                        st.write(f"  - loss: {metrics.get('loss', 'N/A')}")
-                        st.write(f"  - f1_score: {metrics.get('f1_score', 'N/A')}")
-                        st.write(f"  - precision: {metrics.get('precision', 'N/A')}")
-                        st.write(f"  - recall: {metrics.get('recall', 'N/A')}")
-            
             # Use round_client_metrics which stores real training data
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
-                st.info(f"Processing data from {len(st.session_state.round_client_metrics)} training rounds")
+                st.info(f"Processing authentic federated learning data from {len(st.session_state.round_client_metrics)} training rounds")
                 
+                # Extract real training metrics from federated learning session
                 for round_num, client_data in st.session_state.round_client_metrics.items():
                     for client_id, metrics in client_data.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
-                        # Use real training data
-                        accuracy = metrics.get('accuracy', 0)
+                        
+                        # Extract authentic training metrics
+                        accuracy = float(metrics.get('accuracy', 0))
+                        loss = float(metrics.get('loss', 0))
+                        f1 = float(metrics.get('f1_score', 0))
+                        
                         accuracies.append(accuracy)
-                        losses.append(metrics.get('loss', 0))
-                        f1_scores.append(metrics.get('f1_score', 0))
+                        losses.append(loss)
+                        f1_scores.append(f1)
                 
                 st.success(f"Loaded {len(rounds)} data points from training session")
             
@@ -5531,14 +5519,21 @@ def main():
             
             # Check for training data in session state
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
-                st.info("Processing available training data")
+                st.info("Processing authentic federated learning training data")
+                
                 for round_num, client_data in st.session_state.round_client_metrics.items():
                     for client_id, metrics in client_data.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
-                        accuracies.append(metrics.get('accuracy', 0))
-                        losses.append(metrics.get('loss', 0))
-                        f1_scores.append(metrics.get('f1_score', 0))
+                        
+                        # Extract authentic metrics with proper type conversion
+                        accuracy = float(metrics.get('accuracy', 0))
+                        loss = float(metrics.get('loss', 0))
+                        f1 = float(metrics.get('f1_score', 0))
+                        
+                        accuracies.append(accuracy)
+                        losses.append(loss)
+                        f1_scores.append(f1)
 
         # Create and display performance analysis tables
         if rounds:
@@ -5556,18 +5551,20 @@ def main():
             # Display comprehensive client metrics table
             st.subheader("📊 Client Performance Data by Round")
             
-            # Collect additional metrics
+            # Collect additional authentic metrics
             precisions = []
             recalls = []
             
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
                 for round_num, client_data in st.session_state.round_client_metrics.items():
                     for client_id, metrics in client_data.items():
-                        precisions.append(metrics.get('precision', 0))
-                        recalls.append(metrics.get('recall', 0))
+                        precision = float(metrics.get('precision', 0))
+                        recall = float(metrics.get('recall', 0))
+                        precisions.append(precision)
+                        recalls.append(recall)
             else:
-                precisions = [0] * len(rounds)
-                recalls = [0] * len(rounds)
+                precisions = [0.0] * len(rounds)
+                recalls = [0.0] * len(rounds)
             
             # Create comprehensive table
             comprehensive_df = pd.DataFrame({
