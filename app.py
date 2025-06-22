@@ -5628,14 +5628,74 @@ def main():
                                 delta=f"{improvement:.3f}"
                             )
                     
-                    # Detailed round-by-round performance table
-                    st.subheader("📊 Round-by-Round Performance Table" if st.session_state.language == 'en' else "📊 Tableau de Performance par Tour")
+                    # Enhanced client metrics tables
+                    st.subheader("📊 Detailed Client Metrics by Round" if st.session_state.language == 'en' else "📊 Métriques Détaillées des Clients par Tour")
                     
-                    # Create pivot table for better visualization
+                    # Create separate pivot tables for accuracy and loss
                     if len(performance_df) > 0:
-                        pivot_df = performance_df.pivot(index='Round', columns='Client', values='Accuracy')
-                        pivot_df = pivot_df.round(4)
-                        st.dataframe(pivot_df, use_container_width=True)
+                        # Accuracy table
+                        accuracy_pivot = performance_df.pivot(index='Round', columns='Client', values='Accuracy')
+                        accuracy_pivot = accuracy_pivot.round(4)
+                        
+                        # Loss table  
+                        loss_pivot = performance_df.pivot(index='Round', columns='Client', values='Loss')
+                        loss_pivot = loss_pivot.round(4)
+                        
+                        # Create tabs for different metrics
+                        metric_tab1, metric_tab2, metric_tab3 = st.tabs([
+                            "📈 Accuracy by Round" if st.session_state.language == 'en' else "📈 Précision par Tour",
+                            "📉 Loss by Round" if st.session_state.language == 'en' else "📉 Perte par Tour",
+                            "📋 Complete Metrics" if st.session_state.language == 'en' else "📋 Métriques Complètes"
+                        ])
+                        
+                        with metric_tab1:
+                            st.write("**Client Accuracy Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Précision des Clients**")
+                            st.dataframe(accuracy_pivot, use_container_width=True)
+                            
+                            # Summary statistics for accuracy
+                            if not accuracy_pivot.empty:
+                                st.write("**Accuracy Summary Statistics:**" if st.session_state.language == 'en' else "**Statistiques Résumées de Précision:**")
+                                summary_stats = pd.DataFrame({
+                                    'Client': accuracy_pivot.columns,
+                                    'Initial': accuracy_pivot.iloc[0].round(4),
+                                    'Final': accuracy_pivot.iloc[-1].round(4), 
+                                    'Best': accuracy_pivot.max().round(4),
+                                    'Average': accuracy_pivot.mean().round(4),
+                                    'Improvement': (accuracy_pivot.iloc[-1] - accuracy_pivot.iloc[0]).round(4)
+                                })
+                                st.dataframe(summary_stats, use_container_width=True)
+                        
+                        with metric_tab2:
+                            st.write("**Client Loss Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Perte des Clients**")
+                            st.dataframe(loss_pivot, use_container_width=True)
+                            
+                            # Summary statistics for loss
+                            if not loss_pivot.empty:
+                                st.write("**Loss Summary Statistics:**" if st.session_state.language == 'en' else "**Statistiques Résumées de Perte:**")
+                                loss_summary_stats = pd.DataFrame({
+                                    'Client': loss_pivot.columns,
+                                    'Initial': loss_pivot.iloc[0].round(4),
+                                    'Final': loss_pivot.iloc[-1].round(4),
+                                    'Best (Lowest)': loss_pivot.min().round(4),
+                                    'Average': loss_pivot.mean().round(4),
+                                    'Reduction': (loss_pivot.iloc[0] - loss_pivot.iloc[-1]).round(4)
+                                })
+                                st.dataframe(loss_summary_stats, use_container_width=True)
+                        
+                        with metric_tab3:
+                            st.write("**Complete Performance Metrics Table**" if st.session_state.language == 'en' else "**Tableau Complet des Métriques de Performance**")
+                            # Show the comprehensive dataframe with all metrics
+                            st.dataframe(display_df, use_container_width=True, height=500)
+                            
+                            # Export option
+                            if st.button("Export to CSV" if st.session_state.language == 'en' else "Exporter en CSV"):
+                                csv = display_df.to_csv(index=False)
+                                st.download_button(
+                                    label="Download CSV" if st.session_state.language == 'en' else "Télécharger CSV",
+                                    data=csv,
+                                    file_name='client_metrics_by_round.csv',
+                                    mime='text/csv'
+                                )
                     
                     # Comprehensive performance statistics table
                     st.subheader("📊 Comprehensive Performance Statistics" if st.session_state.language == 'en' else "📊 Statistiques Complètes de Performance")
