@@ -5506,42 +5506,80 @@ def main():
             
             # Use round_client_metrics which stores real training data
             if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
+                st.info(f"Processing data from {len(st.session_state.round_client_metrics)} training rounds")
+                
                 for round_num, client_data in st.session_state.round_client_metrics.items():
                     for client_id, metrics in client_data.items():
                         rounds.append(round_num)
                         clients.append(f"Client {client_id}")
-                        # Use accuracy field as shown in the debug output
+                        # Use real training data
                         accuracy = metrics.get('accuracy', 0)
                         accuracies.append(accuracy)
                         losses.append(metrics.get('loss', 0))
                         f1_scores.append(metrics.get('f1_score', 0))
-            
-            # Alternative: Use training_metrics summary data
-            elif 'training_metrics' in st.session_state and st.session_state.training_metrics:
-                for round_data in st.session_state.training_metrics:
-                    round_num = round_data.get('round', 0)
-                    client_metrics = round_data.get('client_metrics', {})
-                    
-                    for client_id, metrics in client_metrics.items():
-                        rounds.append(round_num)
-                        clients.append(f"Client {client_id}")
-                        # Use accuracy field as shown in the debug output
-                        accuracies.append(metrics.get('accuracy', 0))
-                        losses.append(metrics.get('loss', 0))
-                        f1_scores.append(metrics.get('f1_score', 0))
                 
-                if rounds:
-                    # Create DataFrame for plotting
-                    performance_df = pd.DataFrame({
-                        'Round': rounds,
-                        'Client': clients,
-                        'Accuracy': accuracies,
-                        'Loss': losses,
-                        'F1_Score': f1_scores
-                    })
-                    
-                    # Display raw data table first
-                    st.subheader("📋 Client Performance Data Table" if st.session_state.language == 'en' else "📋 Tableau des Données de Performance")
+                st.success(f"Loaded {len(rounds)} data points from training session")
+            
+        # Display client metrics tables regardless of training completion status
+        elif 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
+            st.warning("Training in progress - showing current data")
+            for round_num, client_data in st.session_state.round_client_metrics.items():
+                for client_id, metrics in client_data.items():
+                    rounds.append(round_num)
+                    clients.append(f"Client {client_id}")
+                    accuracies.append(metrics.get('accuracy', 0))
+                    losses.append(metrics.get('loss', 0))
+                    f1_scores.append(metrics.get('f1_score', 0))
+
+        # Create and display performance analysis tables
+        if rounds:
+            st.success(f"Displaying authentic federated learning data from {len(rounds)} client training instances across {len(set(rounds))} rounds")
+            
+            # Create comprehensive DataFrame
+            performance_df = pd.DataFrame({
+                'Round': rounds,
+                'Client': clients,
+                'Accuracy': accuracies,
+                'Loss': losses,
+                'F1_Score': f1_scores
+            })
+            
+            # Display comprehensive client metrics table
+            st.subheader("📊 Client Performance Data by Round")
+            
+            # Collect additional metrics
+            precisions = []
+            recalls = []
+            
+            if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
+                for round_num, client_data in st.session_state.round_client_metrics.items():
+                    for client_id, metrics in client_data.items():
+                        precisions.append(metrics.get('precision', 0))
+                        recalls.append(metrics.get('recall', 0))
+            else:
+                precisions = [0] * len(rounds)
+                recalls = [0] * len(rounds)
+            
+            # Create comprehensive table
+            comprehensive_df = pd.DataFrame({
+                'Round': rounds,
+                'Client': clients,
+                'Accuracy': accuracies,
+                'Loss': losses,
+                'F1_Score': f1_scores,
+                'Precision': precisions,
+                'Recall': recalls
+            })
+            
+            # Sort and format
+            display_df = comprehensive_df.sort_values(['Round', 'Client'])
+            display_df['Accuracy'] = display_df['Accuracy'].round(4)
+            display_df['Loss'] = display_df['Loss'].round(4)
+            display_df['F1_Score'] = display_df['F1_Score'].round(4)
+            display_df['Precision'] = display_df['Precision'].round(4)
+            display_df['Recall'] = display_df['Recall'].round(4)
+            
+            st.dataframe(display_df, use_container_width=True, height=500)
                     
                     # Add precision and recall data if available
                     precisions = []
