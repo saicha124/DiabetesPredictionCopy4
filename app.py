@@ -6208,45 +6208,29 @@ def main():
                 st.plotly_chart(fig_acc, use_container_width=True)
             
             with perf_tab2:
-                # Enhanced loss evolution with convergence zones
+                # Simple client loss evolution with convergence analysis
                 fig_loss = go.Figure()
                 
                 for i, client in enumerate(clients):
                     client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
                     color = colors[i % len(colors)]
                     
-                    # Main loss line
+                    # Simple loss line
                     fig_loss.add_trace(go.Scatter(
                         x=client_data['Round'],
                         y=client_data['Loss'],
                         mode='lines+markers',
                         name=client,
-                        line=dict(width=3, color=color, shape='spline'),
-                        marker=dict(size=8, color=color, line=dict(width=2, color='white')),
+                        line=dict(width=2, color=color),
+                        marker=dict(size=6, color=color),
                         hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>Loss: %{{y:.4f}}<extra></extra>'
                     ))
-                    
-                    # Add exponential moving average trend
-                    if len(client_data) > 3:
-                        ema = client_data['Loss'].ewm(span=3).mean()
-                        fig_loss.add_trace(go.Scatter(
-                            x=client_data['Round'],
-                            y=ema,
-                            mode='lines',
-                            name=f'{client} Trend',
-                            line=dict(width=2, color=color, dash='dash'),
-                            opacity=0.7,
-                            showlegend=False,
-                            hovertemplate=f'<b>{client} Trend</b><br>Round: %{{x}}<br>EMA Loss: %{{y:.4f}}<extra></extra>'
-                        ))
                 
-                # Add target convergence zone
+                # Add simple convergence target line
                 if not performance_df.empty:
-                    min_loss = performance_df['Loss'].min()
-                    fig_loss.add_hrect(y0=0, y1=min_loss * 1.1, 
-                                      fillcolor="green", opacity=0.1,
-                                      annotation_text="Convergence Zone", 
-                                      annotation_position="top left")
+                    avg_final_loss = performance_df[performance_df['Round'] == performance_df['Round'].max()]['Loss'].mean()
+                    fig_loss.add_hline(y=avg_final_loss, line_dash="dash", line_color="green", 
+                                      annotation_text=f"Convergence Target: {avg_final_loss:.3f}")
                 
                 fig_loss.update_layout(
                     title={
