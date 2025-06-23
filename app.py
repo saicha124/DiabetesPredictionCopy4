@@ -10,6 +10,38 @@ import json
 import os
 from datetime import datetime, timedelta
 
+# Add custom CSS for horizontal scrolling tables
+st.markdown("""
+<style>
+    .dataframe-container {
+        overflow-x: auto;
+        width: 100%;
+    }
+    
+    .stDataFrame > div {
+        overflow-x: auto;
+        width: 100%;
+    }
+    
+    .stDataFrame [data-testid="stDataFrameResizable"] {
+        width: 100%;
+        overflow-x: auto;
+    }
+    
+    /* Force horizontal scroll for tables */
+    div[data-testid="stDataFrame"] > div {
+        width: 100%;
+        overflow-x: auto !important;
+    }
+    
+    /* Ensure table cells don't wrap */
+    .dataframe td, .dataframe th {
+        white-space: nowrap;
+        min-width: 80px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Import custom modules
 from federated_learning import FederatedLearningManager
 from data_preprocessing import DataPreprocessor
@@ -5904,17 +5936,22 @@ def main():
             display_df['Precision'] = display_df['Precision'].round(4)
             display_df['Recall'] = display_df['Recall'].round(4)
             
-            st.dataframe(display_df, use_container_width=True, height=400,
+            # Display main performance table with forced horizontal scrolling
+            st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+            st.dataframe(display_df, 
+                        width=1200,  # Force wider table
+                        height=400,
                         column_config={
-                            "Round": st.column_config.NumberColumn("Round", width="small"),
-                            "Client": st.column_config.TextColumn("Client", width="medium"),
-                            "Accuracy": st.column_config.NumberColumn("Accuracy", format="%.4f", width="medium"),
-                            "Loss": st.column_config.NumberColumn("Loss", format="%.4f", width="medium"),
-                            "F1_Score": st.column_config.NumberColumn("F1 Score", format="%.4f", width="medium"),
-                            "Precision": st.column_config.NumberColumn("Precision", format="%.4f", width="medium"),
-                            "Recall": st.column_config.NumberColumn("Recall", format="%.4f", width="medium")
+                            "Round": st.column_config.NumberColumn("Round", width=80),
+                            "Client": st.column_config.TextColumn("Client", width=120),
+                            "Accuracy": st.column_config.NumberColumn("Accuracy", format="%.4f", width=120),
+                            "Loss": st.column_config.NumberColumn("Loss", format="%.4f", width=120),
+                            "F1_Score": st.column_config.NumberColumn("F1 Score", format="%.4f", width=120),
+                            "Precision": st.column_config.NumberColumn("Precision", format="%.4f", width=120),
+                            "Recall": st.column_config.NumberColumn("Recall", format="%.4f", width=120)
                         },
                         hide_index=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             
             # Multiple visualization tabs
             perf_tab1, perf_tab2, perf_tab3 = st.tabs([
@@ -5991,9 +6028,13 @@ def main():
                 
                 with metric_tab1:
                     st.write("**Client Accuracy Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Précision des Clients**")
-                    st.dataframe(accuracy_pivot, use_container_width=True, height=300,
-                                column_config={col: st.column_config.NumberColumn(col, format="%.4f") for col in accuracy_pivot.columns},
+                    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                    st.dataframe(accuracy_pivot, 
+                                width=1000,
+                                height=300,
+                                column_config={col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in accuracy_pivot.columns},
                                 hide_index=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
                     
                     # Summary statistics for accuracy
                     if not accuracy_pivot.empty:
@@ -6019,22 +6060,30 @@ def main():
                                 'Average': [0],
                                 'Improvement': [0]
                             })
-                        st.dataframe(summary_stats, use_container_width=True, height=200,
+                        st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                        st.dataframe(summary_stats, 
+                                    width=800,
+                                    height=200,
                                     column_config={
-                                        "Client": st.column_config.TextColumn("Client", width="medium"),
-                                        "Initial": st.column_config.NumberColumn("Initial", format="%.4f", width="small"),
-                                        "Final": st.column_config.NumberColumn("Final", format="%.4f", width="small"),
-                                        "Best": st.column_config.NumberColumn("Best", format="%.4f", width="small"),
-                                        "Average": st.column_config.NumberColumn("Average", format="%.4f", width="small"),
-                                        "Improvement": st.column_config.NumberColumn("Improvement", format="%.4f", width="small")
+                                        "Client": st.column_config.TextColumn("Client", width=120),
+                                        "Initial": st.column_config.NumberColumn("Initial", format="%.4f", width=100),
+                                        "Final": st.column_config.NumberColumn("Final", format="%.4f", width=100),
+                                        "Best": st.column_config.NumberColumn("Best", format="%.4f", width=100),
+                                        "Average": st.column_config.NumberColumn("Average", format="%.4f", width=100),
+                                        "Improvement": st.column_config.NumberColumn("Improvement", format="%.4f", width=120)
                                     },
                                     hide_index=True)
+                        st.markdown('</div>', unsafe_allow_html=True)
                 
                 with metric_tab2:
                     st.write("**Client Loss Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Perte des Clients**")
-                    st.dataframe(loss_pivot, use_container_width=True, height=300,
-                                column_config={col: st.column_config.NumberColumn(col, format="%.4f") for col in loss_pivot.columns},
+                    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                    st.dataframe(loss_pivot, 
+                                width=1000,
+                                height=300,
+                                column_config={col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in loss_pivot.columns},
                                 hide_index=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
                     
                     # Summary statistics for loss
                     if not loss_pivot.empty:
@@ -6060,17 +6109,21 @@ def main():
                 with metric_tab3:
                     st.write("**Complete Performance Metrics Table**" if st.session_state.language == 'en' else "**Tableau Complet des Métriques de Performance**")
                     # Show the comprehensive dataframe with all metrics
-                    st.dataframe(display_df, use_container_width=True, height=400,
+                    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                    st.dataframe(display_df, 
+                                width=1200,
+                                height=400,
                                 column_config={
-                                    "Round": st.column_config.NumberColumn("Round", width="small"),
-                                    "Client": st.column_config.TextColumn("Client", width="medium"),
-                                    "Accuracy": st.column_config.NumberColumn("Accuracy", format="%.4f", width="medium"),
-                                    "Loss": st.column_config.NumberColumn("Loss", format="%.4f", width="medium"),
-                                    "F1_Score": st.column_config.NumberColumn("F1 Score", format="%.4f", width="medium"),
-                                    "Precision": st.column_config.NumberColumn("Precision", format="%.4f", width="medium"),
-                                    "Recall": st.column_config.NumberColumn("Recall", format="%.4f", width="medium")
+                                    "Round": st.column_config.NumberColumn("Round", width=80),
+                                    "Client": st.column_config.TextColumn("Client", width=120),
+                                    "Accuracy": st.column_config.NumberColumn("Accuracy", format="%.4f", width=120),
+                                    "Loss": st.column_config.NumberColumn("Loss", format="%.4f", width=120),
+                                    "F1_Score": st.column_config.NumberColumn("F1 Score", format="%.4f", width=120),
+                                    "Precision": st.column_config.NumberColumn("Precision", format="%.4f", width=120),
+                                    "Recall": st.column_config.NumberColumn("Recall", format="%.4f", width=120)
                                 },
                                 hide_index=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
                     
                     # Export option
                     if st.button("Export to CSV" if st.session_state.language == 'en' else "Exporter en CSV"):
