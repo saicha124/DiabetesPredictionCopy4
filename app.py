@@ -3358,39 +3358,127 @@ def main():
                     
                     col1, col2 = st.columns(2)
                     
-                    with col1:
-                        fig_acc = go.Figure()
-                        fig_acc.add_trace(go.Scatter(
-                            x=rounds, y=accuracies, 
-                            mode='lines+markers', 
-                            name='Global Accuracy',
-                            line=dict(color='blue', width=3),
-                            marker=dict(size=8)
-                        ))
-                        fig_acc.update_layout(
-                            title=f"Accuracy Progress ({model_type.upper()})",
-                            xaxis_title="Round", 
-                            yaxis_title="Accuracy",
-                            height=400
-                        )
-                        st.plotly_chart(fig_acc, use_container_width=True)
+                    # Create enhanced multi-panel dashboard
+                    from plotly.subplots import make_subplots
                     
-                    with col2:
-                        fig_loss = go.Figure()
-                        fig_loss.add_trace(go.Scatter(
-                            x=rounds, y=losses, 
-                            mode='lines+markers', 
-                            name='Loss',
-                            line=dict(color='red', width=3),
-                            marker=dict(size=8)
-                        ))
-                        fig_loss.update_layout(
-                            title="Loss Evolution",
-                            xaxis_title="Round", 
-                            yaxis_title="Loss",
-                            height=400
+                    fig_dashboard = make_subplots(
+                        rows=2, cols=2,
+                        subplot_titles=(
+                            f'Accuracy Progress ({model_type.upper()})', 
+                            'Loss Evolution', 
+                            'Performance Convergence',
+                            'Training Velocity'
+                        ),
+                        specs=[[{"secondary_y": False}, {"secondary_y": False}],
+                               [{"secondary_y": True}, {"secondary_y": False}]],
+                        vertical_spacing=0.12,
+                        horizontal_spacing=0.1
+                    )
+                    
+                    # Enhanced accuracy trace with trend
+                    fig_dashboard.add_trace(
+                        go.Scatter(
+                            x=rounds, y=accuracies,
+                            mode='lines+markers',
+                            name='Accuracy',
+                            line=dict(color='#2E86AB', width=3, shape='spline'),
+                            marker=dict(size=8, color='#2E86AB', line=dict(width=2, color='white')),
+                            hovertemplate='<b>Round %{x}</b><br>Accuracy: %{y:.3f}<extra></extra>'
+                        ),
+                        row=1, col=1
+                    )
+                    
+                    # Add accuracy trend line
+                    if len(rounds) > 2:
+                        z = np.polyfit(rounds, accuracies, 1)
+                        p = np.poly1d(z)
+                        fig_dashboard.add_trace(
+                            go.Scatter(
+                                x=rounds, y=p(rounds),
+                                mode='lines',
+                                name='Accuracy Trend',
+                                line=dict(color='#A23B72', width=2, dash='dash'),
+                                showlegend=False
+                            ),
+                            row=1, col=1
                         )
-                        st.plotly_chart(fig_loss, use_container_width=True)
+                    
+                    # Enhanced loss trace
+                    fig_dashboard.add_trace(
+                        go.Scatter(
+                            x=rounds, y=losses,
+                            mode='lines+markers',
+                            name='Loss',
+                            line=dict(color='#F18F01', width=3, shape='spline'),
+                            marker=dict(size=8, color='#F18F01', line=dict(width=2, color='white')),
+                            hovertemplate='<b>Round %{x}</b><br>Loss: %{y:.4f}<extra></extra>'
+                        ),
+                        row=1, col=2
+                    )
+                    
+                    # Convergence analysis (accuracy vs inverted loss)
+                    fig_dashboard.add_trace(
+                        go.Scatter(
+                            x=rounds, y=accuracies,
+                            mode='lines',
+                            name='Accuracy',
+                            line=dict(color='#2E86AB', width=2),
+                            showlegend=False
+                        ),
+                        row=2, col=1
+                    )
+                    
+                    # Inverted loss for convergence comparison
+                    inverted_loss = [1 - l for l in losses]
+                    fig_dashboard.add_trace(
+                        go.Scatter(
+                            x=rounds, y=inverted_loss,
+                            mode='lines',
+                            name='Inverted Loss',
+                            line=dict(color='#F18F01', width=2),
+                            yaxis='y2',
+                            showlegend=False
+                        ),
+                        row=2, col=1,
+                        secondary_y=True
+                    )
+                    
+                    # Training velocity (improvement rate)
+                    if len(accuracies) > 1:
+                        velocity = [0] + [accuracies[i] - accuracies[i-1] for i in range(1, len(accuracies))]
+                        fig_dashboard.add_trace(
+                            go.Bar(
+                                x=rounds, y=velocity,
+                                name='Improvement Rate',
+                                marker_color=['green' if v >= 0 else 'red' for v in velocity],
+                                opacity=0.7,
+                                showlegend=False
+                            ),
+                            row=2, col=2
+                        )
+                    
+                    # Update layout with enhanced styling
+                    fig_dashboard.update_layout(
+                        title={
+                            'text': f"📊 Real-time Training Dashboard - {model_type.upper()}",
+                            'x': 0.5,
+                            'xanchor': 'center',
+                            'font': {'size': 18, 'color': '#2C3E50'}
+                        },
+                        height=600,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(family="Arial, sans-serif", size=11)
+                    )
+                    
+                    # Update individual axes
+                    fig_dashboard.update_xaxes(title_text="Training Round", showgrid=True, gridcolor='lightgray')
+                    fig_dashboard.update_yaxes(title_text="Accuracy", row=1, col=1, showgrid=True, gridcolor='lightgray')
+                    fig_dashboard.update_yaxes(title_text="Loss", row=1, col=2, showgrid=True, gridcolor='lightgray')
+                    fig_dashboard.update_yaxes(title_text="Convergence", row=2, col=1, showgrid=True, gridcolor='lightgray')
+                    fig_dashboard.update_yaxes(title_text="Improvement", row=2, col=2, showgrid=True, gridcolor='lightgray')
+                    
+                    st.plotly_chart(fig_dashboard, use_container_width=True)
                 
                 # Client performance evolution
                 if len(st.session_state.training_metrics) > 2:
@@ -3573,17 +3661,84 @@ def main():
             
             col1, col2 = st.columns(2)
             
-            with col1:
-                fig_acc = go.Figure()
-                fig_acc.add_trace(go.Scatter(x=rounds, y=accuracies, mode='lines+markers', name='Accuracy'))
-                fig_acc.update_layout(title="Accuracy Progress", xaxis_title="Round", yaxis_title="Accuracy")
-                st.plotly_chart(fig_acc, use_container_width=True)
+            # Enhanced final results visualization
+            fig_results = make_subplots(
+                rows=1, cols=2,
+                subplot_titles=('Final Accuracy Progress', 'Loss Convergence'),
+                specs=[[{"secondary_y": False}, {"secondary_y": False}]]
+            )
             
-            with col2:
-                fig_loss = go.Figure()
-                fig_loss.add_trace(go.Scatter(x=rounds, y=losses, mode='lines+markers', name='Loss', line=dict(color='red')))
-                fig_loss.update_layout(title="Loss Progress", xaxis_title="Round", yaxis_title="Loss")
-                st.plotly_chart(fig_loss, use_container_width=True)
+            # Accuracy with confidence bands
+            fig_results.add_trace(
+                go.Scatter(
+                    x=rounds, y=accuracies,
+                    mode='lines+markers',
+                    name='Accuracy',
+                    line=dict(color='#2E86AB', width=4, shape='spline'),
+                    marker=dict(size=10, color='#2E86AB', line=dict(width=2, color='white')),
+                    hovertemplate='<b>Round %{x}</b><br>Accuracy: %{y:.3f}<extra></extra>'
+                ),
+                row=1, col=1
+            )
+            
+            # Add best accuracy indicator
+            if accuracies:
+                best_acc_idx = accuracies.index(max(accuracies))
+                fig_results.add_trace(
+                    go.Scatter(
+                        x=[rounds[best_acc_idx]], y=[accuracies[best_acc_idx]],
+                        mode='markers',
+                        name='Best',
+                        marker=dict(size=15, color='gold', symbol='star', line=dict(width=2, color='black')),
+                        showlegend=False
+                    ),
+                    row=1, col=1
+                )
+            
+            # Loss with smoothing
+            fig_results.add_trace(
+                go.Scatter(
+                    x=rounds, y=losses,
+                    mode='lines+markers',
+                    name='Loss',
+                    line=dict(color='#F18F01', width=4, shape='spline'),
+                    marker=dict(size=10, color='#F18F01', line=dict(width=2, color='white')),
+                    hovertemplate='<b>Round %{x}</b><br>Loss: %{y:.4f}<extra></extra>'
+                ),
+                row=1, col=2
+            )
+            
+            # Add exponential moving average for loss
+            if len(losses) > 2:
+                loss_ema = pd.Series(losses).ewm(span=3).mean().tolist()
+                fig_results.add_trace(
+                    go.Scatter(
+                        x=rounds, y=loss_ema,
+                        mode='lines',
+                        name='Loss Trend',
+                        line=dict(color='#C73E1D', width=2, dash='dash'),
+                        showlegend=False
+                    ),
+                    row=1, col=2
+                )
+            
+            fig_results.update_layout(
+                title={
+                    'text': "🎯 Final Training Results Analysis",
+                    'x': 0.5,
+                    'xanchor': 'center',
+                    'font': {'size': 16, 'color': '#2C3E50'}
+                },
+                height=400,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)'
+            )
+            
+            fig_results.update_xaxes(title_text="Training Round", showgrid=True, gridcolor='lightgray')
+            fig_results.update_yaxes(title_text="Accuracy", row=1, col=1, showgrid=True, gridcolor='lightgray')
+            fig_results.update_yaxes(title_text="Loss", row=1, col=2, showgrid=True, gridcolor='lightgray')
+            
+            st.plotly_chart(fig_results, use_container_width=True)
             
             # Summary metrics
             final_accuracy = st.session_state.results.get('accuracy', 0)
@@ -5964,28 +6119,209 @@ def main():
             performance_df = comprehensive_df.copy()
             
             with perf_tab1:
-                # Accuracy line chart
-                fig_acc = px.line(performance_df, x='Round', y='Accuracy', color='Client',
-                            title='Client Accuracy Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution de la Précision des Clients',
-                            markers=True)
-                fig_acc.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
+                # Enhanced client accuracy evolution with statistical analysis
+                fig_acc = go.Figure()
+                
+                colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+                clients = performance_df['Client'].unique()
+                all_client_data = []
+                
+                for i, client in enumerate(clients):
+                    client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
+                    color = colors[i % len(colors)]
+                    
+                    # Add main line with enhanced styling
+                    fig_acc.add_trace(go.Scatter(
+                        x=client_data['Round'],
+                        y=client_data['Accuracy'],
+                        mode='lines+markers',
+                        name=client,
+                        line=dict(width=3, color=color, shape='spline'),
+                        marker=dict(size=8, color=color, line=dict(width=2, color='white')),
+                        hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>Accuracy: %{{y:.3f}}<extra></extra>'
+                    ))
+                    
+                    all_client_data.extend(client_data['Accuracy'].tolist())
+                
+                # Add statistical reference lines
+                if all_client_data:
+                    mean_acc = np.mean(all_client_data)
+                    std_acc = np.std(all_client_data)
+                    
+                    fig_acc.add_hline(y=mean_acc, line_dash="dash", line_color="gray", 
+                                      annotation_text=f"Mean: {mean_acc:.3f}")
+                    fig_acc.add_hline(y=mean_acc + std_acc, line_dash="dot", line_color="lightgray", 
+                                      annotation_text=f"+1σ: {mean_acc + std_acc:.3f}")
+                    if mean_acc - std_acc > 0:
+                        fig_acc.add_hline(y=mean_acc - std_acc, line_dash="dot", line_color="lightgray", 
+                                          annotation_text=f"-1σ: {mean_acc - std_acc:.3f}")
+                
+                fig_acc.update_layout(
+                    title={
+                        'text': "📈 Client Accuracy Evolution with Statistical Analysis",
+                        'x': 0.5,
+                        'xanchor': 'center',
+                        'font': {'size': 16, 'color': '#2C3E50'}
+                    },
+                    xaxis_title="Training Round",
+                    yaxis_title="Accuracy Score",
+                    height=450,
+                    hovermode='x unified',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                )
+                
+                fig_acc.update_xaxes(showgrid=True, gridcolor='lightgray')
+                fig_acc.update_yaxes(showgrid=True, gridcolor='lightgray')
+                
                 st.plotly_chart(fig_acc, use_container_width=True)
             
             with perf_tab2:
-                # Loss line chart
-                fig_loss = px.line(performance_df, x='Round', y='Loss', color='Client',
-                             title='Client Loss Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution de la Perte des Clients',
-                             markers=True)
-                fig_loss.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
+                # Enhanced loss evolution with convergence zones
+                fig_loss = go.Figure()
+                
+                for i, client in enumerate(clients):
+                    client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
+                    color = colors[i % len(colors)]
+                    
+                    # Main loss line
+                    fig_loss.add_trace(go.Scatter(
+                        x=client_data['Round'],
+                        y=client_data['Loss'],
+                        mode='lines+markers',
+                        name=client,
+                        line=dict(width=3, color=color, shape='spline'),
+                        marker=dict(size=8, color=color, line=dict(width=2, color='white')),
+                        hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>Loss: %{{y:.4f}}<extra></extra>'
+                    ))
+                    
+                    # Add exponential moving average trend
+                    if len(client_data) > 3:
+                        ema = client_data['Loss'].ewm(span=3).mean()
+                        fig_loss.add_trace(go.Scatter(
+                            x=client_data['Round'],
+                            y=ema,
+                            mode='lines',
+                            name=f'{client} Trend',
+                            line=dict(width=2, color=color, dash='dash'),
+                            opacity=0.7,
+                            showlegend=False,
+                            hovertemplate=f'<b>{client} Trend</b><br>Round: %{{x}}<br>EMA Loss: %{{y:.4f}}<extra></extra>'
+                        ))
+                
+                # Add target convergence zone
+                if not performance_df.empty:
+                    min_loss = performance_df['Loss'].min()
+                    fig_loss.add_hrect(y0=0, y1=min_loss * 1.1, 
+                                      fillcolor="green", opacity=0.1,
+                                      annotation_text="Convergence Zone", 
+                                      annotation_position="top left")
+                
+                fig_loss.update_layout(
+                    title={
+                        'text': "📉 Client Loss Evolution with Convergence Analysis",
+                        'x': 0.5,
+                        'xanchor': 'center',
+                        'font': {'size': 16, 'color': '#2C3E50'}
+                    },
+                    xaxis_title="Training Round",
+                    yaxis_title="Loss Value",
+                    height=450,
+                    hovermode='x unified',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                )
+                
+                fig_loss.update_xaxes(showgrid=True, gridcolor='lightgray')
+                fig_loss.update_yaxes(showgrid=True, gridcolor='lightgray')
+                
                 st.plotly_chart(fig_loss, use_container_width=True)
             
             with perf_tab3:
-                # F1-Score line chart
-                fig_f1 = px.line(performance_df, x='Round', y='F1_Score', color='Client',
-                           title='Client F1-Score Evolution Across Training Rounds' if st.session_state.language == 'en' else 'Évolution du F1-Score des Clients',
-                           markers=True)
-                fig_f1.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
-                st.plotly_chart(fig_f1, use_container_width=True)
+                # Enhanced radar chart for multi-metric comparison
+                if not performance_df.empty:
+                    # Get latest round data for each client
+                    latest_round = performance_df['Round'].max()
+                    latest_data = performance_df[performance_df['Round'] == latest_round]
+                    
+                    # Create radar chart
+                    fig_radar = go.Figure()
+                    
+                    metrics = ['Accuracy', 'F1_Score', 'Precision', 'Recall']
+                    metric_labels = ['Accuracy', 'F1 Score', 'Precision', 'Recall']
+                    
+                    for i, client in enumerate(latest_data['Client'].unique()):
+                        client_data = latest_data[latest_data['Client'] == client].iloc[0]
+                        color = colors[i % len(colors)]
+                        
+                        values = [client_data[metric] for metric in metrics]
+                        values.append(values[0])  # Close the radar chart
+                        
+                        fig_radar.add_trace(go.Scatterpolar(
+                            r=values,
+                            theta=metric_labels + [metric_labels[0]],
+                            fill='toself',
+                            name=client,
+                            line=dict(color=color, width=2),
+                            fillcolor=color,
+                            opacity=0.3,
+                            hovertemplate=f'<b>{client}</b><br>%{{theta}}: %{{r:.3f}}<extra></extra>'
+                        ))
+                    
+                    fig_radar.update_layout(
+                        polar=dict(
+                            radialaxis=dict(
+                                visible=True,
+                                range=[0, 1],
+                                tickmode='linear',
+                                tick0=0,
+                                dtick=0.2,
+                                gridcolor='lightgray'
+                            ),
+                            angularaxis=dict(tickfont=dict(size=12))
+                        ),
+                        title={
+                            'text': f"🎯 Multi-Metric Performance Radar (Round {latest_round})",
+                            'x': 0.5,
+                            'xanchor': 'center',
+                            'font': {'size': 16, 'color': '#2C3E50'}
+                        },
+                        height=500,
+                        showlegend=True,
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    )
+                    
+                    st.plotly_chart(fig_radar, use_container_width=True)
+                    
+                    # Add performance improvement analysis
+                    if len(performance_df['Round'].unique()) > 1:
+                        st.markdown("### 📊 Performance Improvement Analysis")
+                        
+                        improvement_data = []
+                        first_round = performance_df['Round'].min()
+                        first_round_data = performance_df[performance_df['Round'] == first_round]
+                        
+                        for client in latest_data['Client'].unique():
+                            latest_client = latest_data[latest_data['Client'] == client].iloc[0]
+                            first_client = first_round_data[first_round_data['Client'] == client]
+                            
+                            if not first_client.empty:
+                                first_client = first_client.iloc[0]
+                                acc_improvement = latest_client['Accuracy'] - first_client['Accuracy']
+                                f1_improvement = latest_client['F1_Score'] - first_client['F1_Score']
+                                
+                                improvement_data.append({
+                                    'Client': client,
+                                    'Accuracy Δ': f"{acc_improvement:+.4f}",
+                                    'F1 Score Δ': f"{f1_improvement:+.4f}",
+                                    'Status': '📈' if acc_improvement > 0 else '📉' if acc_improvement < 0 else '➡️'
+                                })
+                        
+                        if improvement_data:
+                            improvement_df = pd.DataFrame(improvement_data)
+                            st.dataframe(improvement_df, use_container_width=True, hide_index=True)
             
             # Individual client performance cards
             st.subheader("📋 Individual Client Performance Summary" if st.session_state.language == 'en' else "📋 Résumé des Performances Individuelles")

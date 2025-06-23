@@ -106,6 +106,8 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 23, 2025. Enhanced graph visualizations with 3D plots, heatmaps, and interactive charts
+- June 23, 2025. Added statistical analysis bands and radar charts for multi-metric comparison
 - June 23, 2025. Fixed table display issues with scroll bars and empty columns
 - June 23, 2025. Enhanced training progress display with detailed explanations
 - June 23, 2025. Improved committee security explanation for user clarity
