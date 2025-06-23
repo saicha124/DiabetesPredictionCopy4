@@ -6149,155 +6149,282 @@ def main():
             performance_df = comprehensive_df.copy()
             
             with perf_tab1:
-                # Simple client accuracy evolution
-                fig_acc = go.Figure()
-                
-                colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
-                clients = performance_df['Client'].unique()
-                
-                for i, client in enumerate(clients):
-                    client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
-                    color = colors[i % len(colors)]
-                    
-                    # Simple accuracy line
-                    fig_acc.add_trace(go.Scatter(
-                        x=client_data['Round'],
-                        y=client_data['Accuracy'],
-                        mode='lines+markers',
-                        name=client,
-                        line=dict(width=2, color=color),
-                        marker=dict(size=6, color=color),
-                        hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>Accuracy: %{{y:.3f}}<extra></extra>'
-                    ))
-                
-                # Add simple average line
-                if not performance_df.empty:
-                    avg_accuracy = performance_df.groupby('Round')['Accuracy'].mean()
-                    fig_acc.add_trace(go.Scatter(
-                        x=avg_accuracy.index,
-                        y=avg_accuracy.values,
-                        mode='lines',
-                        name='Average',
-                        line=dict(width=3, color='black', dash='dash'),
-                        hovertemplate='<b>Average</b><br>Round: %{x}<br>Accuracy: %{y:.3f}<extra></extra>'
-                    ))
-                
-                fig_acc.update_layout(
-                    title="Client Accuracy Evolution",
-                    xaxis_title="Training Round",
-                    yaxis_title="Accuracy Score",
-                    height=450,
-                    showlegend=True,
-                    legend=dict(
-                        orientation="v",
-                        yanchor="top",
-                        y=1,
-                        xanchor="left",
-                        x=1.02
+                # Client selector for individual accuracy graphs
+                clients = performance_df['Client'].unique() if not performance_df.empty else []
+                if len(clients) > 0:
+                    selected_client = st.selectbox(
+                        "Select Client for Accuracy Analysis:",
+                        options=["All Clients"] + list(clients),
+                        index=0,
+                        key="accuracy_client_selector"
                     )
-                )
-                
-                fig_acc.update_xaxes(showgrid=True, gridcolor='lightgray')
-                fig_acc.update_yaxes(showgrid=True, gridcolor='lightgray')
-                
-                st.plotly_chart(fig_acc, use_container_width=True)
+                    
+                    fig_acc = go.Figure()
+                    
+                    if selected_client == "All Clients":
+                        # Show all clients with different colors
+                        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+                        for i, client in enumerate(clients):
+                            client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
+                            color = colors[i % len(colors)]
+                            
+                            fig_acc.add_trace(go.Scatter(
+                                x=client_data['Round'],
+                                y=client_data['Accuracy'],
+                                mode='lines+markers',
+                                name=client,
+                                line=dict(width=2, color=color),
+                                marker=dict(size=6, color=color),
+                                hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>Accuracy: %{{y:.3f}}<extra></extra>'
+                            ))
+                        
+                        # Add average line
+                        avg_accuracy = performance_df.groupby('Round')['Accuracy'].mean()
+                        fig_acc.add_trace(go.Scatter(
+                            x=avg_accuracy.index,
+                            y=avg_accuracy.values,
+                            mode='lines',
+                            name='Average',
+                            line=dict(width=3, color='black', dash='dash'),
+                            hovertemplate='<b>Average</b><br>Round: %{x}<br>Accuracy: %{y:.3f}<extra></extra>'
+                        ))
+                        title = "All Clients - Accuracy Evolution"
+                    else:
+                        # Show individual client
+                        client_data = performance_df[performance_df['Client'] == selected_client].sort_values('Round')
+                        
+                        fig_acc.add_trace(go.Scatter(
+                            x=client_data['Round'],
+                            y=client_data['Accuracy'],
+                            mode='lines+markers',
+                            name=selected_client,
+                            line=dict(width=3, color='#1f77b4'),
+                            marker=dict(size=8, color='#1f77b4'),
+                            hovertemplate=f'<b>{selected_client}</b><br>Round: %{{x}}<br>Accuracy: %{{y:.3f}}<extra></extra>'
+                        ))
+                        
+                        # Add trend line for individual client
+                        if len(client_data) > 2:
+                            z = np.polyfit(client_data['Round'], client_data['Accuracy'], 1)
+                            p = np.poly1d(z)
+                            fig_acc.add_trace(go.Scatter(
+                                x=client_data['Round'],
+                                y=p(client_data['Round']),
+                                mode='lines',
+                                name='Trend',
+                                line=dict(width=2, color='red', dash='dash'),
+                                hovertemplate='<b>Trend Line</b><br>Round: %{x}<br>Trend: %{y:.3f}<extra></extra>'
+                            ))
+                        
+                        title = f"{selected_client} - Accuracy Evolution"
+                    
+                    fig_acc.update_layout(
+                        title=title,
+                        xaxis_title="Training Round",
+                        yaxis_title="Accuracy Score",
+                        height=450,
+                        showlegend=True,
+                        legend=dict(
+                            orientation="v",
+                            yanchor="top",
+                            y=1,
+                            xanchor="left",
+                            x=1.02
+                        )
+                    )
+                    
+                    fig_acc.update_xaxes(showgrid=True, gridcolor='lightgray')
+                    fig_acc.update_yaxes(showgrid=True, gridcolor='lightgray')
+                    
+                    st.plotly_chart(fig_acc, use_container_width=True)
+                else:
+                    st.warning("No client data available for accuracy analysis")
             
             with perf_tab2:
-                # Simple client loss evolution with convergence analysis
-                fig_loss = go.Figure()
-                
-                for i, client in enumerate(clients):
-                    client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
-                    color = colors[i % len(colors)]
+                # Client selector for individual loss graphs
+                if len(clients) > 0:
+                    selected_client_loss = st.selectbox(
+                        "Select Client for Loss Analysis:",
+                        options=["All Clients"] + list(clients),
+                        index=0,
+                        key="loss_client_selector"
+                    )
                     
-                    # Simple loss line
-                    fig_loss.add_trace(go.Scatter(
-                        x=client_data['Round'],
-                        y=client_data['Loss'],
-                        mode='lines+markers',
-                        name=client,
-                        line=dict(width=2, color=color),
-                        marker=dict(size=6, color=color),
-                        hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>Loss: %{{y:.4f}}<extra></extra>'
-                    ))
-                
-                # Add simple convergence target line
-                if not performance_df.empty:
-                    avg_final_loss = performance_df[performance_df['Round'] == performance_df['Round'].max()]['Loss'].mean()
-                    fig_loss.add_hline(y=avg_final_loss, line_dash="dash", line_color="green", 
-                                      annotation_text=f"Convergence Target: {avg_final_loss:.3f}")
-                
-                fig_loss.update_layout(
-                    title={
-                        'text': "📉 Client Loss Evolution with Convergence Analysis",
-                        'x': 0.5,
-                        'xanchor': 'center',
-                        'font': {'size': 16, 'color': '#2C3E50'}
-                    },
-                    xaxis_title="Training Round",
-                    yaxis_title="Loss Value",
-                    height=450,
-                    hovermode='x unified',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
-                )
-                
-                fig_loss.update_xaxes(showgrid=True, gridcolor='lightgray')
-                fig_loss.update_yaxes(showgrid=True, gridcolor='lightgray')
-                
-                st.plotly_chart(fig_loss, use_container_width=True)
+                    fig_loss = go.Figure()
+                    
+                    if selected_client_loss == "All Clients":
+                        # Show all clients with different colors
+                        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+                        for i, client in enumerate(clients):
+                            client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
+                            color = colors[i % len(colors)]
+                            
+                            fig_loss.add_trace(go.Scatter(
+                                x=client_data['Round'],
+                                y=client_data['Loss'],
+                                mode='lines+markers',
+                                name=client,
+                                line=dict(width=2, color=color),
+                                marker=dict(size=6, color=color),
+                                hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>Loss: %{{y:.4f}}<extra></extra>'
+                            ))
+                        
+                        # Add convergence target line
+                        avg_final_loss = performance_df[performance_df['Round'] == performance_df['Round'].max()]['Loss'].mean()
+                        fig_loss.add_hline(y=avg_final_loss, line_dash="dash", line_color="green", 
+                                          annotation_text=f"Convergence Target: {avg_final_loss:.3f}")
+                        title = "All Clients - Loss Evolution"
+                    else:
+                        # Show individual client
+                        client_data = performance_df[performance_df['Client'] == selected_client_loss].sort_values('Round')
+                        
+                        fig_loss.add_trace(go.Scatter(
+                            x=client_data['Round'],
+                            y=client_data['Loss'],
+                            mode='lines+markers',
+                            name=selected_client_loss,
+                            line=dict(width=3, color='#ff7f0e'),
+                            marker=dict(size=8, color='#ff7f0e'),
+                            hovertemplate=f'<b>{selected_client_loss}</b><br>Round: %{{x}}<br>Loss: %{{y:.4f}}<extra></extra>'
+                        ))
+                        
+                        # Add trend line for individual client
+                        if len(client_data) > 2:
+                            z = np.polyfit(client_data['Round'], client_data['Loss'], 1)
+                            p = np.poly1d(z)
+                            fig_loss.add_trace(go.Scatter(
+                                x=client_data['Round'],
+                                y=p(client_data['Round']),
+                                mode='lines',
+                                name='Trend',
+                                line=dict(width=2, color='red', dash='dash'),
+                                hovertemplate='<b>Trend Line</b><br>Round: %{x}<br>Trend: %{y:.4f}<extra></extra>'
+                            ))
+                        
+                        # Add best loss line for individual client
+                        best_loss = client_data['Loss'].min()
+                        fig_loss.add_hline(y=best_loss, line_dash="dot", line_color="green", 
+                                          annotation_text=f"Best Loss: {best_loss:.3f}")
+                        
+                        title = f"{selected_client_loss} - Loss Evolution"
+                    
+                    fig_loss.update_layout(
+                        title=title,
+                        xaxis_title="Training Round",
+                        yaxis_title="Loss Value",
+                        height=450,
+                        showlegend=True,
+                        legend=dict(
+                            orientation="v",
+                            yanchor="top",
+                            y=1,
+                            xanchor="left",
+                            x=1.02
+                        )
+                    )
+                    
+                    fig_loss.update_xaxes(showgrid=True, gridcolor='lightgray')
+                    fig_loss.update_yaxes(showgrid=True, gridcolor='lightgray')
+                    
+                    st.plotly_chart(fig_loss, use_container_width=True)
+                else:
+                    st.warning("No client data available for loss analysis")
             
             with perf_tab3:
-                # Simple client F1 score evolution
-                fig_f1 = go.Figure()
-                
-                for i, client in enumerate(clients):
-                    client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
-                    color = colors[i % len(colors)]
-                    
-                    # Simple F1 score line
-                    fig_f1.add_trace(go.Scatter(
-                        x=client_data['Round'],
-                        y=client_data['F1_Score'],
-                        mode='lines+markers',
-                        name=client,
-                        line=dict(width=2, color=color),
-                        marker=dict(size=6, color=color),
-                        hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>F1 Score: %{{y:.3f}}<extra></extra>'
-                    ))
-                
-                # Add simple average line
-                if not performance_df.empty:
-                    avg_f1 = performance_df.groupby('Round')['F1_Score'].mean()
-                    fig_f1.add_trace(go.Scatter(
-                        x=avg_f1.index,
-                        y=avg_f1.values,
-                        mode='lines',
-                        name='Average',
-                        line=dict(width=3, color='black', dash='dash'),
-                        hovertemplate='<b>Average</b><br>Round: %{x}<br>F1 Score: %{y:.3f}<extra></extra>'
-                    ))
-                
-                fig_f1.update_layout(
-                    title="Client F1 Score Evolution",
-                    xaxis_title="Training Round",
-                    yaxis_title="F1 Score",
-                    height=450,
-                    showlegend=True,
-                    legend=dict(
-                        orientation="v",
-                        yanchor="top",
-                        y=1,
-                        xanchor="left",
-                        x=1.02
+                # Client selector for individual F1 score graphs
+                if len(clients) > 0:
+                    selected_client_f1 = st.selectbox(
+                        "Select Client for F1 Score Analysis:",
+                        options=["All Clients"] + list(clients),
+                        index=0,
+                        key="f1_client_selector"
                     )
-                )
-                
-                fig_f1.update_xaxes(showgrid=True, gridcolor='lightgray')
-                fig_f1.update_yaxes(showgrid=True, gridcolor='lightgray')
-                
-                st.plotly_chart(fig_f1, use_container_width=True)
+                    
+                    fig_f1 = go.Figure()
+                    
+                    if selected_client_f1 == "All Clients":
+                        # Show all clients with different colors
+                        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+                        for i, client in enumerate(clients):
+                            client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
+                            color = colors[i % len(colors)]
+                            
+                            fig_f1.add_trace(go.Scatter(
+                                x=client_data['Round'],
+                                y=client_data['F1_Score'],
+                                mode='lines+markers',
+                                name=client,
+                                line=dict(width=2, color=color),
+                                marker=dict(size=6, color=color),
+                                hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>F1 Score: %{{y:.3f}}<extra></extra>'
+                            ))
+                        
+                        # Add average line
+                        avg_f1 = performance_df.groupby('Round')['F1_Score'].mean()
+                        fig_f1.add_trace(go.Scatter(
+                            x=avg_f1.index,
+                            y=avg_f1.values,
+                            mode='lines',
+                            name='Average',
+                            line=dict(width=3, color='black', dash='dash'),
+                            hovertemplate='<b>Average</b><br>Round: %{x}<br>F1 Score: %{y:.3f}<extra></extra>'
+                        ))
+                        title = "All Clients - F1 Score Evolution"
+                    else:
+                        # Show individual client
+                        client_data = performance_df[performance_df['Client'] == selected_client_f1].sort_values('Round')
+                        
+                        fig_f1.add_trace(go.Scatter(
+                            x=client_data['Round'],
+                            y=client_data['F1_Score'],
+                            mode='lines+markers',
+                            name=selected_client_f1,
+                            line=dict(width=3, color='#2ca02c'),
+                            marker=dict(size=8, color='#2ca02c'),
+                            hovertemplate=f'<b>{selected_client_f1}</b><br>Round: %{{x}}<br>F1 Score: %{{y:.3f}}<extra></extra>'
+                        ))
+                        
+                        # Add trend line for individual client
+                        if len(client_data) > 2:
+                            z = np.polyfit(client_data['Round'], client_data['F1_Score'], 1)
+                            p = np.poly1d(z)
+                            fig_f1.add_trace(go.Scatter(
+                                x=client_data['Round'],
+                                y=p(client_data['Round']),
+                                mode='lines',
+                                name='Trend',
+                                line=dict(width=2, color='red', dash='dash'),
+                                hovertemplate='<b>Trend Line</b><br>Round: %{x}<br>Trend: %{y:.3f}<extra></extra>'
+                            ))
+                        
+                        # Add best F1 score line for individual client
+                        best_f1 = client_data['F1_Score'].max()
+                        fig_f1.add_hline(y=best_f1, line_dash="dot", line_color="blue", 
+                                        annotation_text=f"Best F1: {best_f1:.3f}")
+                        
+                        title = f"{selected_client_f1} - F1 Score Evolution"
+                    
+                    fig_f1.update_layout(
+                        title=title,
+                        xaxis_title="Training Round",
+                        yaxis_title="F1 Score",
+                        height=450,
+                        showlegend=True,
+                        legend=dict(
+                            orientation="v",
+                            yanchor="top",
+                            y=1,
+                            xanchor="left",
+                            x=1.02
+                        )
+                    )
+                    
+                    fig_f1.update_xaxes(showgrid=True, gridcolor='lightgray')
+                    fig_f1.update_yaxes(showgrid=True, gridcolor='lightgray')
+                    
+                    st.plotly_chart(fig_f1, use_container_width=True)
+                else:
+                    st.warning("No client data available for F1 score analysis")
             
         # Individual client performance cards
         st.subheader("📋 Individual Client Performance Summary" if st.session_state.language == 'en' else "📋 Résumé des Performances Individuelles")
