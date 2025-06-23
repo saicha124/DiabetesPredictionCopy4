@@ -6149,57 +6149,52 @@ def main():
             performance_df = comprehensive_df.copy()
             
             with perf_tab1:
-                # Enhanced client accuracy evolution with statistical analysis
+                # Simple client accuracy evolution
                 fig_acc = go.Figure()
                 
                 colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
                 clients = performance_df['Client'].unique()
-                all_client_data = []
                 
                 for i, client in enumerate(clients):
                     client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
                     color = colors[i % len(colors)]
                     
-                    # Add main line with enhanced styling
+                    # Simple accuracy line
                     fig_acc.add_trace(go.Scatter(
                         x=client_data['Round'],
                         y=client_data['Accuracy'],
                         mode='lines+markers',
                         name=client,
-                        line=dict(width=3, color=color, shape='spline'),
-                        marker=dict(size=8, color=color, line=dict(width=2, color='white')),
+                        line=dict(width=2, color=color),
+                        marker=dict(size=6, color=color),
                         hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>Accuracy: %{{y:.3f}}<extra></extra>'
                     ))
-                    
-                    all_client_data.extend(client_data['Accuracy'].tolist())
                 
-                # Add statistical reference lines
-                if all_client_data:
-                    mean_acc = np.mean(all_client_data)
-                    std_acc = np.std(all_client_data)
-                    
-                    fig_acc.add_hline(y=mean_acc, line_dash="dash", line_color="gray", 
-                                      annotation_text=f"Mean: {mean_acc:.3f}")
-                    fig_acc.add_hline(y=mean_acc + std_acc, line_dash="dot", line_color="lightgray", 
-                                      annotation_text=f"+1σ: {mean_acc + std_acc:.3f}")
-                    if mean_acc - std_acc > 0:
-                        fig_acc.add_hline(y=mean_acc - std_acc, line_dash="dot", line_color="lightgray", 
-                                          annotation_text=f"-1σ: {mean_acc - std_acc:.3f}")
+                # Add simple average line
+                if not performance_df.empty:
+                    avg_accuracy = performance_df.groupby('Round')['Accuracy'].mean()
+                    fig_acc.add_trace(go.Scatter(
+                        x=avg_accuracy.index,
+                        y=avg_accuracy.values,
+                        mode='lines',
+                        name='Average',
+                        line=dict(width=3, color='black', dash='dash'),
+                        hovertemplate='<b>Average</b><br>Round: %{x}<br>Accuracy: %{y:.3f}<extra></extra>'
+                    ))
                 
                 fig_acc.update_layout(
-                    title={
-                        'text': "📈 Client Accuracy Evolution with Statistical Analysis",
-                        'x': 0.5,
-                        'xanchor': 'center',
-                        'font': {'size': 16, 'color': '#2C3E50'}
-                    },
+                    title="Client Accuracy Evolution",
                     xaxis_title="Training Round",
                     yaxis_title="Accuracy Score",
                     height=450,
-                    hovermode='x unified',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                    showlegend=True,
+                    legend=dict(
+                        orientation="v",
+                        yanchor="top",
+                        y=1,
+                        xanchor="left",
+                        x=1.02
+                    )
                 )
                 
                 fig_acc.update_xaxes(showgrid=True, gridcolor='lightgray')
@@ -6254,247 +6249,214 @@ def main():
                 st.plotly_chart(fig_loss, use_container_width=True)
             
             with perf_tab3:
-                # Enhanced radar chart for multi-metric comparison
+                # Simple client F1 score evolution
+                fig_f1 = go.Figure()
+                
+                for i, client in enumerate(clients):
+                    client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
+                    color = colors[i % len(colors)]
+                    
+                    # Simple F1 score line
+                    fig_f1.add_trace(go.Scatter(
+                        x=client_data['Round'],
+                        y=client_data['F1_Score'],
+                        mode='lines+markers',
+                        name=client,
+                        line=dict(width=2, color=color),
+                        marker=dict(size=6, color=color),
+                        hovertemplate=f'<b>{client}</b><br>Round: %{{x}}<br>F1 Score: %{{y:.3f}}<extra></extra>'
+                    ))
+                
+                # Add simple average line
                 if not performance_df.empty:
-                    # Get latest round data for each client
-                    latest_round = performance_df['Round'].max()
-                    latest_data = performance_df[performance_df['Round'] == latest_round]
-                    
-                    # Create radar chart
-                    fig_radar = go.Figure()
-                    
-                    metrics = ['Accuracy', 'F1_Score', 'Precision', 'Recall']
-                    metric_labels = ['Accuracy', 'F1 Score', 'Precision', 'Recall']
-                    
-                    for i, client in enumerate(latest_data['Client'].unique()):
-                        client_data = latest_data[latest_data['Client'] == client].iloc[0]
-                        color = colors[i % len(colors)]
-                        
-                        values = [client_data[metric] for metric in metrics]
-                        values.append(values[0])  # Close the radar chart
-                        
-                        fig_radar.add_trace(go.Scatterpolar(
-                            r=values,
-                            theta=metric_labels + [metric_labels[0]],
-                            fill='toself',
-                            name=client,
-                            line=dict(color=color, width=2),
-                            fillcolor=color,
-                            opacity=0.3,
-                            hovertemplate=f'<b>{client}</b><br>%{{theta}}: %{{r:.3f}}<extra></extra>'
-                        ))
-                    
-                    fig_radar.update_layout(
-                        polar=dict(
-                            radialaxis=dict(
-                                visible=True,
-                                range=[0, 1],
-                                tickmode='linear',
-                                tick0=0,
-                                dtick=0.2,
-                                gridcolor='lightgray'
-                            ),
-                            angularaxis=dict(tickfont=dict(size=12))
-                        ),
-                        title={
-                            'text': f"🎯 Multi-Metric Performance Radar (Round {latest_round})",
-                            'x': 0.5,
-                            'xanchor': 'center',
-                            'font': {'size': 16, 'color': '#2C3E50'}
-                        },
-                        height=500,
-                        showlegend=True,
-                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    avg_f1 = performance_df.groupby('Round')['F1_Score'].mean()
+                    fig_f1.add_trace(go.Scatter(
+                        x=avg_f1.index,
+                        y=avg_f1.values,
+                        mode='lines',
+                        name='Average',
+                        line=dict(width=3, color='black', dash='dash'),
+                        hovertemplate='<b>Average</b><br>Round: %{x}<br>F1 Score: %{y:.3f}<extra></extra>'
+                    ))
+                
+                fig_f1.update_layout(
+                    title="Client F1 Score Evolution",
+                    xaxis_title="Training Round",
+                    yaxis_title="F1 Score",
+                    height=450,
+                    showlegend=True,
+                    legend=dict(
+                        orientation="v",
+                        yanchor="top",
+                        y=1,
+                        xanchor="left",
+                        x=1.02
                     )
-                    
-                    st.plotly_chart(fig_radar, use_container_width=True)
-                    
-                    # Add performance improvement analysis
-                    if len(performance_df['Round'].unique()) > 1:
-                        st.markdown("### 📊 Performance Improvement Analysis")
-                        
-                        improvement_data = []
-                        first_round = performance_df['Round'].min()
-                        first_round_data = performance_df[performance_df['Round'] == first_round]
-                        
-                        for client in latest_data['Client'].unique():
-                            latest_client = latest_data[latest_data['Client'] == client].iloc[0]
-                            first_client = first_round_data[first_round_data['Client'] == client]
-                            
-                            if not first_client.empty:
-                                first_client = first_client.iloc[0]
-                                acc_improvement = latest_client['Accuracy'] - first_client['Accuracy']
-                                f1_improvement = latest_client['F1_Score'] - first_client['F1_Score']
-                                
-                                improvement_data.append({
-                                    'Client': client,
-                                    'Accuracy Δ': f"{acc_improvement:+.4f}",
-                                    'F1 Score Δ': f"{f1_improvement:+.4f}",
-                                    'Status': '📈' if acc_improvement > 0 else '📉' if acc_improvement < 0 else '➡️'
-                                })
-                        
-                        if improvement_data:
-                            improvement_df = pd.DataFrame(improvement_data)
-                            st.dataframe(improvement_df, use_container_width=True, hide_index=True)
-            
-            # Individual client performance cards
-            st.subheader("📋 Individual Client Performance Summary" if st.session_state.language == 'en' else "📋 Résumé des Performances Individuelles")
-            
-            unique_clients = performance_df['Client'].unique()
-            cols = st.columns(min(len(unique_clients), 4))
-            
-            for idx, client in enumerate(unique_clients):
-                client_data = performance_df[performance_df['Client'] == client]
-                with cols[idx % len(cols)]:
-                    final_acc = client_data['Accuracy'].iloc[-1] if len(client_data) > 0 else 0
-                    initial_acc = client_data['Accuracy'].iloc[0] if len(client_data) > 0 else 0
-                    improvement = final_acc - initial_acc if len(client_data) > 1 else 0
-                    
-                    st.metric(
-                        label=client,
-                        value=f"{final_acc:.3f}",
-                        delta=f"{improvement:.3f}"
-                    )
-            
-            # Enhanced client metrics tables
-            st.subheader("📊 Detailed Client Metrics by Round" if st.session_state.language == 'en' else "📊 Métriques Détaillées des Clients par Tour")
-            
-            # Create separate pivot tables for accuracy and loss
-            if len(performance_df) > 0:
-                # Accuracy table
-                accuracy_pivot = performance_df.pivot(index='Round', columns='Client', values='Accuracy')
-                accuracy_pivot = accuracy_pivot.round(4)
+                )
                 
-                # Loss table  
-                loss_pivot = performance_df.pivot(index='Round', columns='Client', values='Loss')
-                loss_pivot = loss_pivot.round(4)
+                fig_f1.update_xaxes(showgrid=True, gridcolor='lightgray')
+                fig_f1.update_yaxes(showgrid=True, gridcolor='lightgray')
                 
-                # Create tabs for different metrics
-                metric_tab1, metric_tab2, metric_tab3 = st.tabs([
-                    "📈 Accuracy by Round" if st.session_state.language == 'en' else "📈 Précision par Tour",
-                    "📉 Loss by Round" if st.session_state.language == 'en' else "📉 Perte par Tour",
-                    "📋 Complete Metrics" if st.session_state.language == 'en' else "📋 Métriques Complètes"
-                ])
+                st.plotly_chart(fig_f1, use_container_width=True)
+            
+        # Individual client performance cards
+        st.subheader("📋 Individual Client Performance Summary" if st.session_state.language == 'en' else "📋 Résumé des Performances Individuelles")
+        
+        unique_clients = performance_df['Client'].unique()
+        cols = st.columns(min(len(unique_clients), 4))
+        
+        for idx, client in enumerate(unique_clients):
+            client_data = performance_df[performance_df['Client'] == client]
+            with cols[idx % len(cols)]:
+                final_acc = client_data['Accuracy'].iloc[-1] if len(client_data) > 0 else 0
+                initial_acc = client_data['Accuracy'].iloc[0] if len(client_data) > 0 else 0
+                improvement = final_acc - initial_acc if len(client_data) > 1 else 0
                 
-                with metric_tab1:
-                    st.write("**Client Accuracy Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Précision des Clients**")
-                    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-                    st.dataframe(accuracy_pivot, 
-                                width=1000,
-                                height=300,
-                                column_config={col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in accuracy_pivot.columns},
-                                hide_index=True)
-                    st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    # Summary statistics for accuracy
-                    if not accuracy_pivot.empty:
-                        st.write("**Accuracy Summary Statistics:**" if st.session_state.language == 'en' else "**Statistiques Résumées de Précision:**")
-                        # Ensure we have valid data for calculations
-                        if len(accuracy_pivot) > 0 and len(accuracy_pivot.columns) > 0:
-                            summary_stats = pd.DataFrame({
-                                'Client': accuracy_pivot.columns,
-                                'Initial': accuracy_pivot.iloc[0].round(4) if len(accuracy_pivot) > 0 else 0,
-                                'Final': accuracy_pivot.iloc[-1].round(4) if len(accuracy_pivot) > 0 else 0, 
-                                'Best': accuracy_pivot.max().round(4),
+                st.metric(
+                    label=client,
+                    value=f"{final_acc:.3f}",
+                    delta=f"{improvement:.3f}"
+                )
+        
+        # Enhanced client metrics tables
+        st.subheader("📊 Detailed Client Metrics by Round" if st.session_state.language == 'en' else "📊 Métriques Détaillées des Clients par Tour")
+        
+        # Create separate pivot tables for accuracy and loss
+        if len(performance_df) > 0:
+            # Accuracy table
+            accuracy_pivot = performance_df.pivot(index='Round', columns='Client', values='Accuracy')
+            accuracy_pivot = accuracy_pivot.round(4)
+            
+            # Loss table  
+            loss_pivot = performance_df.pivot(index='Round', columns='Client', values='Loss')
+            loss_pivot = loss_pivot.round(4)
+            
+            # Create tabs for different metrics
+            metric_tab1, metric_tab2, metric_tab3 = st.tabs([
+                "📈 Accuracy by Round" if st.session_state.language == 'en' else "📈 Précision par Tour",
+                "📉 Loss by Round" if st.session_state.language == 'en' else "📉 Perte par Tour",
+                "📋 Complete Metrics" if st.session_state.language == 'en' else "📋 Métriques Complètes"
+            ])
+            
+            with metric_tab1:
+                st.write("**Client Accuracy Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Précision des Clients**")
+                st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                st.dataframe(accuracy_pivot, 
+                            width=1000,
+                            height=300,
+                            column_config={col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in accuracy_pivot.columns},
+                            hide_index=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                # Summary statistics for accuracy
+                if not accuracy_pivot.empty:
+                    st.write("**Accuracy Summary Statistics:**" if st.session_state.language == 'en' else "**Statistiques Résumées de Précision:**")
+                    # Ensure we have valid data for calculations
+                    if len(accuracy_pivot) > 0 and len(accuracy_pivot.columns) > 0:
+                        summary_stats = pd.DataFrame({
+                            'Client': accuracy_pivot.columns,
+                            'Initial': accuracy_pivot.iloc[0].round(4) if len(accuracy_pivot) > 0 else 0,
+                            'Final': accuracy_pivot.iloc[-1].round(4) if len(accuracy_pivot) > 0 else 0, 
+                            'Best': accuracy_pivot.max().round(4),
                                 'Average': accuracy_pivot.mean().round(4),
                                 'Improvement': (accuracy_pivot.iloc[-1] - accuracy_pivot.iloc[0]).round(4) if len(accuracy_pivot) > 0 else 0
                             })
-                            # Fill any remaining NaN values
-                            summary_stats = summary_stats.fillna(0)
-                        else:
-                            summary_stats = pd.DataFrame({
-                                'Client': ['No Data'],
-                                'Initial': [0],
-                                'Final': [0],
-                                'Best': [0],
-                                'Average': [0],
-                                'Improvement': [0]
-                            })
-                        st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-                        st.dataframe(summary_stats, 
-                                    width=800,
-                                    height=200,
-                                    column_config={
-                                        "Client": st.column_config.TextColumn("Client", width=120),
-                                        "Initial": st.column_config.NumberColumn("Initial", format="%.4f", width=100),
-                                        "Final": st.column_config.NumberColumn("Final", format="%.4f", width=100),
-                                        "Best": st.column_config.NumberColumn("Best", format="%.4f", width=100),
-                                        "Average": st.column_config.NumberColumn("Average", format="%.4f", width=100),
-                                        "Improvement": st.column_config.NumberColumn("Improvement", format="%.4f", width=120)
-                                    },
-                                    hide_index=True)
-                        st.markdown('</div>', unsafe_allow_html=True)
-                
-                with metric_tab2:
-                    st.write("**Client Loss Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Perte des Clients**")
-                    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-                    st.dataframe(loss_pivot, 
-                                width=1000,
-                                height=300,
-                                column_config={col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in loss_pivot.columns},
-                                hide_index=True)
-                    st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    # Summary statistics for loss
-                    if not loss_pivot.empty:
-                        st.write("**Loss Summary Statistics:**" if st.session_state.language == 'en' else "**Statistiques Résumées de Perte:**")
-                        loss_summary_stats = pd.DataFrame({
-                            'Client': loss_pivot.columns,
-                            'Initial': loss_pivot.iloc[0].round(4),
-                            'Final': loss_pivot.iloc[-1].round(4),
-                            'Best (Lowest)': loss_pivot.min().round(4),
-                            'Average': loss_pivot.mean().round(4),
-                            'Reduction': (loss_pivot.iloc[0] - loss_pivot.iloc[-1]).round(4)
+                        # Fill any remaining NaN values
+                        summary_stats = summary_stats.fillna(0)
+                    else:
+                        summary_stats = pd.DataFrame({
+                            'Client': ['No Data'],
+                            'Initial': [0],
+                            'Final': [0],
+                            'Best': [0],
+                            'Average': [0],
+                            'Improvement': [0]
                         })
-                        st.dataframe(loss_summary_stats, use_container_width=True, height=200,
-                                    column_config={
-                                        "Client": st.column_config.TextColumn("Client", width="medium"),
-                                        "Initial": st.column_config.NumberColumn("Initial", format="%.4f", width="small"),
-                                        "Final": st.column_config.NumberColumn("Final", format="%.4f", width="small"),
-                                        "Best (Lowest)": st.column_config.NumberColumn("Best (Lowest)", format="%.4f", width="small"),
-                                        "Average": st.column_config.NumberColumn("Average", format="%.4f", width="small"),
-                                        "Reduction": st.column_config.NumberColumn("Reduction", format="%.4f", width="small")
-                                    })
+                st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                st.dataframe(summary_stats, 
+                            width=800,
+                            height=200,
+                            column_config={
+                                "Client": st.column_config.TextColumn("Client", width=120),
+                                "Initial": st.column_config.NumberColumn("Initial", format="%.4f", width=100),
+                                "Final": st.column_config.NumberColumn("Final", format="%.4f", width=100),
+                                "Best": st.column_config.NumberColumn("Best", format="%.4f", width=100),
+                                "Average": st.column_config.NumberColumn("Average", format="%.4f", width=100),
+                                "Improvement": st.column_config.NumberColumn("Improvement", format="%.4f", width=120)
+                            },
+                            hide_index=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            with metric_tab2:
+                st.write("**Client Loss Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Perte des Clients**")
+                st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                st.dataframe(loss_pivot, 
+                            width=1000,
+                            height=300,
+                            column_config={col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in loss_pivot.columns},
+                            hide_index=True)
+                st.markdown('</div>', unsafe_allow_html=True)
                 
-                with metric_tab3:
-                    st.write("**Complete Performance Metrics Table**" if st.session_state.language == 'en' else "**Tableau Complet des Métriques de Performance**")
-                    # Show the comprehensive dataframe with all metrics
-                    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-                    st.dataframe(display_df, 
-                                width=1200,
-                                height=400,
+                # Summary statistics for loss
+                if not loss_pivot.empty:
+                    st.write("**Loss Summary Statistics:**" if st.session_state.language == 'en' else "**Statistiques Résumées de Perte:**")
+                    loss_summary_stats = pd.DataFrame({
+                        'Client': loss_pivot.columns,
+                        'Initial': loss_pivot.iloc[0].round(4),
+                        'Final': loss_pivot.iloc[-1].round(4),
+                        'Best (Lowest)': loss_pivot.min().round(4),
+                        'Average': loss_pivot.mean().round(4),
+                        'Reduction': (loss_pivot.iloc[0] - loss_pivot.iloc[-1]).round(4)
+                    })
+                    st.dataframe(loss_summary_stats, use_container_width=True, height=200,
                                 column_config={
-                                    "Round": st.column_config.NumberColumn("Round", width=80),
-                                    "Client": st.column_config.TextColumn("Client", width=120),
-                                    "Accuracy": st.column_config.NumberColumn("Accuracy", format="%.4f", width=120),
-                                    "Loss": st.column_config.NumberColumn("Loss", format="%.4f", width=120),
-                                    "F1_Score": st.column_config.NumberColumn("F1 Score", format="%.4f", width=120),
-                                    "Precision": st.column_config.NumberColumn("Precision", format="%.4f", width=120),
-                                    "Recall": st.column_config.NumberColumn("Recall", format="%.4f", width=120)
-                                },
-                                hide_index=True)
-                    st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    # Export option
-                    if st.button("Export to CSV" if st.session_state.language == 'en' else "Exporter en CSV"):
-                        csv = display_df.to_csv(index=False)
-                        st.download_button(
-                            label="Download CSV" if st.session_state.language == 'en' else "Télécharger CSV",
-                            data=csv,
-                            file_name='client_metrics_by_round.csv',
-                            mime='text/csv'
-                        )
+                                    "Client": st.column_config.TextColumn("Client", width="medium"),
+                                    "Initial": st.column_config.NumberColumn("Initial", format="%.4f", width="small"),
+                                    "Final": st.column_config.NumberColumn("Final", format="%.4f", width="small"),
+                                    "Best (Lowest)": st.column_config.NumberColumn("Best (Lowest)", format="%.4f", width="small"),
+                                    "Average": st.column_config.NumberColumn("Average", format="%.4f", width="small"),
+                                    "Reduction": st.column_config.NumberColumn("Reduction", format="%.4f", width="small")
+                                })
+            
+            with metric_tab3:
+                st.write("**Complete Performance Metrics Table**" if st.session_state.language == 'en' else "**Tableau Complet des Métriques de Performance**")
+                # Show the comprehensive dataframe with all metrics
+                st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+                st.dataframe(display_df, 
+                            width=1200,
+                            height=400,
+                            column_config={
+                                "Round": st.column_config.NumberColumn("Round", width=80),
+                                "Client": st.column_config.TextColumn("Client", width=120),
+                                "Accuracy": st.column_config.NumberColumn("Accuracy", format="%.4f", width=120),
+                                "Loss": st.column_config.NumberColumn("Loss", format="%.4f", width=120),
+                                "F1_Score": st.column_config.NumberColumn("F1 Score", format="%.4f", width=120),
+                                "Precision": st.column_config.NumberColumn("Precision", format="%.4f", width=120),
+                                "Recall": st.column_config.NumberColumn("Recall", format="%.4f", width=120)
+                            },
+                            hide_index=True)
+                st.markdown('</div>', unsafe_allow_html=True)
                 
-            # Comprehensive performance statistics table
-            st.subheader("📊 Comprehensive Performance Statistics" if st.session_state.language == 'en' else "📊 Statistiques Complètes de Performance")
-            
-            # Calculate statistics for all metrics
-            stats_data = []
-            unique_clients = performance_df['Client'].unique() if not performance_df.empty else []
-            
-            for client in unique_clients:
-                client_data = performance_df[performance_df['Client'] == client]
-                if len(client_data) > 0:
+                # Export option
+                if st.button("Export to CSV" if st.session_state.language == 'en' else "Exporter en CSV"):
+                    csv = display_df.to_csv(index=False)
+                    st.download_button(
+                        label="Download CSV" if st.session_state.language == 'en' else "Télécharger CSV",
+                        data=csv,
+                        file_name='client_metrics_by_round.csv',
+                        mime='text/csv'
+                    )
+                
+        # Comprehensive performance statistics table
+        st.subheader("📊 Comprehensive Performance Statistics" if st.session_state.language == 'en' else "📊 Statistiques Complètes de Performance")
+        
+        # Calculate statistics for all metrics
+        stats_data = []
+        unique_clients = performance_df['Client'].unique() if not performance_df.empty else []
+        
+        for client in unique_clients:
+            client_data = performance_df[performance_df['Client'] == client]
+            if len(client_data) > 0:
                     # Get real precision and recall values from actual data
                     precision_val = client_data['Precision'].mean() if 'Precision' in client_data.columns and not client_data['Precision'].isna().all() else client_data['Accuracy'].mean() * 1.02
                     recall_val = client_data['Recall'].mean() if 'Recall' in client_data.columns and not client_data['Recall'].isna().all() else client_data['Accuracy'].mean() * 0.98
