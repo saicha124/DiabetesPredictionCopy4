@@ -106,6 +106,9 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 23, 2025. Fixed table display issues with scroll bars and empty columns
+- June 23, 2025. Enhanced training progress display with detailed explanations
+- June 23, 2025. Improved committee security explanation for user clarity
 - June 18, 2025. Initial setup
 ```
 

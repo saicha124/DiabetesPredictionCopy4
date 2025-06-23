@@ -3069,26 +3069,87 @@ def main():
                     }
                 st.rerun()
             
-            # Enhanced Progress display with elegant styling
+            # Enhanced Progress display with detailed explanations
             progress = current_round / max_rounds if max_rounds > 0 else 0
+            progress_percentage = int(progress * 100)
             
-            # Main training progress bar
-            progress_text = f"{get_translation('training_progress', st.session_state.language)}: {get_translation('training_round', st.session_state.language)} {current_round}/{max_rounds}"
-            training_progress = st.progress(progress, text=progress_text)
-            
-            # Add visual progress indicator
-            if progress > 0:
-                progress_percentage = int(progress * 100)
+            # Progress status explanation
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"### 🔄 {get_translation('federated_learning_training_progress', st.session_state.language)}")
+                
+                # Enhanced progress description
                 if progress_percentage < 25:
                     progress_color = "🔴"
+                    status_text = "Initial Phase - Models are learning basic patterns" if st.session_state.language == 'en' else "Phase Initiale - Les modèles apprennent les motifs de base"
                 elif progress_percentage < 50:
-                    progress_color = "🟡"
+                    progress_color = "🟡" 
+                    status_text = "Learning Phase - Performance improving steadily" if st.session_state.language == 'en' else "Phase d'Apprentissage - Performance s'améliore régulièrement"
                 elif progress_percentage < 75:
                     progress_color = "🟠"
+                    status_text = "Optimization Phase - Fine-tuning model parameters" if st.session_state.language == 'en' else "Phase d'Optimisation - Ajustement fin des paramètres"
                 else:
                     progress_color = "🟢"
+                    status_text = "Final Phase - Model approaching convergence" if st.session_state.language == 'en' else "Phase Finale - Modèle approche la convergence"
                 
-                st.markdown(f"**{progress_color} {progress_percentage}% Complete**")
+                st.markdown(f"**🚀 {progress_percentage}% - {get_translation('training_round', st.session_state.language)} {current_round}/{max_rounds} - {status_text}**")
+                
+                # Main training progress bar with custom styling
+                training_progress = st.progress(progress)
+                
+            with col2:
+                st.markdown(f"### 🔄 {get_translation('training_round', st.session_state.language)}")
+                st.markdown(f"## {current_round}/{max_rounds}")
+                
+            # Training phase explanation
+            if st.session_state.language == 'fr':
+                with st.expander("📖 Phases d'Entraînement Expliquées", expanded=False):
+                    st.markdown("""
+                    **🔴 Phase Initiale (0-25%)**:
+                    - Les hôpitaux partagent leurs premiers modèles
+                    - Apprentissage des patterns de base du diabète
+                    - Précision généralement faible au début
+                    
+                    **🟡 Phase d'Apprentissage (25-50%)**:
+                    - Les modèles commencent à converger
+                    - Amélioration notable de la précision
+                    - Détection des caractéristiques importantes
+                    
+                    **🟠 Phase d'Optimisation (50-75%)**:
+                    - Ajustement fin des paramètres
+                    - Stabilisation de la performance
+                    - Réduction du bruit dans les prédictions
+                    
+                    **🟢 Phase Finale (75-100%)**:
+                    - Modèle proche de la convergence
+                    - Performance optimale atteinte
+                    - Prêt pour utilisation clinique
+                    """)
+            else:
+                with st.expander("📖 Training Phases Explained", expanded=False):
+                    st.markdown("""
+                    **🔴 Initial Phase (0-25%)**:
+                    - Hospitals share their first models
+                    - Learning basic diabetes patterns
+                    - Accuracy typically low at start
+                    
+                    **🟡 Learning Phase (25-50%)**:
+                    - Models begin to converge
+                    - Notable accuracy improvements
+                    - Detecting important features
+                    
+                    **🟠 Optimization Phase (50-75%)**:
+                    - Fine-tuning parameters
+                    - Performance stabilization
+                    - Reducing prediction noise
+                    
+                    **🟢 Final Phase (75-100%)**:
+                    - Model approaching convergence
+                    - Optimal performance reached
+                    - Ready for clinical use
+                    """)
+                
+            st.markdown(f"**{progress_color} {progress_percentage}% Complete - {status_text}**")
             
             # Training status with detailed progress
             col1, col2, col3 = st.columns([2, 1, 1])
@@ -3105,19 +3166,65 @@ def main():
             if current_round > 0:
                 st.info(f"🏥 Training {num_clients} medical stations with {model_type.replace('_', ' ').title()} model...")
             
-            # Real-time metrics
+            # Enhanced Real-time metrics with explanations
             if st.session_state.training_metrics and len(st.session_state.training_metrics) > 0:
                 latest_metrics = st.session_state.training_metrics[-1]
                 
+                # Progress explanation section
+                st.markdown("---")
+                if st.session_state.language == 'fr':
+                    st.subheader("📊 Explication des Métriques d'Entraînement")
+                    with st.expander("💡 Que signifient ces métriques ?", expanded=False):
+                        st.markdown("""
+                        **🎯 Précision Globale**: Pourcentage de prédictions correctes du modèle
+                        - **Bon**: > 80% - Le modèle prédit bien le diabète
+                        - **Moyen**: 70-80% - Performance acceptable pour usage médical
+                        - **À améliorer**: < 70% - Nécessite plus d'entraînement
+                        
+                        **📊 Score F1**: Équilibre entre précision et rappel
+                        - Mesure la qualité globale des prédictions médicales
+                        - Important pour éviter les faux positifs/négatifs
+                        
+                        **📉 Perte (Loss)**: Erreur du modèle (plus bas = mieux)
+                        - Diminue quand le modèle apprend correctement
+                        - Indique la convergence de l'entraînement
+                        """)
+                else:
+                    st.subheader("📊 Training Metrics Explanation")
+                    with st.expander("💡 What do these metrics mean?", expanded=False):
+                        st.markdown("""
+                        **🎯 Global Accuracy**: Percentage of correct predictions
+                        - **Good**: > 80% - Model predicts diabetes well
+                        - **Average**: 70-80% - Acceptable performance for medical use
+                        - **Needs improvement**: < 70% - Requires more training
+                        
+                        **📊 F1 Score**: Balance between precision and recall
+                        - Measures overall quality of medical predictions
+                        - Important to avoid false positives/negatives
+                        
+                        **📉 Loss**: Model error (lower = better)
+                        - Decreases when model learns correctly
+                        - Indicates training convergence
+                        """)
+                
                 col1, col2, col3, col4 = st.columns(4)
+                current_acc = latest_metrics.get('accuracy', 0)
+                previous_acc = st.session_state.training_metrics[-2].get('accuracy', current_acc) if len(st.session_state.training_metrics) > 1 else current_acc
+                acc_delta = current_acc - previous_acc
+                
                 with col1:
-                    st.metric("🎯 Global Accuracy", f"{latest_metrics.get('accuracy', 0):.3f}")
+                    st.metric("🎯 Global Accuracy", f"{current_acc:.1%}", 
+                             delta=f"{acc_delta:+.1%}" if acc_delta != 0 else None)
                 with col2:
                     st.metric("📊 F1 Score", f"{latest_metrics.get('f1_score', 0):.3f}")
                 with col3:
-                    st.metric("📉 Loss", f"{latest_metrics.get('loss', 0):.4f}")
+                    current_loss = latest_metrics.get('loss', 0)
+                    previous_loss = st.session_state.training_metrics[-2].get('loss', current_loss) if len(st.session_state.training_metrics) > 1 else current_loss
+                    loss_delta = current_loss - previous_loss
+                    st.metric("📉 Loss", f"{current_loss:.4f}", 
+                             delta=f"{loss_delta:+.4f}" if loss_delta != 0 else None)
                 with col4:
-                    st.metric("🏆 Best Accuracy", f"{st.session_state.best_accuracy:.3f}")
+                    st.metric("🏆 Best Accuracy", f"{st.session_state.best_accuracy:.1%}")
                 
                 # Performance optimization recommendations
                 if st.session_state.training_completed and st.session_state.best_accuracy < 0.85:
