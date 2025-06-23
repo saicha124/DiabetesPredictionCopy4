@@ -3360,7 +3360,6 @@ def main():
                     col1, col2 = st.columns(2)
                     
                     # Create enhanced multi-panel dashboard
-                    from plotly.subplots import make_subplots
                     
                     fig_dashboard = make_subplots(
                         rows=2, cols=2,
