@@ -3465,10 +3465,18 @@ def main():
                             'xanchor': 'center',
                             'font': {'size': 18, 'color': '#2C3E50'}
                         },
-                        height=600,
+                        height=500,
                         plot_bgcolor='rgba(0,0,0,0)',
                         paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(family="Arial, sans-serif", size=11)
+                        font=dict(family="Arial, sans-serif", size=11),
+                        showlegend=True,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
+                        )
                     )
                     
                     # Update individual axes
@@ -3510,8 +3518,15 @@ def main():
                         title="Individual Medical Station Performance",
                         xaxis_title="Round",
                         yaxis_title="Local Accuracy",
-                        height=400,
-                        legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                        height=350,
+                        showlegend=True,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
+                        )
                     )
                     st.plotly_chart(fig_clients, use_container_width=True)
             
