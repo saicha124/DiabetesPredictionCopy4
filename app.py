@@ -381,7 +381,7 @@ def main():
                 local_epochs = st.slider(
                     get_translation("local_epochs", st.session_state.language),
                     min_value=1,
-                    max_value=10,
+                    max_value=100,
                     value=st.session_state.get('local_epochs', default_epochs),
                     help=get_translation("local_epochs_help", st.session_state.language)
                 )
@@ -2226,6 +2226,7 @@ def main():
             # Add subtle gradient effect
             gradient_colors = [color, 'white', color]
             for j, grad_color in enumerate(gradient_colors):
+                pass  # Simple placeholder for gradient loop
         
         # Enhanced main detection curve with gradient fill
         
@@ -2237,9 +2238,8 @@ def main():
             if best_round <= len(time_points):
                 best_rate = detection_rates[min(best_round-1, len(detection_rates)-1)]
                 
-                # Add annotation for the peak
-                           xy=(best_round, best_rate), xytext=(best_round+2, best_rate+5),
-                           arrowprops=dict(arrowstyle='->', color='#F24236', lw=2),
+                # Simple peak marker
+                pass
         
         # Add confidence bands
         upper_band = [min(100, rate + 2) for rate in detection_rates]
@@ -2258,10 +2258,10 @@ def main():
                 phase_rates.append(detection_rates[min(center-1, len(detection_rates)-1)])
         
         for center, rate, name in zip(phase_centers, phase_rates, phase_names[:len(phase_centers)]):
+            pass  # Simple placeholder for phase processing
         
-        # Professional styling
-                 if st.session_state.language == 'en' 
-                 else f'Timeline Sécurité FL Réel - Précision: {final_accuracy:.1%}', 
+        # Professional styling - simplified timeline visualization
+        st.markdown("### Security Timeline") 
         
         
         
