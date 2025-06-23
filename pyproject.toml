@@ -17,5 +17,6 @@ dependencies = [
     "seaborn>=0.13.2",
     "statsmodels>=0.14.1",
     "streamlit>=1.46.0",
+    "tensorflow>=2.18.1",
     "trafilatura>=1.8.0",
 ]
