@@ -381,7 +381,7 @@ def main():
                 local_epochs = st.slider(
                     get_translation("local_epochs", st.session_state.language),
                     min_value=1,
-                    max_value=100,
+                    max_value=10,
                     value=st.session_state.get('local_epochs', default_epochs),
                     help=get_translation("local_epochs_help", st.session_state.language)
                 )
@@ -1538,16 +1538,25 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            # Calculate security metrics
+            # Simple Security Status Overview
+            fig_simple = plt.figure(figsize=(12, 8))
+            gs = fig_simple.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.4, wspace=0.3)
+            
+            # Top Left: Simple Security Score Meter
+            ax1 = fig_simple.add_subplot(gs[0, 0])
+            
+            # Calculate realistic security score using same rates as other sections
             total_attacks_simple = sum(sybil_attacks) + sum(byzantine_attacks) + sum(network_intrusions)
             
             # Use realistic detection rates based on training performance
             if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
                 model_accuracy = st.session_state.get('final_accuracy', st.session_state.get('best_accuracy', 0.7607))
+                # Match the same calculation as in other sections
                 sybil_rate_simple = min(0.98, model_accuracy + 0.18)
                 byzantine_rate_simple = min(0.95, model_accuracy + 0.10)
                 intrusion_rate_simple = min(0.97, model_accuracy + 0.13)
             else:
+                # Use the actual training accuracy from session state if available
                 actual_accuracy = st.session_state.get('best_accuracy', 0.7607)
                 sybil_rate_simple = min(0.98, actual_accuracy + 0.18)
                 byzantine_rate_simple = min(0.95, actual_accuracy + 0.10)
@@ -1558,21 +1567,58 @@ def main():
                                      sum(network_intrusions) * intrusion_rate_simple)
             security_percentage = (total_blocked_simple / total_attacks_simple * 100) if total_attacks_simple > 0 else 0
             
-            # Simple security level indicator
-            st.metric("Security Level", f"{security_percentage:.1f}%")
+            # Create simple bar chart for security level
+            security_levels = ['Poor', 'Fair', 'Good', 'Excellent']
+            if st.session_state.language == 'fr':
+                security_levels = ['Faible', 'Moyen', 'Bon', 'Excellent']
             
-
+            level_values = [25, 50, 75, 100]
+            colors = ['red', 'orange', 'yellow', 'green']
+            
+            bars = ax1.bar(security_levels, level_values, color=colors, alpha=0.3, edgecolor='black')
+            
+            # Highlight current security level
+            if security_percentage >= 90:
+                current_level = 3
+            elif security_percentage >= 75:
+                current_level = 2
+            elif security_percentage >= 50:
+                current_level = 1
+            else:
+                current_level = 0
+            
+            bars[current_level].set_alpha(0.8)
+            bars[current_level].set_linewidth(3)
+            
+            # Add current score
+            ax1.text(current_level, level_values[current_level] + 5, f'{security_percentage:.1f}%',
+                    ha='center', fontsize=16, fontweight='bold', color='darkgreen')
+            
+            ax1.set_title('Current Security Level' if st.session_state.language == 'en' 
+                         else 'Niveau de Sécurité Actuel', fontsize=14, fontweight='bold')
+            ax1.set_ylabel('Security Score' if st.session_state.language == 'en' else 'Score de Sécurité')
+            ax1.set_ylim(0, 110)
+            ax1.grid(True, alpha=0.3, axis='y')
             
             # Top Right: Attack Types Breakdown (Simple Pie Chart)
+            ax2 = fig_simple.add_subplot(gs[0, 1])
             
             attack_counts = [sum(sybil_attacks), sum(byzantine_attacks), sum(network_intrusions)]
             attack_labels = ['Sybil', 'Byzantine', 'Network']
             if st.session_state.language == 'fr':
                 attack_labels = ['Sybil', 'Byzantines', 'Réseau']
             
-
+            colors_pie = ['#FF6B6B', '#4ECDC4', '#45B7D1']
+            
+            wedges, texts, autotexts = ax2.pie(attack_counts, labels=attack_labels, colors=colors_pie,
+                                              autopct='%1.0f%%', startangle=90,
+                                              textprops={'fontsize': 12, 'fontweight': 'bold'})
+            
+            ax2.set_title('Attack Types Distribution' if st.session_state.language == 'en' 
+                         else 'Distribution des Types d\'Attaques', fontsize=14, fontweight='bold')
             
             # Middle Left: Simple Detection Rate Trend
+            ax3 = fig_simple.add_subplot(gs[1, 0])
             
             # Calculate simple detection rates
             detection_rates_simple = []
@@ -1582,11 +1628,25 @@ def main():
                 rate = (blocked_round / total_round * 100) if total_round > 0 else 0
                 detection_rates_simple.append(rate)
             
+            ax3.plot(time_points, detection_rates_simple, 'g-', linewidth=4, marker='o', markersize=6,
+                    markerfacecolor='lightgreen', markeredgecolor='darkgreen')
+            ax3.fill_between(time_points, detection_rates_simple, alpha=0.3, color='green')
             
             # Add target line
+            ax3.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7,
+                       label='Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%')
             
+            ax3.set_title('Detection Rate Over Time' if st.session_state.language == 'en' 
+                         else 'Taux de Détection dans le Temps', fontsize=14, fontweight='bold')
+            ax3.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            ax3.set_ylabel('Detection Rate (%)' if st.session_state.language == 'en' else 'Taux de Détection (%)')
+            ax3.legend()
+            ax3.grid(True, alpha=0.3)
+            ax3.set_xlim(1, 20)
+            ax3.set_ylim(70, 105)
             
             # Middle Right: Committee Status (Simple)
+            ax4 = fig_simple.add_subplot(gs[1, 1])
             
             # Simple committee health visualization
             committee_names = ['Node 1', 'Node 2', 'Node 3', 'Node 4', 'Node 5']
@@ -1594,20 +1654,47 @@ def main():
             
             colors_committee = ['green' if h >= 90 else 'orange' if h >= 80 else 'red' for h in committee_health]
             
+            bars_committee = ax4.barh(committee_names, committee_health, color=colors_committee, alpha=0.7)
             
             # Add percentage labels
-                        
+            for bar, health in zip(bars_committee, committee_health):
+                ax4.text(bar.get_width() + 1, bar.get_y() + bar.get_height()/2,
+                        f'{health}%', va='center', fontweight='bold')
+            
+            ax4.set_title('Committee Node Health' if st.session_state.language == 'en' 
+                         else 'Santé des Nœuds du Comité', fontsize=14, fontweight='bold')
+            ax4.set_xlabel('Health Score (%)' if st.session_state.language == 'en' else 'Score de Santé (%)')
+            ax4.set_xlim(0, 105)
+            ax4.grid(True, alpha=0.3, axis='x')
+            
             # Bottom: Simple Attack Timeline
+            ax5 = fig_simple.add_subplot(gs[2, :])
             
             # Simple stacked bar chart
             width = 0.8
+            ax5.bar(time_points, sybil_attacks, width, label='Sybil', color='#FF6B6B', alpha=0.7)
+            ax5.bar(time_points, byzantine_attacks, width, bottom=sybil_attacks, 
+                   label='Byzantine', color='#4ECDC4', alpha=0.7)
             
             bottom_values = [s + b for s, b in zip(sybil_attacks, byzantine_attacks)]
+            ax5.bar(time_points, network_intrusions, width, bottom=bottom_values,
+                   label='Network', color='#45B7D1', alpha=0.7)
             
             # Overlay blocked attacks line
             total_blocked_timeline = [s+b+n for s,b,n in zip(sybil_blocked, byzantine_blocked, intrusion_blocked)]
+            ax5.plot(time_points, total_blocked_timeline, 'darkgreen', linewidth=4, marker='D', markersize=6,
+                    label='Total Blocked' if st.session_state.language == 'en' else 'Total Bloquées')
             
+            ax5.set_title('Attack Timeline and Defense Response' if st.session_state.language == 'en' 
+                         else 'Chronologie des Attaques et Réponse Défensive', fontsize=14, fontweight='bold')
+            ax5.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            ax5.set_ylabel('Number of Events' if st.session_state.language == 'en' else 'Nombre d\'Événements')
+            ax5.legend(loc='upper left')
+            ax5.grid(True, alpha=0.3)
+            ax5.set_xlim(0.5, 20.5)
             
+            plt.tight_layout()
+            st.pyplot(fig_simple)
         
         with col2:
             # Simple Security Summary and Explanations
@@ -2000,27 +2087,32 @@ def main():
         initial_defense = actual_accuracy * 100  # Start at your model accuracy
         defense_progression = [min(98, initial_defense + i * 1.5) for i in rounds]
         
+        fig_simple = plt.figure(figsize=(12, 5))
         
+        plt.plot(rounds, defense_progression, 'o-', linewidth=3, markersize=8, 
+                color='#2E86AB', markerfacecolor='gold', markeredgecolor='white', markeredgewidth=2)
+        plt.fill_between(rounds, defense_progression, alpha=0.3, color='#2E86AB')
         
-        # Simple defense progress chart
-        fig_defense = go.Figure()
-        fig_defense.add_trace(go.Scatter(
-            x=rounds, y=defense_progression,
-            mode='lines',
-            name='Defense Progress',
-            line=dict(color='blue', width=2)
-        ))
-        fig_defense.update_layout(
-            title=f'Security Defense Learning - Based on Your {actual_accuracy:.1%} Model',
-            xaxis_title='Round',
-            yaxis_title='Defense Rate (%)',
-            height=300
-        )
-        st.plotly_chart(fig_defense, use_container_width=True)
+        # Highlight your actual accuracy point
+        plt.axhline(y=actual_accuracy * 100, color='red', linestyle='--', linewidth=2, 
+                   label=f'Your Model Base: {actual_accuracy:.1%}')
         
+        plt.title(f'Security Defense Learning - Based on Your {actual_accuracy:.1%} Model' 
+                 if st.session_state.language == 'en' 
+                 else f'Apprentissage Défense Sécurité - Basé sur Votre Modèle {actual_accuracy:.1%}', 
+                 fontsize=14, fontweight='bold')
+        plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+        plt.ylabel('Defense Rate (%)' if st.session_state.language == 'en' else 'Taux de Défense (%)')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.ylim(75, 100)
+        
+        plt.tight_layout()
+        st.pyplot(fig_simple)
         
         with col3:
             # Enhanced Network Intrusion Analysis
+            fig_intrusion = plt.figure(figsize=(8, 6))
             
             # Calculate intrusion characteristics
             intrusion_source_diversity = []
@@ -2036,19 +2128,73 @@ def main():
             gs = fig_intrusion.add_gridspec(3, 1, height_ratios=[2, 1, 1], hspace=0.4)
             
             # Main intrusion analysis with source tracking
+            ax1 = fig_intrusion.add_subplot(gs[0])
             
             # Stacked bars for different intrusion types
             internal_intrusions = [max(0, int(ni * 0.3)) for ni in network_intrusions]
             external_intrusions = [ni - ii for ni, ii in zip(network_intrusions, internal_intrusions)]
             
-            p_intrusion = np.poly1d(z_intrusion)
+            bars1 = ax1.bar(time_points, internal_intrusions, color='#cc66ff', alpha=0.8, width=0.7, 
+                           label='Internal' if st.session_state.language == 'en' else 'Interne')
+            bars2 = ax1.bar(time_points, external_intrusions, bottom=internal_intrusions, 
+                           color='#8844cc', alpha=0.8, width=0.7,
+                           label='External' if st.session_state.language == 'en' else 'Externe')
             
+            # Source diversity overlay
+            ax1_twin = ax1.twinx()
+            diversity_line = ax1_twin.plot(time_points, intrusion_source_diversity, 
+                                         color='yellow', linewidth=3, marker='*', markersize=8,
+                                         label='Source Diversity', alpha=0.9)
+            ax1_twin.set_ylabel('Attack Sources' if st.session_state.language == 'en' else 'Sources d\'Attaque', 
+                              fontsize=10, color='yellow')
+            ax1_twin.set_ylim(0, 7)
+            
+            # Trend analysis
+            z_intrusion = np.polyfit(time_points, network_intrusions, 1)
+            p_intrusion = np.poly1d(z_intrusion)
+            ax1.plot(time_points, p_intrusion(time_points), "--", alpha=0.8, color='purple', linewidth=3)
+            
+            ax1.set_title('Network Intrusion Analysis & Sources' if st.session_state.language == 'en' else 'Analyse d\'Intrusions Réseau et Sources', 
+                         fontsize=13, fontweight='bold')
+            ax1.set_ylabel('Intrusion Count' if st.session_state.language == 'en' else 'Nombre d\'Intrusions', fontsize=11)
+            ax1.legend(loc='upper left', fontsize=9)
+            ax1.grid(True, alpha=0.3)
+            ax1.set_xlim(0.5, 20.5)
+            
+            # Statistics with threat classification
+            avg_intrusion = np.mean(network_intrusions)
+            max_intrusion = max(network_intrusions)
+            avg_sources = np.mean(intrusion_source_diversity)
+            threat_level = "HIGH" if avg_intrusion > 2 else "MEDIUM" if avg_intrusion > 1 else "LOW"
+            if st.session_state.language == 'fr':
+                threat_level = "ÉLEVÉ" if avg_intrusion > 2 else "MOYEN" if avg_intrusion > 1 else "FAIBLE"
+            
+            ax1.text(0.02, 0.98, f'Avg: {avg_intrusion:.1f}\nMax: {max_intrusion}\nSources: {avg_sources:.1f}\nThreat: {threat_level}', 
+                    transform=ax1.transAxes, fontsize=9, fontweight='bold',
+                    bbox=dict(boxstyle='round,pad=0.4', facecolor='plum', alpha=0.9),
+                    verticalalignment='top')
             
             # Intrusion detection efficiency
+            ax2 = fig_intrusion.add_subplot(gs[1])
+            ax2.fill_between(time_points, intrusion_detection_efficiency, alpha=0.6, color='cyan')
+            ax2.plot(time_points, intrusion_detection_efficiency, 'c-', linewidth=2, marker='v', markersize=4)
+            ax2.set_ylabel('Detection %' if st.session_state.language == 'en' else 'Détection %', fontsize=10)
+            ax2.grid(True, alpha=0.3)
+            ax2.set_xlim(0.5, 20.5)
+            ax2.set_ylim(75, 100)
             
             # Impact severity analysis
+            ax3 = fig_intrusion.add_subplot(gs[2])
             colors = ['red' if impact > np.mean(intrusion_impact_score) else 'orange' for impact in intrusion_impact_score]
+            ax3.scatter(time_points, intrusion_impact_score, c=colors, s=60, alpha=0.7, edgecolors='black')
+            ax3.plot(time_points, intrusion_impact_score, 'k--', alpha=0.5, linewidth=1)
+            ax3.set_xlabel('Round' if st.session_state.language == 'en' else 'Tour', fontsize=11)
+            ax3.set_ylabel('Impact Score' if st.session_state.language == 'en' else 'Score d\'Impact', fontsize=10)
+            ax3.grid(True, alpha=0.3)
+            ax3.set_xlim(0.5, 20.5)
             
+            plt.tight_layout()
+            st.pyplot(fig_intrusion)
             
             # Advanced metrics dashboard
             col_a, col_b = st.columns(2)
@@ -2131,6 +2277,8 @@ def main():
             st.subheader("⏱️ Security Learning Timeline")
         
         # Create modern, professional learning timeline visualization
+        fig_timeline = plt.figure(figsize=(16, 8))
+        plt.style.use('seaborn-v0_8-darkgrid')
         
         # Calculate detection rates using ACTUAL training performance data
         detection_rates = []
@@ -2222,30 +2370,51 @@ def main():
         # Modern gradient background for phases
         for i, (phase, (start, end, color)) in enumerate(phases.items()):
             phase_name = phase_names[i]
+            plt.axvspan(start, end, alpha=0.15, color=color, label=f'{phase_name} Phase')
             
             # Add subtle gradient effect
             gradient_colors = [color, 'white', color]
             for j, grad_color in enumerate(gradient_colors):
-                pass  # Simple placeholder for gradient loop
+                plt.axvspan(start + j*(end-start)/3, start + (j+1)*(end-start)/3, 
+                           alpha=0.08, color=grad_color)
         
         # Enhanced main detection curve with gradient fill
+        plt.fill_between(time_points, detection_rates, alpha=0.3, color='#2E86AB', 
+                        label='Security Level Area')
         
         # Main curve with enhanced styling
+        plt.plot(time_points, detection_rates, color='#2E86AB', linewidth=4, 
+                marker='o', markersize=10, markerfacecolor='#F24236', 
+                markeredgecolor='white', markeredgewidth=2, 
+                label=f'Actual Security Performance', alpha=0.9)
         
         # Highlight the actual training accuracy point prominently
         if actual_training_completed or current_best_accuracy > 0:
             best_round = 2 if actual_training_completed else len(training_metrics)  # Your best was at round 2
             if best_round <= len(time_points):
                 best_rate = detection_rates[min(best_round-1, len(detection_rates)-1)]
+                plt.scatter([best_round], [best_rate], s=300, c='#F24236', 
+                          marker='*', edgecolors='gold', linewidth=3, 
+                          label=f'Peak Performance: {final_accuracy:.1%}', zorder=10)
                 
-                # Simple peak marker
-                pass
+                # Add annotation for the peak
+                plt.annotate(f'BEST: {final_accuracy:.1%}\nRound {best_round}', 
+                           xy=(best_round, best_rate), xytext=(best_round+2, best_rate+5),
+                           arrowprops=dict(arrowstyle='->', color='#F24236', lw=2),
+                           fontsize=12, fontweight='bold', color='#F24236',
+                           bbox=dict(boxstyle='round,pad=0.5', facecolor='gold', alpha=0.8))
         
         # Add confidence bands
         upper_band = [min(100, rate + 2) for rate in detection_rates]
         lower_band = [max(60, rate - 2) for rate in detection_rates]
+        plt.fill_between(time_points, lower_band, upper_band, alpha=0.1, color='gray', 
+                        label='Confidence Band')
         
         # Target performance lines
+        plt.axhline(y=95, color='green', linestyle='--', linewidth=2, alpha=0.7, 
+                   label='Excellence Target (95%)')
+        plt.axhline(y=85, color='orange', linestyle='--', linewidth=2, alpha=0.7, 
+                   label='Good Performance (85%)')
         
         # Enhanced phase annotations
         phase_centers = []
@@ -2258,13 +2427,31 @@ def main():
                 phase_rates.append(detection_rates[min(center-1, len(detection_rates)-1)])
         
         for center, rate, name in zip(phase_centers, phase_rates, phase_names[:len(phase_centers)]):
-            pass  # Simple placeholder for phase processing
+            plt.annotate(f'{name}\n{rate:.1f}%', xy=(center, rate), xytext=(center, rate+8),
+                        arrowprops=dict(arrowstyle='->', color='darkblue', alpha=0.8, lw=1.5),
+                        ha='center', fontsize=11, fontweight='bold', color='darkblue',
+                        bbox=dict(boxstyle='round,pad=0.4', facecolor='lightblue', 
+                                alpha=0.9, edgecolor='darkblue'))
         
-        # Professional styling - simplified timeline visualization
-        st.markdown("### Security Timeline") 
+        # Professional styling
+        plt.title(f'Real Federated Learning Security Timeline - Accuracy: {final_accuracy:.1%}' 
+                 if st.session_state.language == 'en' 
+                 else f'Timeline Sécurité FL Réel - Précision: {final_accuracy:.1%}', 
+                 fontsize=18, fontweight='bold', color='#2E86AB', pad=20)
         
+        plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement', 
+                  fontsize=14, fontweight='bold')
+        plt.ylabel('Security Detection Rate (%)' if st.session_state.language == 'en' 
+                  else 'Taux de Détection Sécurité (%)', fontsize=14, fontweight='bold')
         
+        plt.legend(loc='lower right', fontsize=11, framealpha=0.9, 
+                  fancybox=True, shadow=True)
+        plt.grid(True, alpha=0.4, linestyle=':', linewidth=1)
+        plt.xlim(0.5, 20.5)
+        plt.ylim(65, 105)
         
+        plt.tight_layout()
+        st.pyplot(fig_timeline)
         
         # Attack Effectiveness Analysis
         st.markdown("---")
@@ -2337,6 +2524,7 @@ def main():
         
         with col1:
             # Donut Chart for Defense Success Rates
+            fig1 = plt.figure(figsize=(10, 8))
             
             attack_types = ['Sybil Attacks', 'Byzantine Attacks', 'Network Intrusions']
             if st.session_state.language == 'fr':
@@ -2362,6 +2550,7 @@ def main():
             gs = fig1.add_gridspec(2, 1, height_ratios=[1.5, 1], hspace=0.4)
             
             # Top: Donut chart showing overall defense effectiveness
+            ax1 = fig1.add_subplot(gs[0])
             
             # Calculate blocked vs unblocked for donut using realistic rates
             total_attacks_sum = sum(sybil_attacks) + sum(byzantine_attacks) + sum(network_intrusions)
@@ -2378,47 +2567,89 @@ def main():
             donut_colors = ['#4CAF50', '#FF5722']  # Green for blocked, red for unblocked
             
             # Create donut chart
+            wedges, texts, autotexts = ax1.pie(donut_sizes, labels=donut_labels, colors=donut_colors,
+                                              autopct='%1.1f%%', startangle=90, pctdistance=0.85,
+                                              textprops={'fontsize': 12, 'fontweight': 'bold'})
             
             # Add center circle to make it a donut
+            centre_circle = plt.Circle((0,0), 0.50, fc='white')
+            ax1.add_artist(centre_circle)
             
             # Calculate realistic overall effectiveness for center display
             realistic_overall = (realistic_blocked / total_attacks_sum * 100) if total_attacks_sum > 0 else 0
+            ax1.text(0, 0, f'{realistic_overall:.1f}%\nEffective', ha='center', va='center',
+                    fontsize=16, fontweight='bold', color='darkgreen')
             
+            ax1.set_title('Overall Defense Effectiveness' if st.session_state.language == 'en' 
+                         else 'Efficacité Globale de Défense', fontsize=16, fontweight='bold', pad=20)
             
             # Bottom: Horizontal bar chart for individual attack types
+            ax2 = fig1.add_subplot(gs[1])
             
             colors = ['#4CAF50', '#FF9800', '#2196F3']  # Green, Orange, Blue
             y_pos = range(len(attack_types))
             
+            bars = ax2.barh(y_pos, success_rates, color=colors, alpha=0.8, edgecolor='black', linewidth=1)
             
             # Add percentage labels on bars
             for i, (bar, rate) in enumerate(zip(bars, success_rates)):
                 width = bar.get_width()
+                ax2.text(width + 1, bar.get_y() + bar.get_height()/2,
+                        f'{rate:.1f}%', ha='left', va='center', fontweight='bold', fontsize=11)
             
             # Add target line
+            ax2.axvline(x=90, color='red', linestyle='--', linewidth=2, alpha=0.7, 
+                       label='Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%')
             
+            ax2.set_yticks(y_pos)
+            ax2.set_yticklabels(attack_types)
+            ax2.set_xlabel('Success Rate (%)' if st.session_state.language == 'en' else 'Taux de Succès (%)')
+            ax2.set_title('Defense Success by Attack Type' if st.session_state.language == 'en' 
+                         else 'Succès de Défense par Type d\'Attaque', fontsize=14, fontweight='bold')
+            ax2.set_xlim(0, 105)
+            ax2.legend(loc='lower right')
+            ax2.grid(True, alpha=0.3, axis='x')
             
+            plt.tight_layout()
+            st.pyplot(fig1)
         
         with col2:
-            # Simple attack timeline chart  
+            # Stacked Area Chart for Attack Trends
+            fig2 = plt.figure(figsize=(10, 8))
+            gs2 = fig2.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.4)
+            
+            # Top: Stacked area chart showing attack composition
+            ax1 = fig2.add_subplot(gs2[0])
+            
+            # Create stacked area chart
+            ax1.fill_between(time_points, 0, sybil_attacks, alpha=0.7, color='#FF6B6B', 
+                           label='Sybil Attacks' if st.session_state.language == 'en' else 'Attaques Sybil')
+            ax1.fill_between(time_points, sybil_attacks, 
+                           [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
+                           alpha=0.7, color='#4ECDC4', 
+                           label='Byzantine Attacks' if st.session_state.language == 'en' else 'Attaques Byzantines')
+            ax1.fill_between(time_points, [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
+                           [s+b+n for s,b,n in zip(sybil_attacks, byzantine_attacks, network_intrusions)], 
+                           alpha=0.7, color='#45B7D1', 
+                           label='Network Intrusions' if st.session_state.language == 'en' else 'Intrusions Réseau')
+            
+            # Overlay total blocked attacks as a bold line
             total_blocked_per_round = [s+b+n for s,b,n in zip(sybil_blocked, byzantine_blocked, intrusion_blocked)]
+            ax1.plot(time_points, total_blocked_per_round, 'darkgreen', linewidth=4, marker='D', markersize=6,
+                    label='Total Blocked' if st.session_state.language == 'en' else 'Total Bloquées', 
+                    markerfacecolor='lightgreen', markeredgecolor='darkgreen')
             
-            fig_timeline = go.Figure()
-            fig_timeline.add_trace(go.Scatter(
-                x=time_points, y=total_blocked_per_round,
-                mode='lines',
-                name='Total Blocked' if st.session_state.language == 'en' else 'Total Bloquées',
-                line=dict(color='green', width=2)
-            ))
-            fig_timeline.update_layout(
-                title='Attack Defense Response' if st.session_state.language == 'en' else 'Réponse Défensive aux Attaques',
-                xaxis_title='Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement',
-                yaxis_title='Attacks Blocked' if st.session_state.language == 'en' else 'Attaques Bloquées',
-                height=300
-            )
-            st.plotly_chart(fig_timeline, use_container_width=True)
+            ax1.set_title('Attack Composition and Defense Response' if st.session_state.language == 'en' 
+                         else 'Composition des Attaques et Réponse Défensive', fontsize=14, fontweight='bold')
+            ax1.set_ylabel('Number of Attacks' if st.session_state.language == 'en' else 'Nombre d\'Attaques')
+            ax1.legend(loc='upper left', fontsize=10)
+            ax1.grid(True, alpha=0.3)
+            ax1.set_xlim(1, 20)
             
-            # Simple effectiveness chart
+            # Bottom: Defense effectiveness percentage over time
+            ax2 = fig2.add_subplot(gs2[1])
+            
+            # Calculate defense effectiveness per round
             effectiveness_per_round = []
             for i in range(len(time_points)):
                 total_attacks_round = sybil_attacks[i] + byzantine_attacks[i] + network_intrusions[i]
@@ -2426,20 +2657,25 @@ def main():
                 effectiveness = (total_blocked_round / total_attacks_round * 100) if total_attacks_round > 0 else 0
                 effectiveness_per_round.append(effectiveness)
             
-            fig_effectiveness = go.Figure()
-            fig_effectiveness.add_trace(go.Scatter(
-                x=time_points, y=effectiveness_per_round,
-                mode='lines',
-                name='Effectiveness',
-                line=dict(color='blue', width=2)
-            ))
-            fig_effectiveness.update_layout(
-                title='Defense Effectiveness' if st.session_state.language == 'en' else 'Efficacité Défensive',
-                xaxis_title='Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement',
-                yaxis_title='Effectiveness (%)' if st.session_state.language == 'en' else 'Efficacité (%)',
-                height=300
-            )
-            st.plotly_chart(fig_effectiveness, use_container_width=True)
+            # Create area chart for effectiveness
+            ax2.fill_between(time_points, effectiveness_per_round, alpha=0.6, color='#96CEB4')
+            ax2.plot(time_points, effectiveness_per_round, 'darkgreen', linewidth=3, marker='o', markersize=5)
+            
+            # Add effectiveness target line
+            ax2.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7, 
+                       label='Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%')
+            
+            ax2.set_title('Defense Effectiveness Trend' if st.session_state.language == 'en' 
+                         else 'Tendance d\'Efficacité Défensive', fontsize=14, fontweight='bold')
+            ax2.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+            ax2.set_ylabel('Effectiveness (%)' if st.session_state.language == 'en' else 'Efficacité (%)')
+            ax2.legend(loc='lower right')
+            ax2.grid(True, alpha=0.3)
+            ax2.set_xlim(1, 20)
+            ax2.set_ylim(70, 105)
+            
+            plt.tight_layout()
+            st.pyplot(fig2)
         
         # Simple Explanations
         st.markdown("---")
@@ -2596,21 +2832,20 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            # Simple Response Time Chart
-            fig_response = go.Figure()
-            fig_response.add_trace(go.Scatter(
-                x=time_points, y=response_times,
-                mode='lines',
-                name='Response Time',
-                line=dict(color='blue', width=2)
-            ))
-            fig_response.update_layout(
-                title='Committee Response Time' if st.session_state.language == 'en' else 'Temps de Réponse du Comité',
-                xaxis_title='Round' if st.session_state.language == 'en' else 'Tour',
-                yaxis_title='Time (s)' if st.session_state.language == 'en' else 'Temps (s)',
-                height=300
-            )
-            st.plotly_chart(fig_response, use_container_width=True)
+            # Response Time Chart
+            fig_response = plt.figure(figsize=(8, 4))
+            plt.plot(time_points, response_times, 'b-', linewidth=2, marker='o', markersize=4)
+            plt.fill_between(time_points, response_times, alpha=0.3, color='blue')
+            plt.title('Committee Response Time' if st.session_state.language == 'en' else 'Temps de Réponse du Comité', 
+                     fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
+            plt.ylabel('Time (s)' if st.session_state.language == 'en' else 'Temps (s)')
+            plt.grid(True, alpha=0.3)
+            avg_response = np.mean(response_times)
+            plt.axhline(y=avg_response, color='red', linestyle='--', alpha=0.7)
+            plt.text(15, avg_response+0.1, f'Avg: {avg_response:.2f}s', fontsize=10)
+            plt.tight_layout()
+            st.pyplot(fig_response)
             
             if st.session_state.language == 'fr':
                 st.caption("⏱️ Temps de réponse moyen pour validation des transactions")
@@ -2618,21 +2853,21 @@ def main():
                 st.caption("⏱️ Average response time for transaction validation")
         
         with col2:
-            # Simple Validation Success Rate
-            fig_validation = go.Figure()
-            fig_validation.add_trace(go.Scatter(
-                x=time_points, y=validation_success,
-                mode='lines',
-                name='Success Rate',
-                line=dict(color='green', width=2)
-            ))
-            fig_validation.update_layout(
-                title='Validation Success Rate' if st.session_state.language == 'en' else 'Taux de Succès de Validation',
-                xaxis_title='Round' if st.session_state.language == 'en' else 'Tour',
-                yaxis_title='Success %' if st.session_state.language == 'en' else 'Succès %',
-                height=300
-            )
-            st.plotly_chart(fig_validation, use_container_width=True)
+            # Validation Success Rate
+            fig_validation = plt.figure(figsize=(8, 4))
+            plt.plot(time_points, validation_success, 'g-', linewidth=2, marker='s', markersize=4)
+            plt.fill_between(time_points, validation_success, alpha=0.3, color='green')
+            plt.title('Validation Success Rate' if st.session_state.language == 'en' else 'Taux de Succès de Validation', 
+                     fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
+            plt.ylabel('Success %' if st.session_state.language == 'en' else 'Succès %')
+            plt.grid(True, alpha=0.3)
+            plt.ylim(90, 100)
+            avg_success = np.mean(validation_success)
+            plt.axhline(y=avg_success, color='red', linestyle='--', alpha=0.7)
+            plt.text(15, avg_success-0.5, f'Avg: {avg_success:.1f}%', fontsize=10)
+            plt.tight_layout()
+            st.pyplot(fig_validation)
             
             if st.session_state.language == 'fr':
                 st.caption("✅ Pourcentage de validations réussies par le comité")
@@ -2640,21 +2875,21 @@ def main():
                 st.caption("✅ Percentage of successful validations by committee")
         
         with col3:
-            # Simple Node Availability
-            fig_availability = go.Figure()
-            fig_availability.add_trace(go.Scatter(
-                x=time_points, y=node_availability,
-                mode='lines',
-                name='Availability',
-                line=dict(color='purple', width=2)
-            ))
-            fig_availability.update_layout(
-                title='Node Availability' if st.session_state.language == 'en' else 'Disponibilité des Nœuds',
-                xaxis_title='Round' if st.session_state.language == 'en' else 'Tour',
-                yaxis_title='Uptime %' if st.session_state.language == 'en' else 'Disponibilité %',
-                height=300
-            )
-            st.plotly_chart(fig_availability, use_container_width=True)
+            # Node Availability
+            fig_availability = plt.figure(figsize=(8, 4))
+            plt.plot(time_points, node_availability, 'm-', linewidth=2, marker='^', markersize=4)
+            plt.fill_between(time_points, node_availability, alpha=0.3, color='magenta')
+            plt.title('Node Availability' if st.session_state.language == 'en' else 'Disponibilité des Nœuds', 
+                     fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
+            plt.ylabel('Uptime %' if st.session_state.language == 'en' else 'Disponibilité %')
+            plt.grid(True, alpha=0.3)
+            plt.ylim(85, 100)
+            avg_availability = np.mean(node_availability)
+            plt.axhline(y=avg_availability, color='red', linestyle='--', alpha=0.7)
+            plt.text(15, avg_availability-1, f'Avg: {avg_availability:.1f}%', fontsize=10)
+            plt.tight_layout()
+            st.pyplot(fig_availability)
             
             if st.session_state.language == 'fr':
                 st.caption("🟢 Disponibilité moyenne des nœuds du comité")
@@ -3124,41 +3359,161 @@ def main():
                     
                     col1, col2 = st.columns(2)
                     
-                    # Simple training progress chart
-                    fig_simple = go.Figure()
-                    fig_simple.add_trace(go.Scatter(
-                        x=rounds, y=accuracies,
-                        mode='lines',
-                        name='Accuracy',
-                        line=dict(color='blue', width=2)
-                    ))
-                    fig_simple.update_layout(
-                        title=f'Training Progress ({model_type.upper()})',
-                        xaxis_title="Round",
-                        yaxis_title="Accuracy",
-                        height=400
+                    # Create enhanced multi-panel dashboard
+                    
+                    fig_dashboard = make_subplots(
+                        rows=2, cols=2,
+                        subplot_titles=(
+                            f'Accuracy Progress ({model_type.upper()})', 
+                            'Loss Evolution', 
+                            'Performance Convergence',
+                            'Training Velocity'
+                        ),
+                        specs=[[{"secondary_y": False}, {"secondary_y": False}],
+                               [{"secondary_y": True}, {"secondary_y": False}]],
+                        vertical_spacing=0.12,
+                        horizontal_spacing=0.1
                     )
                     
-                    with col1:
-
+                    # Enhanced accuracy trace with trend
+                    fig_dashboard.add_trace(
+                        go.Scatter(
+                            x=rounds, y=accuracies,
+                            mode='lines+markers',
+                            name='Accuracy',
+                            line=dict(color='#2E86AB', width=3, shape='spline'),
+                            marker=dict(size=8, color='#2E86AB', line=dict(width=2, color='white')),
+                            hovertemplate='<b>Round %{x}</b><br>Accuracy: %{y:.3f}<extra></extra>'
+                        ),
+                        row=1, col=1
+                    )
+                    
+                    # Add accuracy trend line
+                    if len(rounds) > 2:
+                        z = np.polyfit(rounds, accuracies, 1)
+                        p = np.poly1d(z)
+                        fig_dashboard.add_trace(
+                            go.Scatter(
+                                x=rounds, y=p(rounds),
+                                mode='lines',
+                                name='Accuracy Trend',
+                                line=dict(color='#A23B72', width=2, dash='dash'),
+                                showlegend=False
+                            ),
+                            row=1, col=1
+                        )
+                    
+                    # Enhanced loss trace
+                    fig_dashboard.add_trace(
+                        go.Scatter(
+                            x=rounds, y=losses,
+                            mode='lines+markers',
+                            name='Loss',
+                            line=dict(color='#F18F01', width=3, shape='spline'),
+                            marker=dict(size=8, color='#F18F01', line=dict(width=2, color='white')),
+                            hovertemplate='<b>Round %{x}</b><br>Loss: %{y:.4f}<extra></extra>'
+                        ),
+                        row=1, col=2
+                    )
+                    
+                    # Convergence analysis (accuracy vs inverted loss)
+                    fig_dashboard.add_trace(
+                        go.Scatter(
+                            x=rounds, y=accuracies,
+                            mode='lines',
+                            name='Accuracy',
+                            line=dict(color='#2E86AB', width=2),
+                            showlegend=False
+                        ),
+                        row=2, col=1
+                    )
+                    
+                    # Inverted loss for convergence comparison
+                    inverted_loss = [1 - l for l in losses]
+                    fig_dashboard.add_trace(
+                        go.Scatter(
+                            x=rounds, y=inverted_loss,
+                            mode='lines',
+                            name='Inverted Loss',
+                            line=dict(color='#F18F01', width=2),
+                            yaxis='y2',
+                            showlegend=False
+                        ),
+                        row=2, col=1,
+                        secondary_y=True
+                    )
+                    
+                    # Training velocity (improvement rate)
+                    if len(accuracies) > 1:
+                        velocity = [0] + [accuracies[i] - accuracies[i-1] for i in range(1, len(accuracies))]
+                        fig_dashboard.add_trace(
+                            go.Bar(
+                                x=rounds, y=velocity,
+                                name='Improvement Rate',
+                                marker_color=['green' if v >= 0 else 'red' for v in velocity],
+                                opacity=0.7,
+                                showlegend=False
+                            ),
+                            row=2, col=2
+                        )
+                    
+                    # Update layout with enhanced styling
+                    fig_dashboard.update_layout(
+                        title={
+                            'text': f"📊 Real-time Training Dashboard - {model_type.upper()}",
+                            'x': 0.5,
+                            'xanchor': 'center',
+                            'font': {'size': 18, 'color': '#2C3E50'}
+                        },
+                        height=600,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(family="Arial, sans-serif", size=11)
+                    )
+                    
+                    # Update individual axes
+                    fig_dashboard.update_xaxes(title_text="Training Round", showgrid=True, gridcolor='lightgray')
+                    fig_dashboard.update_yaxes(title_text="Accuracy", row=1, col=1, showgrid=True, gridcolor='lightgray')
+                    fig_dashboard.update_yaxes(title_text="Loss", row=1, col=2, showgrid=True, gridcolor='lightgray')
+                    fig_dashboard.update_yaxes(title_text="Convergence", row=2, col=1, showgrid=True, gridcolor='lightgray')
+                    fig_dashboard.update_yaxes(title_text="Improvement", row=2, col=2, showgrid=True, gridcolor='lightgray')
+                    
+                    st.plotly_chart(fig_dashboard, use_container_width=True)
                 
-                # Simple client summary table
+                # Client performance evolution
                 if len(st.session_state.training_metrics) > 2:
                     st.subheader("🏥 " + get_translation("individual_client_learning_curves", st.session_state.language))
                     
-                    # Show simple final accuracy per client
-                    client_data = []
-                    for client_id in range(st.session_state.get('num_clients', 5)):
-                        final_acc = 0
-                        for round_data in reversed(st.session_state.training_metrics):
-                            if 'client_metrics' in round_data and client_id in round_data['client_metrics']:
-                                final_acc = round_data['client_metrics'][client_id].get('local_accuracy', 0)
-                                break
-                        client_data.append({'Station': f'Station {client_id + 1}', 'Final Accuracy': f'{final_acc:.3f}'})
+                    fig_clients = go.Figure()
+                    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
                     
-                    if client_data:
-                        df = pd.DataFrame(client_data)
-                        st.dataframe(df, use_container_width=True)
+                    for client_id in range(st.session_state.get('num_clients', 5)):
+                        client_accuracies = []
+                        client_rounds = []
+                        
+                        for round_data in st.session_state.training_metrics:
+                            if 'client_metrics' in round_data and client_id in round_data['client_metrics']:
+                                local_acc = round_data['client_metrics'][client_id].get('local_accuracy', round_data['client_metrics'][client_id].get('accuracy', 0))
+                                client_accuracies.append(local_acc)
+                                client_rounds.append(round_data['round'])
+                        
+                        if client_accuracies:
+                            fig_clients.add_trace(go.Scatter(
+                                x=client_rounds, y=client_accuracies,
+                                mode='lines+markers',
+                                name=f'Station {client_id + 1}',
+                                line=dict(color=colors[client_id % len(colors)], width=2),
+                                marker=dict(size=6)
+                            ))
+                    
+                    fig_clients.update_layout(
+                        title="Individual Medical Station Performance",
+                        xaxis_title="Round",
+                        yaxis_title="Local Accuracy",
+                        height=400,
+                        legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                    )
+                    st.plotly_chart(fig_clients, use_container_width=True)
             
             else:
                 st.info("Training in progress... Waiting for first round results.")
@@ -3306,41 +3661,84 @@ def main():
             
             col1, col2 = st.columns(2)
             
-            # Simple accuracy line chart
-            fig_accuracy = go.Figure()
-            fig_accuracy.add_trace(go.Scatter(
-                x=rounds, y=accuracies,
-                mode='lines',
-                name='Accuracy',
-                line=dict(color='blue', width=2)
-            ))
-            fig_accuracy.update_layout(
-                title="Accuracy Progress",
-                xaxis_title="Round",
-                yaxis_title="Accuracy",
-                height=300
+            # Enhanced final results visualization
+            fig_results = make_subplots(
+                rows=1, cols=2,
+                subplot_titles=('Final Accuracy Progress', 'Loss Convergence'),
+                specs=[[{"secondary_y": False}, {"secondary_y": False}]]
             )
             
-            with col1:
-                st.plotly_chart(fig_accuracy, use_container_width=True)
-            
-            # Simple loss line chart
-            fig_loss = go.Figure()
-            fig_loss.add_trace(go.Scatter(
-                x=rounds, y=losses,
-                mode='lines',
-                name='Loss',
-                line=dict(color='red', width=2)
-            ))
-            fig_loss.update_layout(
-                title="Loss Progress",
-                xaxis_title="Round",
-                yaxis_title="Loss",
-                height=300
+            # Accuracy with confidence bands
+            fig_results.add_trace(
+                go.Scatter(
+                    x=rounds, y=accuracies,
+                    mode='lines+markers',
+                    name='Accuracy',
+                    line=dict(color='#2E86AB', width=4, shape='spline'),
+                    marker=dict(size=10, color='#2E86AB', line=dict(width=2, color='white')),
+                    hovertemplate='<b>Round %{x}</b><br>Accuracy: %{y:.3f}<extra></extra>'
+                ),
+                row=1, col=1
             )
             
-            with col2:
-                st.plotly_chart(fig_loss, use_container_width=True)
+            # Add best accuracy indicator
+            if accuracies:
+                best_acc_idx = accuracies.index(max(accuracies))
+                fig_results.add_trace(
+                    go.Scatter(
+                        x=[rounds[best_acc_idx]], y=[accuracies[best_acc_idx]],
+                        mode='markers',
+                        name='Best',
+                        marker=dict(size=15, color='gold', symbol='star', line=dict(width=2, color='black')),
+                        showlegend=False
+                    ),
+                    row=1, col=1
+                )
+            
+            # Loss with smoothing
+            fig_results.add_trace(
+                go.Scatter(
+                    x=rounds, y=losses,
+                    mode='lines+markers',
+                    name='Loss',
+                    line=dict(color='#F18F01', width=4, shape='spline'),
+                    marker=dict(size=10, color='#F18F01', line=dict(width=2, color='white')),
+                    hovertemplate='<b>Round %{x}</b><br>Loss: %{y:.4f}<extra></extra>'
+                ),
+                row=1, col=2
+            )
+            
+            # Add exponential moving average for loss
+            if len(losses) > 2:
+                loss_ema = pd.Series(losses).ewm(span=3).mean().tolist()
+                fig_results.add_trace(
+                    go.Scatter(
+                        x=rounds, y=loss_ema,
+                        mode='lines',
+                        name='Loss Trend',
+                        line=dict(color='#C73E1D', width=2, dash='dash'),
+                        showlegend=False
+                    ),
+                    row=1, col=2
+                )
+            
+            fig_results.update_layout(
+                title={
+                    'text': "🎯 Final Training Results Analysis",
+                    'x': 0.5,
+                    'xanchor': 'center',
+                    'font': {'size': 16, 'color': '#2C3E50'}
+                },
+                height=400,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)'
+            )
+            
+            fig_results.update_xaxes(title_text="Training Round", showgrid=True, gridcolor='lightgray')
+            fig_results.update_yaxes(title_text="Accuracy", row=1, col=1, showgrid=True, gridcolor='lightgray')
+            fig_results.update_yaxes(title_text="Loss", row=1, col=2, showgrid=True, gridcolor='lightgray')
+            
+            st.plotly_chart(fig_results, use_container_width=True)
             
             # Summary metrics
             final_accuracy = st.session_state.results.get('accuracy', 0)
@@ -6488,6 +6886,7 @@ def main():
                 
                 with col1:
                     # Security metrics chart
+                    fig_metrics = plt.figure(figsize=(8, 6))
                     
                     metrics_labels = ["Sybil", "Byzantine", "Network"]
                     if st.session_state.language == 'fr':
@@ -6521,18 +6920,37 @@ def main():
                     
                     colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
                     
+                    bars = plt.bar(metrics_labels, detection_rates, color=colors, alpha=0.8, edgecolor='black')
                     
                     for bar, rate in zip(bars, detection_rates):
+                        plt.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 1,
+                                f'{rate}%', ha='center', va='bottom', fontweight='bold')
                     
+                    plt.title('Detection Rate by Attack Type' if st.session_state.language == 'en' 
+                             else 'Taux de Détection par Type d\'Attaque', fontweight='bold')
+                    plt.ylabel('Detection Rate (%)' if st.session_state.language == 'en' else 'Taux de Détection (%)')
+                    plt.ylim(0, 100)
+                    plt.grid(True, alpha=0.3, axis='y')
                     
+                    st.pyplot(fig_metrics)
                 
                 with col2:
                     # Response time chart
+                    fig_response = plt.figure(figsize=(8, 6))
                     
                     time_data = list(range(1, 21))
                     response_times = [0.8 - i*0.02 + np.random.uniform(-0.05, 0.05) for i in time_data]
                     
+                    plt.plot(time_data, response_times, 'g-', linewidth=3, marker='o', markersize=5)
+                    plt.fill_between(time_data, response_times, alpha=0.3, color='green')
                     
+                    plt.title('Response Time Improvement' if st.session_state.language == 'en' 
+                             else 'Amélioration du Temps de Réponse', fontweight='bold')
+                    plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
+                    plt.ylabel('Response Time (s)' if st.session_state.language == 'en' else 'Temps de Réponse (s)')
+                    plt.grid(True, alpha=0.3)
+                    
+                    st.pyplot(fig_response)
             
             # Recommendations (if included)
             if include_recommendations:
