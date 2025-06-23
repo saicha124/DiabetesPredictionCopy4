@@ -3465,7 +3465,7 @@ def main():
                             'xanchor': 'center',
                             'font': {'size': 18, 'color': '#2C3E50'}
                         },
-                        height=500,
+                        height=450,
                         plot_bgcolor='rgba(0,0,0,0)',
                         paper_bgcolor='rgba(0,0,0,0)',
                         font=dict(family="Arial, sans-serif", size=11),
@@ -3518,7 +3518,7 @@ def main():
                         title="Individual Medical Station Performance",
                         xaxis_title="Round",
                         yaxis_title="Local Accuracy",
-                        height=350,
+                        height=320,
                         showlegend=True,
                         legend=dict(
                             orientation="h",
@@ -3744,9 +3744,17 @@ def main():
                     'xanchor': 'center',
                     'font': {'size': 16, 'color': '#2C3E50'}
                 },
-                height=400,
+                height=320,
                 plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)'
+                paper_bgcolor='rgba(0,0,0,0)',
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="center",
+                    x=0.5
+                )
             )
             
             fig_results.update_xaxes(title_text="Training Round", showgrid=True, gridcolor='lightgray')
@@ -6283,14 +6291,14 @@ def main():
                         title=title,
                         xaxis_title="Training Round",
                         yaxis_title="Accuracy Score",
-                        height=350,
+                        height=320,
                         showlegend=True,
                         legend=dict(
-                            orientation="v",
-                            yanchor="top",
-                            y=1,
-                            xanchor="left",
-                            x=1.02
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
                         )
                     )
                     
@@ -6373,14 +6381,14 @@ def main():
                         title=title,
                         xaxis_title="Training Round",
                         yaxis_title="Loss Value",
-                        height=350,
+                        height=320,
                         showlegend=True,
                         legend=dict(
-                            orientation="v",
-                            yanchor="top",
-                            y=1,
-                            xanchor="left",
-                            x=1.02
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
                         )
                     )
                     
