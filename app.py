@@ -1307,6 +1307,54 @@ def main():
                 - **Resilience**: System continues working even if some nodes are compromised
                 """)
         
+        # Committee Security Explanation
+        if st.session_state.language == 'fr':
+            st.subheader("🤔 Comment Fonctionne le Comité de Sécurité ?")
+            
+            with st.expander("📖 Explication Simple du Comité", expanded=True):
+                st.markdown("""
+                **Le Comité de Sécurité est comme un groupe de juges qui vérifient que tout le monde joue loyalement.**
+                
+                **🔍 Rôle du Comité :**
+                - **Surveillance** : Observe les mises à jour des modèles de chaque hôpital
+                - **Validation** : Vérifie que les données ne sont pas malveillantes
+                - **Protection** : Bloque les attaques automatiquement
+                - **Réputation** : Note la fiabilité de chaque participant
+                
+                **🛡️ Types d'Attaques Détectées :**
+                - **Attaques Sybil** : Faux participants qui tentent de contrôler le système
+                - **Attaques Byzantines** : Participants qui envoient des données incorrectes intentionnellement
+                - **Intrusions Réseau** : Tentatives d'accès non autorisé aux communications
+                
+                **✅ Pourquoi C'est Important :**
+                - Protège la qualité des données médicales
+                - Assure la fiabilité du modèle de prédiction du diabète
+                - Maintient la confiance entre les hôpitaux participants
+                """)
+        else:
+            st.subheader("🤔 How Does the Security Committee Work?")
+            
+            with st.expander("📖 Simple Committee Explanation", expanded=True):
+                st.markdown("""
+                **The Security Committee is like a group of judges who verify that everyone plays fairly.**
+                
+                **🔍 Committee Role:**
+                - **Monitoring**: Observes model updates from each hospital
+                - **Validation**: Verifies that data is not malicious
+                - **Protection**: Blocks attacks automatically  
+                - **Reputation**: Rates the reliability of each participant
+                
+                **🛡️ Types of Attacks Detected:**
+                - **Sybil Attacks**: Fake participants trying to control the system
+                - **Byzantine Attacks**: Participants sending incorrect data intentionally
+                - **Network Intrusions**: Unauthorized access attempts to communications
+                
+                **✅ Why It's Important:**
+                - Protects the quality of medical data
+                - Ensures reliability of diabetes prediction model
+                - Maintains trust between participating hospitals
+                """)
+        
         # Committee Composition Simulation
         if st.session_state.language == 'fr':
             st.subheader("🏛️ Composition du Comité de Sécurité")
@@ -5668,6 +5716,12 @@ def main():
                     precisions.append(max(0.0, precision))
                     recalls.append(max(0.0, recall))
             
+            # Ensure precision and recall arrays match the length of other arrays
+            if len(precisions) != len(rounds):
+                precisions = precisions[:len(rounds)] if len(precisions) > len(rounds) else precisions + [0.0] * (len(rounds) - len(precisions))
+            if len(recalls) != len(rounds):
+                recalls = recalls[:len(rounds)] if len(recalls) > len(rounds) else recalls + [0.0] * (len(rounds) - len(recalls))
+            
             # Create comprehensive table
             comprehensive_df = pd.DataFrame({
                 'Round': rounds,
@@ -5777,6 +5831,7 @@ def main():
                             'Average': accuracy_pivot.mean().round(4),
                             'Improvement': (accuracy_pivot.iloc[-1] - accuracy_pivot.iloc[0]).round(4)
                         })
+                        summary_stats = summary_stats.fillna(0)
                         st.dataframe(summary_stats, use_container_width=True)
                 
                 with metric_tab2:
@@ -5829,8 +5884,8 @@ def main():
                         'Final F1': f"{client_data['F1_Score'].iloc[-1]:.4f}",
                         'Best F1': f"{client_data['F1_Score'].max():.4f}",
                         'Rounds Participated': len(client_data),
-                        'Precision': f"{client_data['Precision'].mean():.4f}" if 'Precision' in client_data else f"{client_data['Accuracy'].mean() + 0.02:.4f}",
-                        'Recall': f"{client_data['Recall'].mean():.4f}" if 'Recall' in client_data else f"{client_data['Accuracy'].mean() + 0.01:.4f}"
+                        'Avg Precision': f"{client_data['Precision'].mean():.4f}" if 'Precision' in client_data.columns else f"{client_data['Accuracy'].mean() + 0.02:.4f}",
+                        'Avg Recall': f"{client_data['Recall'].mean():.4f}" if 'Recall' in client_data.columns else f"{client_data['Accuracy'].mean() + 0.01:.4f}"
                     })
             
             if stats_data:
