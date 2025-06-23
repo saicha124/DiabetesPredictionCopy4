@@ -1538,25 +1538,16 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            # Simple Security Status Overview
-            fig_simple = plt.figure(figsize=(12, 8))
-            gs = fig_simple.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.4, wspace=0.3)
-            
-            # Top Left: Simple Security Score Meter
-            ax1 = fig_simple.add_subplot(gs[0, 0])
-            
-            # Calculate realistic security score using same rates as other sections
+            # Calculate security metrics
             total_attacks_simple = sum(sybil_attacks) + sum(byzantine_attacks) + sum(network_intrusions)
             
             # Use realistic detection rates based on training performance
             if hasattr(st.session_state, 'training_completed') and st.session_state.training_completed:
                 model_accuracy = st.session_state.get('final_accuracy', st.session_state.get('best_accuracy', 0.7607))
-                # Match the same calculation as in other sections
                 sybil_rate_simple = min(0.98, model_accuracy + 0.18)
                 byzantine_rate_simple = min(0.95, model_accuracy + 0.10)
                 intrusion_rate_simple = min(0.97, model_accuracy + 0.13)
             else:
-                # Use the actual training accuracy from session state if available
                 actual_accuracy = st.session_state.get('best_accuracy', 0.7607)
                 sybil_rate_simple = min(0.98, actual_accuracy + 0.18)
                 byzantine_rate_simple = min(0.95, actual_accuracy + 0.10)
@@ -1566,6 +1557,9 @@ def main():
                                      sum(byzantine_attacks) * byzantine_rate_simple + 
                                      sum(network_intrusions) * intrusion_rate_simple)
             security_percentage = (total_blocked_simple / total_attacks_simple * 100) if total_attacks_simple > 0 else 0
+            
+            # Simple security level indicator
+            st.metric("Security Level", f"{security_percentage:.1f}%")
             
             # Create simple bar chart for security level
             security_levels = ['Poor', 'Fair', 'Good', 'Excellent']
@@ -2614,42 +2608,25 @@ def main():
             st.pyplot(fig1)
         
         with col2:
-            # Stacked Area Chart for Attack Trends
-            fig2 = plt.figure(figsize=(10, 8))
-            gs2 = fig2.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.4)
-            
-            # Top: Stacked area chart showing attack composition
-            ax1 = fig2.add_subplot(gs2[0])
-            
-            # Create stacked area chart
-            ax1.fill_between(time_points, 0, sybil_attacks, alpha=0.7, color='#FF6B6B', 
-                           label='Sybil Attacks' if st.session_state.language == 'en' else 'Attaques Sybil')
-            ax1.fill_between(time_points, sybil_attacks, 
-                           [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
-                           alpha=0.7, color='#4ECDC4', 
-                           label='Byzantine Attacks' if st.session_state.language == 'en' else 'Attaques Byzantines')
-            ax1.fill_between(time_points, [s+b for s,b in zip(sybil_attacks, byzantine_attacks)], 
-                           [s+b+n for s,b,n in zip(sybil_attacks, byzantine_attacks, network_intrusions)], 
-                           alpha=0.7, color='#45B7D1', 
-                           label='Network Intrusions' if st.session_state.language == 'en' else 'Intrusions Réseau')
-            
-            # Overlay total blocked attacks as a bold line
+            # Simple attack timeline chart  
             total_blocked_per_round = [s+b+n for s,b,n in zip(sybil_blocked, byzantine_blocked, intrusion_blocked)]
-            ax1.plot(time_points, total_blocked_per_round, 'darkgreen', linewidth=4, marker='D', markersize=6,
-                    label='Total Blocked' if st.session_state.language == 'en' else 'Total Bloquées', 
-                    markerfacecolor='lightgreen', markeredgecolor='darkgreen')
             
-            ax1.set_title('Attack Composition and Defense Response' if st.session_state.language == 'en' 
-                         else 'Composition des Attaques et Réponse Défensive', fontsize=14, fontweight='bold')
-            ax1.set_ylabel('Number of Attacks' if st.session_state.language == 'en' else 'Nombre d\'Attaques')
-            ax1.legend(loc='upper left', fontsize=10)
-            ax1.grid(True, alpha=0.3)
-            ax1.set_xlim(1, 20)
+            fig_timeline = go.Figure()
+            fig_timeline.add_trace(go.Scatter(
+                x=time_points, y=total_blocked_per_round,
+                mode='lines',
+                name='Total Blocked' if st.session_state.language == 'en' else 'Total Bloquées',
+                line=dict(color='green', width=2)
+            ))
+            fig_timeline.update_layout(
+                title='Attack Defense Response' if st.session_state.language == 'en' else 'Réponse Défensive aux Attaques',
+                xaxis_title='Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement',
+                yaxis_title='Attacks Blocked' if st.session_state.language == 'en' else 'Attaques Bloquées',
+                height=300
+            )
+            st.plotly_chart(fig_timeline, use_container_width=True)
             
-            # Bottom: Defense effectiveness percentage over time
-            ax2 = fig2.add_subplot(gs2[1])
-            
-            # Calculate defense effectiveness per round
+            # Simple effectiveness chart
             effectiveness_per_round = []
             for i in range(len(time_points)):
                 total_attacks_round = sybil_attacks[i] + byzantine_attacks[i] + network_intrusions[i]
@@ -2657,25 +2634,20 @@ def main():
                 effectiveness = (total_blocked_round / total_attacks_round * 100) if total_attacks_round > 0 else 0
                 effectiveness_per_round.append(effectiveness)
             
-            # Create area chart for effectiveness
-            ax2.fill_between(time_points, effectiveness_per_round, alpha=0.6, color='#96CEB4')
-            ax2.plot(time_points, effectiveness_per_round, 'darkgreen', linewidth=3, marker='o', markersize=5)
-            
-            # Add effectiveness target line
-            ax2.axhline(y=90, color='red', linestyle='--', linewidth=2, alpha=0.7, 
-                       label='Target: 90%' if st.session_state.language == 'en' else 'Objectif: 90%')
-            
-            ax2.set_title('Defense Effectiveness Trend' if st.session_state.language == 'en' 
-                         else 'Tendance d\'Efficacité Défensive', fontsize=14, fontweight='bold')
-            ax2.set_xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-            ax2.set_ylabel('Effectiveness (%)' if st.session_state.language == 'en' else 'Efficacité (%)')
-            ax2.legend(loc='lower right')
-            ax2.grid(True, alpha=0.3)
-            ax2.set_xlim(1, 20)
-            ax2.set_ylim(70, 105)
-            
-            plt.tight_layout()
-            st.pyplot(fig2)
+            fig_effectiveness = go.Figure()
+            fig_effectiveness.add_trace(go.Scatter(
+                x=time_points, y=effectiveness_per_round,
+                mode='lines',
+                name='Effectiveness',
+                line=dict(color='blue', width=2)
+            ))
+            fig_effectiveness.update_layout(
+                title='Defense Effectiveness' if st.session_state.language == 'en' else 'Efficacité Défensive',
+                xaxis_title='Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement',
+                yaxis_title='Effectiveness (%)' if st.session_state.language == 'en' else 'Efficacité (%)',
+                height=300
+            )
+            st.plotly_chart(fig_effectiveness, use_container_width=True)
         
         # Simple Explanations
         st.markdown("---")
@@ -2832,20 +2804,21 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            # Response Time Chart
-            fig_response = plt.figure(figsize=(8, 4))
-            plt.plot(time_points, response_times, 'b-', linewidth=2, marker='o', markersize=4)
-            plt.fill_between(time_points, response_times, alpha=0.3, color='blue')
-            plt.title('Committee Response Time' if st.session_state.language == 'en' else 'Temps de Réponse du Comité', 
-                     fontsize=12, fontweight='bold')
-            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
-            plt.ylabel('Time (s)' if st.session_state.language == 'en' else 'Temps (s)')
-            plt.grid(True, alpha=0.3)
-            avg_response = np.mean(response_times)
-            plt.axhline(y=avg_response, color='red', linestyle='--', alpha=0.7)
-            plt.text(15, avg_response+0.1, f'Avg: {avg_response:.2f}s', fontsize=10)
-            plt.tight_layout()
-            st.pyplot(fig_response)
+            # Simple Response Time Chart
+            fig_response = go.Figure()
+            fig_response.add_trace(go.Scatter(
+                x=time_points, y=response_times,
+                mode='lines',
+                name='Response Time',
+                line=dict(color='blue', width=2)
+            ))
+            fig_response.update_layout(
+                title='Committee Response Time' if st.session_state.language == 'en' else 'Temps de Réponse du Comité',
+                xaxis_title='Round' if st.session_state.language == 'en' else 'Tour',
+                yaxis_title='Time (s)' if st.session_state.language == 'en' else 'Temps (s)',
+                height=300
+            )
+            st.plotly_chart(fig_response, use_container_width=True)
             
             if st.session_state.language == 'fr':
                 st.caption("⏱️ Temps de réponse moyen pour validation des transactions")
@@ -2853,21 +2826,21 @@ def main():
                 st.caption("⏱️ Average response time for transaction validation")
         
         with col2:
-            # Validation Success Rate
-            fig_validation = plt.figure(figsize=(8, 4))
-            plt.plot(time_points, validation_success, 'g-', linewidth=2, marker='s', markersize=4)
-            plt.fill_between(time_points, validation_success, alpha=0.3, color='green')
-            plt.title('Validation Success Rate' if st.session_state.language == 'en' else 'Taux de Succès de Validation', 
-                     fontsize=12, fontweight='bold')
-            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
-            plt.ylabel('Success %' if st.session_state.language == 'en' else 'Succès %')
-            plt.grid(True, alpha=0.3)
-            plt.ylim(90, 100)
-            avg_success = np.mean(validation_success)
-            plt.axhline(y=avg_success, color='red', linestyle='--', alpha=0.7)
-            plt.text(15, avg_success-0.5, f'Avg: {avg_success:.1f}%', fontsize=10)
-            plt.tight_layout()
-            st.pyplot(fig_validation)
+            # Simple Validation Success Rate
+            fig_validation = go.Figure()
+            fig_validation.add_trace(go.Scatter(
+                x=time_points, y=validation_success,
+                mode='lines',
+                name='Success Rate',
+                line=dict(color='green', width=2)
+            ))
+            fig_validation.update_layout(
+                title='Validation Success Rate' if st.session_state.language == 'en' else 'Taux de Succès de Validation',
+                xaxis_title='Round' if st.session_state.language == 'en' else 'Tour',
+                yaxis_title='Success %' if st.session_state.language == 'en' else 'Succès %',
+                height=300
+            )
+            st.plotly_chart(fig_validation, use_container_width=True)
             
             if st.session_state.language == 'fr':
                 st.caption("✅ Pourcentage de validations réussies par le comité")
@@ -2875,21 +2848,21 @@ def main():
                 st.caption("✅ Percentage of successful validations by committee")
         
         with col3:
-            # Node Availability
-            fig_availability = plt.figure(figsize=(8, 4))
-            plt.plot(time_points, node_availability, 'm-', linewidth=2, marker='^', markersize=4)
-            plt.fill_between(time_points, node_availability, alpha=0.3, color='magenta')
-            plt.title('Node Availability' if st.session_state.language == 'en' else 'Disponibilité des Nœuds', 
-                     fontsize=12, fontweight='bold')
-            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
-            plt.ylabel('Uptime %' if st.session_state.language == 'en' else 'Disponibilité %')
-            plt.grid(True, alpha=0.3)
-            plt.ylim(85, 100)
-            avg_availability = np.mean(node_availability)
-            plt.axhline(y=avg_availability, color='red', linestyle='--', alpha=0.7)
-            plt.text(15, avg_availability-1, f'Avg: {avg_availability:.1f}%', fontsize=10)
-            plt.tight_layout()
-            st.pyplot(fig_availability)
+            # Simple Node Availability
+            fig_availability = go.Figure()
+            fig_availability.add_trace(go.Scatter(
+                x=time_points, y=node_availability,
+                mode='lines',
+                name='Availability',
+                line=dict(color='purple', width=2)
+            ))
+            fig_availability.update_layout(
+                title='Node Availability' if st.session_state.language == 'en' else 'Disponibilité des Nœuds',
+                xaxis_title='Round' if st.session_state.language == 'en' else 'Tour',
+                yaxis_title='Uptime %' if st.session_state.language == 'en' else 'Disponibilité %',
+                height=300
+            )
+            st.plotly_chart(fig_availability, use_container_width=True)
             
             if st.session_state.language == 'fr':
                 st.caption("🟢 Disponibilité moyenne des nœuds du comité")
@@ -3359,161 +3332,42 @@ def main():
                     
                     col1, col2 = st.columns(2)
                     
-                    # Create enhanced multi-panel dashboard
-                    
-                    fig_dashboard = make_subplots(
-                        rows=2, cols=2,
-                        subplot_titles=(
-                            f'Accuracy Progress ({model_type.upper()})', 
-                            'Loss Evolution', 
-                            'Performance Convergence',
-                            'Training Velocity'
-                        ),
-                        specs=[[{"secondary_y": False}, {"secondary_y": False}],
-                               [{"secondary_y": True}, {"secondary_y": False}]],
-                        vertical_spacing=0.12,
-                        horizontal_spacing=0.1
+                    # Simple training progress chart
+                    fig_simple = go.Figure()
+                    fig_simple.add_trace(go.Scatter(
+                        x=rounds, y=accuracies,
+                        mode='lines',
+                        name='Accuracy',
+                        line=dict(color='blue', width=2)
+                    ))
+                    fig_simple.update_layout(
+                        title=f'Training Progress ({model_type.upper()})',
+                        xaxis_title="Round",
+                        yaxis_title="Accuracy",
+                        height=400
                     )
                     
-                    # Enhanced accuracy trace with trend
-                    fig_dashboard.add_trace(
-                        go.Scatter(
-                            x=rounds, y=accuracies,
-                            mode='lines+markers',
-                            name='Accuracy',
-                            line=dict(color='#2E86AB', width=3, shape='spline'),
-                            marker=dict(size=8, color='#2E86AB', line=dict(width=2, color='white')),
-                            hovertemplate='<b>Round %{x}</b><br>Accuracy: %{y:.3f}<extra></extra>'
-                        ),
-                        row=1, col=1
-                    )
-                    
-                    # Add accuracy trend line
-                    if len(rounds) > 2:
-                        z = np.polyfit(rounds, accuracies, 1)
-                        p = np.poly1d(z)
-                        fig_dashboard.add_trace(
-                            go.Scatter(
-                                x=rounds, y=p(rounds),
-                                mode='lines',
-                                name='Accuracy Trend',
-                                line=dict(color='#A23B72', width=2, dash='dash'),
-                                showlegend=False
-                            ),
-                            row=1, col=1
-                        )
-                    
-                    # Enhanced loss trace
-                    fig_dashboard.add_trace(
-                        go.Scatter(
-                            x=rounds, y=losses,
-                            mode='lines+markers',
-                            name='Loss',
-                            line=dict(color='#F18F01', width=3, shape='spline'),
-                            marker=dict(size=8, color='#F18F01', line=dict(width=2, color='white')),
-                            hovertemplate='<b>Round %{x}</b><br>Loss: %{y:.4f}<extra></extra>'
-                        ),
-                        row=1, col=2
-                    )
-                    
-                    # Convergence analysis (accuracy vs inverted loss)
-                    fig_dashboard.add_trace(
-                        go.Scatter(
-                            x=rounds, y=accuracies,
-                            mode='lines',
-                            name='Accuracy',
-                            line=dict(color='#2E86AB', width=2),
-                            showlegend=False
-                        ),
-                        row=2, col=1
-                    )
-                    
-                    # Inverted loss for convergence comparison
-                    inverted_loss = [1 - l for l in losses]
-                    fig_dashboard.add_trace(
-                        go.Scatter(
-                            x=rounds, y=inverted_loss,
-                            mode='lines',
-                            name='Inverted Loss',
-                            line=dict(color='#F18F01', width=2),
-                            yaxis='y2',
-                            showlegend=False
-                        ),
-                        row=2, col=1,
-                        secondary_y=True
-                    )
-                    
-                    # Training velocity (improvement rate)
-                    if len(accuracies) > 1:
-                        velocity = [0] + [accuracies[i] - accuracies[i-1] for i in range(1, len(accuracies))]
-                        fig_dashboard.add_trace(
-                            go.Bar(
-                                x=rounds, y=velocity,
-                                name='Improvement Rate',
-                                marker_color=['green' if v >= 0 else 'red' for v in velocity],
-                                opacity=0.7,
-                                showlegend=False
-                            ),
-                            row=2, col=2
-                        )
-                    
-                    # Update layout with enhanced styling
-                    fig_dashboard.update_layout(
-                        title={
-                            'text': f"📊 Real-time Training Dashboard - {model_type.upper()}",
-                            'x': 0.5,
-                            'xanchor': 'center',
-                            'font': {'size': 18, 'color': '#2C3E50'}
-                        },
-                        height=600,
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font=dict(family="Arial, sans-serif", size=11)
-                    )
-                    
-                    # Update individual axes
-                    fig_dashboard.update_xaxes(title_text="Training Round", showgrid=True, gridcolor='lightgray')
-                    fig_dashboard.update_yaxes(title_text="Accuracy", row=1, col=1, showgrid=True, gridcolor='lightgray')
-                    fig_dashboard.update_yaxes(title_text="Loss", row=1, col=2, showgrid=True, gridcolor='lightgray')
-                    fig_dashboard.update_yaxes(title_text="Convergence", row=2, col=1, showgrid=True, gridcolor='lightgray')
-                    fig_dashboard.update_yaxes(title_text="Improvement", row=2, col=2, showgrid=True, gridcolor='lightgray')
-                    
-                    st.plotly_chart(fig_dashboard, use_container_width=True)
+                    with col1:
+                        st.plotly_chart(fig_simple, use_container_width=True)
+
                 
-                # Client performance evolution
+                # Simple client summary table
                 if len(st.session_state.training_metrics) > 2:
                     st.subheader("🏥 " + get_translation("individual_client_learning_curves", st.session_state.language))
                     
-                    fig_clients = go.Figure()
-                    colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
-                    
+                    # Show simple final accuracy per client
+                    client_data = []
                     for client_id in range(st.session_state.get('num_clients', 5)):
-                        client_accuracies = []
-                        client_rounds = []
-                        
-                        for round_data in st.session_state.training_metrics:
+                        final_acc = 0
+                        for round_data in reversed(st.session_state.training_metrics):
                             if 'client_metrics' in round_data and client_id in round_data['client_metrics']:
-                                local_acc = round_data['client_metrics'][client_id].get('local_accuracy', round_data['client_metrics'][client_id].get('accuracy', 0))
-                                client_accuracies.append(local_acc)
-                                client_rounds.append(round_data['round'])
-                        
-                        if client_accuracies:
-                            fig_clients.add_trace(go.Scatter(
-                                x=client_rounds, y=client_accuracies,
-                                mode='lines+markers',
-                                name=f'Station {client_id + 1}',
-                                line=dict(color=colors[client_id % len(colors)], width=2),
-                                marker=dict(size=6)
-                            ))
+                                final_acc = round_data['client_metrics'][client_id].get('local_accuracy', 0)
+                                break
+                        client_data.append({'Station': f'Station {client_id + 1}', 'Final Accuracy': f'{final_acc:.3f}'})
                     
-                    fig_clients.update_layout(
-                        title="Individual Medical Station Performance",
-                        xaxis_title="Round",
-                        yaxis_title="Local Accuracy",
-                        height=400,
-                        legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
-                    )
-                    st.plotly_chart(fig_clients, use_container_width=True)
+                    if client_data:
+                        df = pd.DataFrame(client_data)
+                        st.dataframe(df, use_container_width=True)
             
             else:
                 st.info("Training in progress... Waiting for first round results.")
@@ -3661,84 +3515,41 @@ def main():
             
             col1, col2 = st.columns(2)
             
-            # Enhanced final results visualization
-            fig_results = make_subplots(
-                rows=1, cols=2,
-                subplot_titles=('Final Accuracy Progress', 'Loss Convergence'),
-                specs=[[{"secondary_y": False}, {"secondary_y": False}]]
+            # Simple accuracy line chart
+            fig_accuracy = go.Figure()
+            fig_accuracy.add_trace(go.Scatter(
+                x=rounds, y=accuracies,
+                mode='lines',
+                name='Accuracy',
+                line=dict(color='blue', width=2)
+            ))
+            fig_accuracy.update_layout(
+                title="Accuracy Progress",
+                xaxis_title="Round",
+                yaxis_title="Accuracy",
+                height=300
             )
             
-            # Accuracy with confidence bands
-            fig_results.add_trace(
-                go.Scatter(
-                    x=rounds, y=accuracies,
-                    mode='lines+markers',
-                    name='Accuracy',
-                    line=dict(color='#2E86AB', width=4, shape='spline'),
-                    marker=dict(size=10, color='#2E86AB', line=dict(width=2, color='white')),
-                    hovertemplate='<b>Round %{x}</b><br>Accuracy: %{y:.3f}<extra></extra>'
-                ),
-                row=1, col=1
+            with col1:
+                st.plotly_chart(fig_accuracy, use_container_width=True)
+            
+            # Simple loss line chart
+            fig_loss = go.Figure()
+            fig_loss.add_trace(go.Scatter(
+                x=rounds, y=losses,
+                mode='lines',
+                name='Loss',
+                line=dict(color='red', width=2)
+            ))
+            fig_loss.update_layout(
+                title="Loss Progress",
+                xaxis_title="Round",
+                yaxis_title="Loss",
+                height=300
             )
             
-            # Add best accuracy indicator
-            if accuracies:
-                best_acc_idx = accuracies.index(max(accuracies))
-                fig_results.add_trace(
-                    go.Scatter(
-                        x=[rounds[best_acc_idx]], y=[accuracies[best_acc_idx]],
-                        mode='markers',
-                        name='Best',
-                        marker=dict(size=15, color='gold', symbol='star', line=dict(width=2, color='black')),
-                        showlegend=False
-                    ),
-                    row=1, col=1
-                )
-            
-            # Loss with smoothing
-            fig_results.add_trace(
-                go.Scatter(
-                    x=rounds, y=losses,
-                    mode='lines+markers',
-                    name='Loss',
-                    line=dict(color='#F18F01', width=4, shape='spline'),
-                    marker=dict(size=10, color='#F18F01', line=dict(width=2, color='white')),
-                    hovertemplate='<b>Round %{x}</b><br>Loss: %{y:.4f}<extra></extra>'
-                ),
-                row=1, col=2
-            )
-            
-            # Add exponential moving average for loss
-            if len(losses) > 2:
-                loss_ema = pd.Series(losses).ewm(span=3).mean().tolist()
-                fig_results.add_trace(
-                    go.Scatter(
-                        x=rounds, y=loss_ema,
-                        mode='lines',
-                        name='Loss Trend',
-                        line=dict(color='#C73E1D', width=2, dash='dash'),
-                        showlegend=False
-                    ),
-                    row=1, col=2
-                )
-            
-            fig_results.update_layout(
-                title={
-                    'text': "🎯 Final Training Results Analysis",
-                    'x': 0.5,
-                    'xanchor': 'center',
-                    'font': {'size': 16, 'color': '#2C3E50'}
-                },
-                height=400,
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)'
-            )
-            
-            fig_results.update_xaxes(title_text="Training Round", showgrid=True, gridcolor='lightgray')
-            fig_results.update_yaxes(title_text="Accuracy", row=1, col=1, showgrid=True, gridcolor='lightgray')
-            fig_results.update_yaxes(title_text="Loss", row=1, col=2, showgrid=True, gridcolor='lightgray')
-            
-            st.plotly_chart(fig_results, use_container_width=True)
+            with col2:
+                st.plotly_chart(fig_loss, use_container_width=True)
             
             # Summary metrics
             final_accuracy = st.session_state.results.get('accuracy', 0)
