@@ -5188,7 +5188,7 @@ def main():
                         title=chart_title,
                         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                        height=600,
+                        height=400,
                         showlegend=True,
                         legend=dict(
                             orientation="h",
@@ -5310,8 +5310,7 @@ def main():
                             title=cm_title,
                             xaxis_title=x_axis_title,
                             yaxis_title=y_axis_title,
-                            height=500,
-                            width=500
+                            height=350
                         )
                         
                         col1, col2 = st.columns([1, 1])
@@ -5395,7 +5394,7 @@ def main():
                             title="Example Confusion Matrix Structure",
                             xaxis_title="Predicted",
                             yaxis_title="Actual",
-                            height=400
+                            height=300
                         )
                         
                         st.plotly_chart(fig_example, use_container_width=True)
@@ -5428,7 +5427,7 @@ def main():
                     final_accuracy = min(0.95, max(0.60, base_accuracy + adjustment))
                     accuracies_clients.append(final_accuracy)
                 
-                # Create accuracy vs clients plot
+                # Create simple accuracy vs clients plot
                 fig_clients = go.Figure()
                 
                 fig_clients.add_trace(go.Scatter(
@@ -5436,8 +5435,8 @@ def main():
                     y=accuracies_clients,
                     mode='lines+markers',
                     name='Global Accuracy',
-                    line=dict(color='blue', width=3),
-                    marker=dict(size=10, color='blue')
+                    line=dict(color='blue', width=2),
+                    marker=dict(size=6, color='blue')
                 ))
                 
                 # Add current configuration point
@@ -5449,7 +5448,7 @@ def main():
                     y=[current_accuracy],
                     mode='markers',
                     name='Current Configuration',
-                    marker=dict(size=15, color='red', symbol='star')
+                    marker=dict(size=12, color='red', symbol='star')
                 ))
                 
                 if st.session_state.language == 'fr':
@@ -5457,16 +5456,30 @@ def main():
                         title="Précision du Modèle Global vs Nombre de Clients Fédérés",
                         xaxis_title="Nombre d'Établissements Médicaux (Clients)",
                         yaxis_title="Précision du Modèle Global",
-                        height=500,
-                        showlegend=True
+                        height=350,
+                        showlegend=True,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
+                        )
                     )
                 else:
                     fig_clients.update_layout(
                         title="Global Model Accuracy vs Number of Federated Clients",
                         xaxis_title="Number of Medical Facilities (Clients)",
                         yaxis_title="Global Model Accuracy",
-                        height=500,
-                        showlegend=True
+                        height=350,
+                        showlegend=True,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
+                        )
                     )
                 
                 st.plotly_chart(fig_clients, use_container_width=True)
@@ -5548,7 +5561,7 @@ def main():
                     final_accuracy = min(0.95, max(0.65, base_accuracy + adjustment))
                     accuracies_fog.append(final_accuracy)
                 
-                # Create accuracy vs fog nodes plot
+                # Create simple fog nodes plot
                 fig_fog = go.Figure()
                 
                 fig_fog.add_trace(go.Scatter(
@@ -5556,8 +5569,8 @@ def main():
                     y=accuracies_fog,
                     mode='lines+markers',
                     name='Global Accuracy',
-                    line=dict(color='orange', width=3),
-                    marker=dict(size=10, color='orange')
+                    line=dict(color='orange', width=2),
+                    marker=dict(size=6, color='orange')
                 ))
                 
                 # Add current configuration point
@@ -5568,7 +5581,7 @@ def main():
                     y=[current_accuracy],
                     mode='markers',
                     name='Current Configuration',
-                    marker=dict(size=15, color='red', symbol='star')
+                    marker=dict(size=12, color='red', symbol='star')
                 ))
                 
                 if st.session_state.language == 'fr':
@@ -5576,16 +5589,30 @@ def main():
                         title="Précision du Modèle Global vs Nombre de Nœuds Fog",
                         xaxis_title="Nombre de Nœuds Fog",
                         yaxis_title="Précision du Modèle Global",
-                        height=500,
-                        showlegend=True
+                        height=350,
+                        showlegend=True,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
+                        )
                     )
                 else:
                     fig_fog.update_layout(
                         title="Global Model Accuracy vs Number of Fog Nodes",
                         xaxis_title="Number of Fog Nodes",
                         yaxis_title="Global Model Accuracy",
-                        height=500,
-                        showlegend=True
+                        height=350,
+                        showlegend=True,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
+                        )
                     )
                 
                 st.plotly_chart(fig_fog, use_container_width=True)
@@ -5662,7 +5689,7 @@ def main():
                         losses = [m['loss'] for m in st.session_state.training_metrics]
                         f1_scores = [m.get('f1_score', 0) for m in st.session_state.training_metrics]
                         
-                        # Multi-metric comparison
+                        # Simple multi-metric comparison
                         fig_multi = go.Figure()
                         
                         fig_multi.add_trace(go.Scatter(
@@ -5670,6 +5697,7 @@ def main():
                             mode='lines+markers',
                             name='Accuracy',
                             line=dict(color='blue', width=2),
+                            marker=dict(size=4),
                             yaxis='y'
                         ))
                         
@@ -5678,6 +5706,7 @@ def main():
                             mode='lines+markers',
                             name='F1-Score',
                             line=dict(color='green', width=2),
+                            marker=dict(size=4),
                             yaxis='y'
                         ))
                         
@@ -5686,6 +5715,7 @@ def main():
                             mode='lines+markers',
                             name='Loss',
                             line=dict(color='red', width=2),
+                            marker=dict(size=4),
                             yaxis='y2'
                         ))
                         
@@ -5695,7 +5725,15 @@ def main():
                                 xaxis_title="Tour d'Entraînement",
                                 yaxis=dict(title="Précision / Score F1", side="left"),
                                 yaxis2=dict(title="Perte", side="right", overlaying="y"),
-                                height=400
+                                height=300,
+                                showlegend=True,
+                                legend=dict(
+                                    orientation="h",
+                                    yanchor="bottom",
+                                    y=1.02,
+                                    xanchor="center",
+                                    x=0.5
+                                )
                             )
                         else:
                             fig_multi.update_layout(
@@ -5703,7 +5741,15 @@ def main():
                                 xaxis_title="Training Round",
                                 yaxis=dict(title="Accuracy / F1-Score", side="left"),
                                 yaxis2=dict(title="Loss", side="right", overlaying="y"),
-                                height=400
+                                height=300,
+                                showlegend=True,
+                                legend=dict(
+                                    orientation="h",
+                                    yanchor="bottom",
+                                    y=1.02,
+                                    xanchor="center",
+                                    x=0.5
+                                )
                             )
                         
                         st.plotly_chart(fig_multi, use_container_width=True)
@@ -6222,7 +6268,7 @@ def main():
                         title=title,
                         xaxis_title="Training Round",
                         yaxis_title="Accuracy Score",
-                        height=450,
+                        height=350,
                         showlegend=True,
                         legend=dict(
                             orientation="v",
@@ -6312,7 +6358,7 @@ def main():
                         title=title,
                         xaxis_title="Training Round",
                         yaxis_title="Loss Value",
-                        height=450,
+                        height=350,
                         showlegend=True,
                         legend=dict(
                             orientation="v",
@@ -6408,7 +6454,7 @@ def main():
                         title=title,
                         xaxis_title="Training Round",
                         yaxis_title="F1 Score",
-                        height=450,
+                        height=350,
                         showlegend=True,
                         legend=dict(
                             orientation="v",
@@ -6426,30 +6472,31 @@ def main():
                 else:
                     st.warning("No client data available for F1 score analysis")
             
-        # Individual client performance cards
-        st.subheader("📋 Individual Client Performance Summary" if st.session_state.language == 'en' else "📋 Résumé des Performances Individuelles")
+        # Individual client performance cards (only if data exists)
+        if 'performance_df' in locals() and len(performance_df) > 0:
+            st.subheader("📋 Individual Client Performance Summary" if st.session_state.language == 'en' else "📋 Résumé des Performances Individuelles")
+            
+            unique_clients = performance_df['Client'].unique()
+            cols = st.columns(min(len(unique_clients), 4))
+            
+            for idx, client in enumerate(unique_clients):
+                client_data = performance_df[performance_df['Client'] == client]
+                with cols[idx % len(cols)]:
+                    final_acc = client_data['Accuracy'].iloc[-1] if len(client_data) > 0 else 0
+                    initial_acc = client_data['Accuracy'].iloc[0] if len(client_data) > 0 else 0
+                    improvement = final_acc - initial_acc if len(client_data) > 1 else 0
+                    
+                    st.metric(
+                        label=client,
+                        value=f"{final_acc:.3f}",
+                        delta=f"{improvement:.3f}"
+                    )
+            
+            # Enhanced client metrics tables
+            st.subheader("📊 Detailed Client Metrics by Round" if st.session_state.language == 'en' else "📊 Métriques Détaillées des Clients par Tour")
         
-        unique_clients = performance_df['Client'].unique()
-        cols = st.columns(min(len(unique_clients), 4))
-        
-        for idx, client in enumerate(unique_clients):
-            client_data = performance_df[performance_df['Client'] == client]
-            with cols[idx % len(cols)]:
-                final_acc = client_data['Accuracy'].iloc[-1] if len(client_data) > 0 else 0
-                initial_acc = client_data['Accuracy'].iloc[0] if len(client_data) > 0 else 0
-                improvement = final_acc - initial_acc if len(client_data) > 1 else 0
-                
-                st.metric(
-                    label=client,
-                    value=f"{final_acc:.3f}",
-                    delta=f"{improvement:.3f}"
-                )
-        
-        # Enhanced client metrics tables
-        st.subheader("📊 Detailed Client Metrics by Round" if st.session_state.language == 'en' else "📊 Métriques Détaillées des Clients par Tour")
-        
-        # Create separate pivot tables for accuracy and loss
-        if len(performance_df) > 0:
+        # Create separate pivot tables for accuracy and loss (only if data exists)
+        if 'performance_df' in locals() and len(performance_df) > 0:
             # Accuracy table
             accuracy_pivot = performance_df.pivot(index='Round', columns='Client', values='Accuracy')
             accuracy_pivot = accuracy_pivot.round(4)
@@ -6574,16 +6621,17 @@ def main():
                         mime='text/csv'
                     )
                 
-        # Comprehensive performance statistics table
-        st.subheader("📊 Comprehensive Performance Statistics" if st.session_state.language == 'en' else "📊 Statistiques Complètes de Performance")
-        
-        # Calculate statistics for all metrics
-        stats_data = []
-        unique_clients = performance_df['Client'].unique() if not performance_df.empty else []
-        
-        for client in unique_clients:
-            client_data = performance_df[performance_df['Client'] == client]
-            if len(client_data) > 0:
+        # Comprehensive performance statistics table (only if data exists)
+        if 'performance_df' in locals() and len(performance_df) > 0:
+            st.subheader("📊 Comprehensive Performance Statistics" if st.session_state.language == 'en' else "📊 Statistiques Complètes de Performance")
+            
+            # Calculate statistics for all metrics
+            stats_data = []
+            unique_clients = performance_df['Client'].unique() if not performance_df.empty else []
+            
+            for client in unique_clients:
+                client_data = performance_df[performance_df['Client'] == client]
+                if len(client_data) > 0:
                     # Get real precision and recall values from actual data
                     precision_val = client_data['Precision'].mean() if 'Precision' in client_data.columns and not client_data['Precision'].isna().all() else client_data['Accuracy'].mean() * 1.02
                     recall_val = client_data['Recall'].mean() if 'Recall' in client_data.columns and not client_data['Recall'].isna().all() else client_data['Accuracy'].mean() * 0.98
