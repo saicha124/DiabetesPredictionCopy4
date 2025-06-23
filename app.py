@@ -4223,7 +4223,15 @@ def main():
                                 title=f"{selected_feature} Distribution",
                                 xaxis_title=selected_feature,
                                 yaxis_title="Count",
-                                height=400
+                                height=400,
+                                showlegend=True,
+                                legend=dict(
+                                    orientation="h",
+                                    yanchor="bottom",
+                                    y=1.02,
+                                    xanchor="right",
+                                    x=1
+                                )
                             )
                             st.plotly_chart(fig_dist, use_container_width=True)
                             
@@ -4270,7 +4278,15 @@ def main():
                             title="Risk Score Distribution",
                             xaxis_title="Risk Score",
                             yaxis_title="Count",
-                            height=400
+                            height=400,
+                            showlegend=True,
+                            legend=dict(
+                                orientation="h",
+                                yanchor="bottom",
+                                y=1.02,
+                                xanchor="right",
+                                x=1
+                            )
                         )
                         st.plotly_chart(fig_risk, use_container_width=True)
                         
@@ -4948,7 +4964,14 @@ def main():
                 
                 fig.update_layout(
                     title="Federated Learning Network Topology",
-                    showlegend=False,
+                    showlegend=True,
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=-0.1,
+                        xanchor="center",
+                        x=0.5
+                    ),
                     hovermode='closest',
                     margin=dict(b=20,l=5,r=5,t=40),
                     annotations=[ dict(
@@ -5166,7 +5189,14 @@ def main():
                         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                         height=600,
-                        showlegend=True
+                        showlegend=True,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="center",
+                            x=0.5
+                        )
                     )
                     
                     st.plotly_chart(fig, use_container_width=True)

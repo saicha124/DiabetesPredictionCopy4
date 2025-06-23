@@ -36,7 +36,7 @@ class ClientPerformanceVisualizer:
             'f1_score': f1,
             'predictions': y_pred,
             'true_labels': y_true,
-            'probabilities': y_prob if y_prob is not None else np.random.random(len(y_true))
+            'probabilities': y_prob if y_prob is not None else np.ones(len(y_true)) * 0.5
         }
         
         self.round_confusion_matrices[round_num][client_id] = cm
@@ -105,7 +105,7 @@ class ClientPerformanceVisualizer:
             hovermode='x unified'
         )
         
-        fig.update_yaxis(range=[0, 1])
+        fig.update_yaxes(range=[0, 1])
         
         st.plotly_chart(fig, use_container_width=True, key="client_accuracy_trends")
     
@@ -158,6 +158,13 @@ class ClientPerformanceVisualizer:
                     range=[0, 1]
                 )),
             showlegend=True,
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02
+            ),
             title=f"Client Performance Comparison (Round {latest_round})",
             height=400
         )
@@ -266,7 +273,7 @@ class ClientPerformanceVisualizer:
         )
         
         fig.update_layout(height=600, title_text="Round Performance Distribution Analysis")
-        st.plotly_chart(fig, use_container_width=True, key=f"round_analysis_{round_num}")
+        st.plotly_chart(fig, use_container_width=True, key=f"round_analysis_{hash(str(round_data))}")
     
     def create_global_performance_summary(self):
         """Create global performance summary across all rounds and clients"""

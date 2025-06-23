@@ -243,7 +243,15 @@ class InteractiveJourneyVisualizer:
             yaxis=dict(range=[-1, 4], showgrid=False, showticklabels=False, zeroline=False),
             height=500,
             plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            paper_bgcolor='rgba(0,0,0,0)',
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
         )
         
         return fig
