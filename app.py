@@ -1396,7 +1396,8 @@ def main():
         
         committee_df = pd.DataFrame(committee_members)
         st.dataframe(committee_df, use_container_width=True, height=250,
-                    column_config={col: st.column_config.TextColumn(col, width="medium") for col in committee_df.columns})
+                    column_config={col: st.column_config.TextColumn(col, width="medium") for col in committee_df.columns},
+                    hide_index=True)
         
         # Security Metrics Visualization
         if st.session_state.language == 'fr':
@@ -2982,7 +2983,8 @@ def main():
             events_df = pd.DataFrame(events)
         
         st.dataframe(events_df, use_container_width=True, height=200,
-                    column_config={col: st.column_config.TextColumn(col, width="medium") for col in events_df.columns})
+                    column_config={col: st.column_config.TextColumn(col, width="medium") for col in events_df.columns},
+                    hide_index=True)
         
         # Security Configuration Panel
         if st.session_state.language == 'fr':
@@ -5911,7 +5913,8 @@ def main():
                             "F1_Score": st.column_config.NumberColumn("F1 Score", format="%.4f", width="medium"),
                             "Precision": st.column_config.NumberColumn("Precision", format="%.4f", width="medium"),
                             "Recall": st.column_config.NumberColumn("Recall", format="%.4f", width="medium")
-                        })
+                        },
+                        hide_index=True)
             
             # Multiple visualization tabs
             perf_tab1, perf_tab2, perf_tab3 = st.tabs([
@@ -5989,7 +5992,8 @@ def main():
                 with metric_tab1:
                     st.write("**Client Accuracy Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Précision des Clients**")
                     st.dataframe(accuracy_pivot, use_container_width=True, height=300,
-                                column_config={col: st.column_config.NumberColumn(col, format="%.4f") for col in accuracy_pivot.columns})
+                                column_config={col: st.column_config.NumberColumn(col, format="%.4f") for col in accuracy_pivot.columns},
+                                hide_index=True)
                     
                     # Summary statistics for accuracy
                     if not accuracy_pivot.empty:
@@ -6023,12 +6027,14 @@ def main():
                                         "Best": st.column_config.NumberColumn("Best", format="%.4f", width="small"),
                                         "Average": st.column_config.NumberColumn("Average", format="%.4f", width="small"),
                                         "Improvement": st.column_config.NumberColumn("Improvement", format="%.4f", width="small")
-                                    })
+                                    },
+                                    hide_index=True)
                 
                 with metric_tab2:
                     st.write("**Client Loss Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Perte des Clients**")
                     st.dataframe(loss_pivot, use_container_width=True, height=300,
-                                column_config={col: st.column_config.NumberColumn(col, format="%.4f") for col in loss_pivot.columns})
+                                column_config={col: st.column_config.NumberColumn(col, format="%.4f") for col in loss_pivot.columns},
+                                hide_index=True)
                     
                     # Summary statistics for loss
                     if not loss_pivot.empty:
@@ -6063,7 +6069,8 @@ def main():
                                     "F1_Score": st.column_config.NumberColumn("F1 Score", format="%.4f", width="medium"),
                                     "Precision": st.column_config.NumberColumn("Precision", format="%.4f", width="medium"),
                                     "Recall": st.column_config.NumberColumn("Recall", format="%.4f", width="medium")
-                                })
+                                },
+                                hide_index=True)
                     
                     # Export option
                     if st.button("Export to CSV" if st.session_state.language == 'en' else "Exporter en CSV"):
