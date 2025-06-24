@@ -106,6 +106,7 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 24, 2025. Extended Local Training Epochs configuration from 1-10 to 1-100 range for enhanced training flexibility
 - June 24, 2025. Fixed loss calculation to provide individual client variation instead of simple accuracy inverse
 - June 24, 2025. Enhanced client evaluation with proper log loss calculation for realistic metrics
 - June 24, 2025. Updated fallback metrics to ensure each client has unique loss values per round

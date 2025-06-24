@@ -383,7 +383,7 @@ def main():
                 local_epochs = st.slider(
                     get_translation("local_epochs", st.session_state.language),
                     min_value=1,
-                    max_value=10,
+                    max_value=100,
                     value=st.session_state.get('local_epochs', default_epochs),
                     help=get_translation("local_epochs_help", st.session_state.language)
                 )
