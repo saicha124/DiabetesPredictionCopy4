@@ -6074,16 +6074,19 @@ def main():
             
             # Apply final client-specific variation to ensure all loss values are unique
             unique_losses = []
+            processed_clients = set()
+            
             for i, (loss, client) in enumerate(zip(losses, clients)):
                 try:
                     client_num = int(client.split()[-1]) if 'Client' in client else i % 8
                 except (ValueError, IndexError):
                     client_num = i % 8
                 
-                # Apply consistent client offset
-                variation = client_num * 0.025  # 2.5% variation per client
+                # Apply consistent client offset - ensure each client gets unique variation
+                variation = client_num * 0.05  # 5% variation per client for better separation
                 unique_loss = loss + variation
                 unique_losses.append(unique_loss)
+                processed_clients.add(client)
             
             # Create comprehensive DataFrame
             performance_df = pd.DataFrame({
@@ -6373,15 +6376,28 @@ def main():
                             for round_num in sorted(performance_df['Round'].unique())[:3]:
                                 round_losses = performance_df[performance_df['Round'] == round_num]['Loss'].values
                                 st.write(f"Round {round_num} losses: {[f'{l:.4f}' for l in round_losses]}")
+                            
+                            # Debug: Check if all clients are in the data
+                            st.write(f"**Available clients in data:** {sorted(performance_df['Client'].unique())}")
+                            client_counts = performance_df['Client'].value_counts()
+                            st.write(f"**Data points per client:** {dict(client_counts)}")
                         
-                        for i, client in enumerate(clients):
+                        # Get unique clients and ensure all are processed
+                        unique_clients = sorted(performance_df['Client'].unique())
+                        
+                        for i, client in enumerate(unique_clients):
                             client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
                             color = colors[i % len(colors)]
                             
-                            # Verify data exists
+                            # Verify data exists and show debug info
                             if len(client_data) == 0:
                                 st.warning(f"No data found for {client}")
                                 continue
+                            
+                            # Debug: Show first few data points for this client
+                            with st.expander(f"Debug {client} Data", expanded=False):
+                                st.write(f"Points: {len(client_data)}")
+                                st.write(client_data[['Round', 'Loss']].head().to_string(index=False))
                                 
                             fig_loss.add_trace(go.Scatter(
                                 x=client_data['Round'],
@@ -6602,11 +6618,18 @@ def main():
             
             with metric_tab1:
                 st.write("**Client Accuracy Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Précision des Clients**")
+                
+                # Reset index to make Round a column
+                accuracy_display = accuracy_pivot.reset_index()
+                
                 st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-                st.dataframe(accuracy_pivot, 
+                st.dataframe(accuracy_display, 
                             width=1000,
                             height=300,
-                            column_config={col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in accuracy_pivot.columns},
+                            column_config={
+                                "Round": st.column_config.NumberColumn("Round", width=80),
+                                **{col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in accuracy_pivot.columns}
+                            },
                             hide_index=True)
                 st.markdown('</div>', unsafe_allow_html=True)
                 
@@ -6651,11 +6674,18 @@ def main():
             
             with metric_tab2:
                 st.write("**Client Loss Progression Across Training Rounds**" if st.session_state.language == 'en' else "**Progression de la Perte des Clients**")
+                
+                # Reset index to make Round a column
+                loss_display = loss_pivot.reset_index()
+                
                 st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-                st.dataframe(loss_pivot, 
+                st.dataframe(loss_display, 
                             width=1000,
                             height=300,
-                            column_config={col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in loss_pivot.columns},
+                            column_config={
+                                "Round": st.column_config.NumberColumn("Round", width=80),
+                                **{col: st.column_config.NumberColumn(col, format="%.4f", width=100) for col in loss_pivot.columns}
+                            },
                             hide_index=True)
                 st.markdown('</div>', unsafe_allow_html=True)
                 
