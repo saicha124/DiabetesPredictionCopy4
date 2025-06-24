@@ -6324,10 +6324,29 @@ def main():
                     if selected_client_loss == "All Clients":
                         # Show all clients with different colors
                         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+                        
+                        # Debug: Show data info
+                        with st.expander("🔍 Loss Data Debug Info", expanded=False):
+                            st.write(f"Total data points: {len(performance_df)}")
+                            st.write(f"Unique clients: {list(clients)}")
+                            st.write(f"Round range: {performance_df['Round'].min()} - {performance_df['Round'].max()}")
+                            st.write(f"Loss range: {performance_df['Loss'].min():.4f} - {performance_df['Loss'].max():.4f}")
+                            
+                            # Show sample data for each client
+                            for client in clients[:3]:  # Show first 3 clients
+                                client_sample = performance_df[performance_df['Client'] == client].head(3)
+                                st.write(f"**{client} sample:**")
+                                st.write(client_sample[['Round', 'Loss']].to_string(index=False))
+                        
                         for i, client in enumerate(clients):
                             client_data = performance_df[performance_df['Client'] == client].sort_values('Round')
                             color = colors[i % len(colors)]
                             
+                            # Verify data exists
+                            if len(client_data) == 0:
+                                st.warning(f"No data found for {client}")
+                                continue
+                                
                             fig_loss.add_trace(go.Scatter(
                                 x=client_data['Round'],
                                 y=client_data['Loss'],
@@ -6339,9 +6358,19 @@ def main():
                             ))
                         
                         # Add convergence target line
-                        avg_final_loss = performance_df[performance_df['Round'] == performance_df['Round'].max()]['Loss'].mean()
-                        fig_loss.add_hline(y=avg_final_loss, line_dash="dash", line_color="green", 
-                                          annotation_text=f"Convergence Target: {avg_final_loss:.3f}")
+                        if len(performance_df) > 0:
+                            avg_final_loss = performance_df[performance_df['Round'] == performance_df['Round'].max()]['Loss'].mean()
+                            fig_loss.add_hline(y=avg_final_loss, line_dash="dash", line_color="green", 
+                                              annotation_text=f"Convergence Target: {avg_final_loss:.3f}")
+                            
+                            # Add invisible trace for legend
+                            fig_loss.add_trace(go.Scatter(
+                                x=[None], y=[None],
+                                mode='lines',
+                                name='Convergence Target',
+                                line=dict(color='green', dash='dash', width=2),
+                                showlegend=True
+                            ))
                         title = "All Clients - Loss Evolution"
                     else:
                         # Show individual client
