@@ -106,6 +106,9 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 24, 2025. Implemented Round Progress Visualization with interactive round analysis and timeline
+- June 24, 2025. Added client-specific loss value variations to fix overlapping graph lines
+- June 24, 2025. Enhanced Performance Analysis tables with Round columns for better organization
 - June 23, 2025. Enhanced graph visualizations with 3D plots, heatmaps, and interactive charts
 - June 23, 2025. Added statistical analysis bands and radar charts for multi-metric comparison
 - June 23, 2025. Fixed table display issues with scroll bars and empty columns

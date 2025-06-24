@@ -252,7 +252,8 @@ def main():
         get_translation("tab_graph_viz", st.session_state.language),
         "📊 Performance Evolution" if st.session_state.language == 'en' else "📊 Évolution Performance",
         "🎯 Real Security Analysis" if st.session_state.language == 'en' else "🎯 Analyse Sécurité Réelle",
-        "📋 Incident Reports" if st.session_state.language == 'en' else "📋 Rapports d'Incidents"
+        "📋 Incident Reports" if st.session_state.language == 'en' else "📋 Rapports d'Incidents",
+        "🔄 Round Progress" if st.session_state.language == 'en' else "🔄 Progrès des Tours"
     ]
     
     # Map navigation selections to tab indices
@@ -267,14 +268,15 @@ def main():
         "Graph Visualization": 7, "Visualisation Graphique": 7,
         "Performance Evolution": 8, "Évolution Performance": 8,
         "Real Security Analysis": 9, "Analyse Sécurité Réelle": 9,
-        "Incident Reports": 10, "Rapports d'Incidents": 10
+        "Incident Reports": 10, "Rapports d'Incidents": 10,
+        "Round Progress": 11, "Progrès des Tours": 11
     }
     
     # Determine default tab index
     default_tab = nav_to_tab.get(st.session_state.get('selected_tab', 'Configuration'), 0)
     
     # Main tabs
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs(tab_names)
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs(tab_names)
 
     with tab1:
         st.header("🎛️ " + get_translation("tab_training", st.session_state.language))
@@ -7378,6 +7380,397 @@ def main():
                         st.error("PDF generation requires reportlab package")
                     except Exception as e:
                         st.error(f"Error generating PDF: {e}")
+
+    with tab12:
+        # Round Progress Visualization Tab
+        if st.session_state.language == 'fr':
+            st.header("🔄 Visualisation du Progrès des Tours")
+            st.markdown("### 📊 Analyse Détaillée du Progrès par Tour d'Entraînement")
+        else:
+            st.header("🔄 Round Progress Visualization")
+            st.markdown("### 📊 Detailed Round-by-Round Training Progress Analysis")
+            
+        if 'training_completed' in st.session_state and st.session_state.training_completed:
+            # Extract training data for round progress visualization
+            rounds_data = []
+            client_round_data = {}
+            
+            if 'round_client_metrics' in st.session_state and st.session_state.round_client_metrics:
+                for round_num, client_data in st.session_state.round_client_metrics.items():
+                    if round_num == 0:
+                        continue
+                        
+                    round_metrics = {
+                        'round': round_num,
+                        'clients': len(client_data),
+                        'avg_accuracy': 0,
+                        'avg_loss': 0,
+                        'best_accuracy': 0,
+                        'worst_accuracy': 1,
+                        'accuracy_std': 0,
+                        'client_details': []
+                    }
+                    
+                    accuracies = []
+                    losses = []
+                    
+                    for client_id, metrics in client_data.items():
+                        acc = metrics.get('local_accuracy', metrics.get('accuracy', 0))
+                        loss = metrics.get('loss', 0)
+                        
+                        if acc <= 1 and loss >= 0:  # Valid metrics
+                            accuracies.append(acc)
+                            losses.append(loss)
+                            
+                            client_round_data.setdefault(client_id, []).append({
+                                'round': round_num,
+                                'accuracy': acc,
+                                'loss': loss
+                            })
+                            
+                            round_metrics['client_details'].append({
+                                'client_id': client_id,
+                                'accuracy': acc,
+                                'loss': loss
+                            })
+                    
+                    if accuracies:
+                        round_metrics['avg_accuracy'] = np.mean(accuracies)
+                        round_metrics['avg_loss'] = np.mean(losses)
+                        round_metrics['best_accuracy'] = max(accuracies)
+                        round_metrics['worst_accuracy'] = min(accuracies)
+                        round_metrics['accuracy_std'] = np.std(accuracies)
+                        rounds_data.append(round_metrics)
+                
+                if rounds_data:
+                    # Round Progress Overview
+                    if st.session_state.language == 'fr':
+                        st.subheader("📈 Vue d'Ensemble du Progrès")
+                    else:
+                        st.subheader("📈 Progress Overview")
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    total_rounds = len(rounds_data)
+                    final_accuracy = rounds_data[-1]['avg_accuracy'] if rounds_data else 0
+                    best_round = max(rounds_data, key=lambda x: x['avg_accuracy'])['round'] if rounds_data else 0
+                    improvement = final_accuracy - rounds_data[0]['avg_accuracy'] if len(rounds_data) > 1 else 0
+                    
+                    with col1:
+                        st.metric("Total Rounds" if st.session_state.language == 'en' else "Tours Totaux",
+                                 total_rounds)
+                    
+                    with col2:
+                        st.metric("Final Accuracy" if st.session_state.language == 'en' else "Précision Finale",
+                                 f"{final_accuracy:.3f}",
+                                 delta=f"{improvement:.3f}")
+                    
+                    with col3:
+                        st.metric("Best Round" if st.session_state.language == 'en' else "Meilleur Tour",
+                                 best_round)
+                    
+                    with col4:
+                        avg_clients = np.mean([r['clients'] for r in rounds_data])
+                        st.metric("Avg Clients" if st.session_state.language == 'en' else "Clients Moy.",
+                                 f"{avg_clients:.1f}")
+                    
+                    # Interactive Round Selector
+                    st.markdown("---")
+                    if st.session_state.language == 'fr':
+                        st.subheader("🔍 Analyse Interactive par Tour")
+                    else:
+                        st.subheader("🔍 Interactive Round Analysis")
+                    
+                    # Round selection
+                    round_numbers = [r['round'] for r in rounds_data]
+                    selected_round = st.selectbox(
+                        "Select Round for Detailed Analysis" if st.session_state.language == 'en' else "Sélectionner un Tour pour Analyse Détaillée",
+                        round_numbers,
+                        index=len(round_numbers)-1  # Default to last round
+                    )
+                    
+                    # Find selected round data
+                    selected_round_data = next((r for r in rounds_data if r['round'] == selected_round), None)
+                    
+                    if selected_round_data:
+                        # Round Details
+                        col1, col2 = st.columns([2, 1])
+                        
+                        with col1:
+                            if st.session_state.language == 'fr':
+                                st.markdown(f"### 📊 Détails du Tour {selected_round}")
+                            else:
+                                st.markdown(f"### 📊 Round {selected_round} Details")
+                            
+                            # Round metrics
+                            round_col1, round_col2, round_col3 = st.columns(3)
+                            
+                            with round_col1:
+                                st.metric("Average Accuracy" if st.session_state.language == 'en' else "Précision Moyenne",
+                                         f"{selected_round_data['avg_accuracy']:.4f}")
+                                st.metric("Best Client" if st.session_state.language == 'en' else "Meilleur Client",
+                                         f"{selected_round_data['best_accuracy']:.4f}")
+                            
+                            with round_col2:
+                                st.metric("Average Loss" if st.session_state.language == 'en' else "Perte Moyenne",
+                                         f"{selected_round_data['avg_loss']:.4f}")
+                                st.metric("Worst Client" if st.session_state.language == 'en' else "Client le Plus Faible",
+                                         f"{selected_round_data['worst_accuracy']:.4f}")
+                            
+                            with round_col3:
+                                st.metric("Active Clients" if st.session_state.language == 'en' else "Clients Actifs",
+                                         selected_round_data['clients'])
+                                st.metric("Accuracy Std" if st.session_state.language == 'en' else "Écart-Type Précision",
+                                         f"{selected_round_data['accuracy_std']:.4f}")
+                        
+                        with col2:
+                            # Round performance gauge
+                            if st.session_state.language == 'fr':
+                                st.markdown("#### 🎯 Performance du Tour")
+                            else:
+                                st.markdown("#### 🎯 Round Performance")
+                            
+                            fig_gauge = go.Figure(go.Indicator(
+                                mode = "gauge+number+delta",
+                                value = selected_round_data['avg_accuracy'] * 100,
+                                domain = {'x': [0, 1], 'y': [0, 1]},
+                                title = {'text': "Accuracy %" if st.session_state.language == 'en' else "Précision %"},
+                                delta = {'reference': 75},
+                                gauge = {
+                                    'axis': {'range': [None, 100]},
+                                    'bar': {'color': "darkblue"},
+                                    'steps': [
+                                        {'range': [0, 50], 'color': "lightgray"},
+                                        {'range': [50, 75], 'color': "yellow"},
+                                        {'range': [75, 90], 'color': "lightgreen"},
+                                        {'range': [90, 100], 'color': "green"}
+                                    ],
+                                    'threshold': {
+                                        'line': {'color': "red", 'width': 4},
+                                        'thickness': 0.75,
+                                        'value': 85
+                                    }
+                                }
+                            ))
+                            fig_gauge.update_layout(height=250)
+                            st.plotly_chart(fig_gauge, use_container_width=True)
+                        
+                        # Client Performance in Selected Round
+                        st.markdown("---")
+                        if st.session_state.language == 'fr':
+                            st.markdown(f"### 👥 Performance des Clients - Tour {selected_round}")
+                        else:
+                            st.markdown(f"### 👥 Client Performance - Round {selected_round}")
+                        
+                        if selected_round_data['client_details']:
+                            # Create client performance visualization
+                            client_df = pd.DataFrame(selected_round_data['client_details'])
+                            
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                # Client accuracy bar chart
+                                fig_clients = go.Figure()
+                                
+                                colors = ['#2E86AB' if acc >= selected_round_data['avg_accuracy'] else '#F24236' 
+                                         for acc in client_df['accuracy']]
+                                
+                                fig_clients.add_trace(go.Bar(
+                                    x=[f"Client {cid}" for cid in client_df['client_id']],
+                                    y=client_df['accuracy'],
+                                    marker_color=colors,
+                                    name="Accuracy" if st.session_state.language == 'en' else "Précision",
+                                    hovertemplate='<b>%{x}</b><br>Accuracy: %{y:.4f}<extra></extra>'
+                                ))
+                                
+                                # Add average line
+                                fig_clients.add_hline(y=selected_round_data['avg_accuracy'], 
+                                                     line_dash="dash", 
+                                                     line_color="orange",
+                                                     annotation_text=f"Average: {selected_round_data['avg_accuracy']:.3f}")
+                                
+                                fig_clients.update_layout(
+                                    title=f"Client Accuracy - Round {selected_round}" if st.session_state.language == 'en' else f"Précision des Clients - Tour {selected_round}",
+                                    xaxis_title="Clients",
+                                    yaxis_title="Accuracy" if st.session_state.language == 'en' else "Précision",
+                                    height=320,
+                                    showlegend=False
+                                )
+                                
+                                st.plotly_chart(fig_clients, use_container_width=True)
+                            
+                            with col2:
+                                # Client performance table
+                                if st.session_state.language == 'fr':
+                                    st.markdown("**📋 Tableau de Performance**")
+                                else:
+                                    st.markdown("**📋 Performance Table**")
+                                
+                                display_df = pd.DataFrame({
+                                    'Client': [f"Client {cid}" for cid in client_df['client_id']],
+                                    'Accuracy': client_df['accuracy'].round(4),
+                                    'Loss': client_df['loss'].round(4),
+                                    'Status': ['🟢 Above Avg' if acc >= selected_round_data['avg_accuracy'] else '🔴 Below Avg' 
+                                              for acc in client_df['accuracy']]
+                                })
+                                
+                                st.dataframe(display_df, 
+                                           use_container_width=True,
+                                           height=300,
+                                           column_config={
+                                               "Client": st.column_config.TextColumn("Client", width=100),
+                                               "Accuracy": st.column_config.NumberColumn("Accuracy", format="%.4f", width=100),
+                                               "Loss": st.column_config.NumberColumn("Loss", format="%.4f", width=100),
+                                               "Status": st.column_config.TextColumn("Status", width=120)
+                                           },
+                                           hide_index=True)
+                    
+                    # Round-by-Round Progress Timeline
+                    st.markdown("---")
+                    if st.session_state.language == 'fr':
+                        st.subheader("📈 Timeline de Progrès par Tour")
+                    else:
+                        st.subheader("📈 Round-by-Round Progress Timeline")
+                    
+                    # Progress timeline visualization
+                    fig_timeline = go.Figure()
+                    
+                    rounds = [r['round'] for r in rounds_data]
+                    avg_accuracies = [r['avg_accuracy'] for r in rounds_data]
+                    best_accuracies = [r['best_accuracy'] for r in rounds_data]
+                    worst_accuracies = [r['worst_accuracy'] for r in rounds_data]
+                    
+                    # Add confidence band
+                    fig_timeline.add_trace(go.Scatter(
+                        x=rounds + rounds[::-1],
+                        y=best_accuracies + worst_accuracies[::-1],
+                        fill='toself',
+                        fillcolor='rgba(46, 134, 171, 0.2)',
+                        line=dict(color='rgba(255,255,255,0)'),
+                        name='Performance Range',
+                        hoverinfo='skip'
+                    ))
+                    
+                    # Average accuracy line
+                    fig_timeline.add_trace(go.Scatter(
+                        x=rounds,
+                        y=avg_accuracies,
+                        mode='lines+markers',
+                        name='Average Accuracy' if st.session_state.language == 'en' else 'Précision Moyenne',
+                        line=dict(color='#2E86AB', width=3),
+                        marker=dict(size=8, color='#2E86AB'),
+                        hovertemplate='<b>Round %{x}</b><br>Avg Accuracy: %{y:.4f}<extra></extra>'
+                    ))
+                    
+                    # Best accuracy line
+                    fig_timeline.add_trace(go.Scatter(
+                        x=rounds,
+                        y=best_accuracies,
+                        mode='lines+markers',
+                        name='Best Client' if st.session_state.language == 'en' else 'Meilleur Client',
+                        line=dict(color='#4CAF50', width=2, dash='dash'),
+                        marker=dict(size=6, color='#4CAF50'),
+                        hovertemplate='<b>Round %{x}</b><br>Best Accuracy: %{y:.4f}<extra></extra>'
+                    ))
+                    
+                    # Worst accuracy line
+                    fig_timeline.add_trace(go.Scatter(
+                        x=rounds,
+                        y=worst_accuracies,
+                        mode='lines+markers',
+                        name='Worst Client' if st.session_state.language == 'en' else 'Client le Plus Faible',
+                        line=dict(color='#F24236', width=2, dash='dash'),
+                        marker=dict(size=6, color='#F24236'),
+                        hovertemplate='<b>Round %{x}</b><br>Worst Accuracy: %{y:.4f}<extra></extra>'
+                    ))
+                    
+                    # Highlight selected round
+                    if selected_round in rounds:
+                        selected_idx = rounds.index(selected_round)
+                        fig_timeline.add_trace(go.Scatter(
+                            x=[selected_round],
+                            y=[avg_accuracies[selected_idx]],
+                            mode='markers',
+                            marker=dict(size=15, color='gold', symbol='star'),
+                            name=f'Selected Round {selected_round}',
+                            hovertemplate=f'<b>Selected Round {selected_round}</b><br>Accuracy: {avg_accuracies[selected_idx]:.4f}<extra></extra>'
+                        ))
+                    
+                    fig_timeline.update_layout(
+                        title='Training Progress Timeline' if st.session_state.language == 'en' else 'Timeline de Progrès d\'Entraînement',
+                        xaxis_title='Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement',
+                        yaxis_title='Accuracy' if st.session_state.language == 'en' else 'Précision',
+                        height=400,
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    )
+                    
+                    st.plotly_chart(fig_timeline, use_container_width=True)
+                    
+                else:
+                    if st.session_state.language == 'fr':
+                        st.info("Aucune donnée de tour trouvée. Veuillez compléter l'entraînement fédéré pour voir l'analyse des tours.")
+                    else:
+                        st.info("No round data found. Please complete federated training to see round analysis.")
+            else:
+                if st.session_state.language == 'fr':
+                    st.info("Aucune donnée de métriques par tour trouvée. Veuillez compléter l'entraînement fédéré pour voir la visualisation du progrès des tours.")
+                else:
+                    st.info("No round metrics data found. Please complete federated training to see round progress visualization.")
+        else:
+            if st.session_state.language == 'fr':
+                st.warning("Veuillez compléter l'entraînement fédéré pour accéder à la visualisation du progrès des tours.")
+                st.markdown("""
+                ### 🎯 Fonctionnalités de Visualisation du Progrès des Tours
+                
+                Une fois l'entraînement terminé, vous pourrez voir :
+                
+                **📊 Vue d'Ensemble du Progrès :**
+                - Métriques de performance globales
+                - Tours totaux et précision finale
+                - Analyse des améliorations
+                
+                **🔍 Analyse Interactive par Tour :**
+                - Sélection de tour pour analyse détaillée
+                - Métriques de performance par tour
+                - Jauge de performance en temps réel
+                
+                **👥 Performance des Clients :**
+                - Graphiques de performance par client
+                - Tableaux de comparaison détaillés
+                - Statuts au-dessus/en-dessous de la moyenne
+                
+                **📈 Timeline de Progrès :**
+                - Visualisation tour par tour
+                - Bandes de confiance de performance
+                - Suivi des tendances d'amélioration
+                """)
+            else:
+                st.warning("Please complete federated training to access round progress visualization.")
+                st.markdown("""
+                ### 🎯 Round Progress Visualization Features
+                
+                Once training is completed, you'll be able to see:
+                
+                **📊 Progress Overview:**
+                - Global performance metrics
+                - Total rounds and final accuracy
+                - Improvement analysis
+                
+                **🔍 Interactive Round Analysis:**
+                - Round selection for detailed analysis
+                - Per-round performance metrics
+                - Real-time performance gauge
+                
+                **👥 Client Performance:**
+                - Per-client performance charts
+                - Detailed comparison tables
+                - Above/below average status
+                
+                **📈 Progress Timeline:**
+                - Round-by-round visualization
+                - Performance confidence bands
+                - Improvement trend tracking
+                """)
 
 
 if __name__ == "__main__":
