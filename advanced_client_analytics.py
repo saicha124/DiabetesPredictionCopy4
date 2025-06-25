@@ -385,7 +385,7 @@ class AdvancedClientAnalytics:
         with col5:
             st.metric(get_translation("avg_recall", st.session_state.language), f"{avg_recall:.3f}")
         
-        # Performance distribution
+        # Performance distribution with enhanced visualizations
         performance_data = []
         for client_id, metrics in latest_metrics.items():
             performance_data.append({
@@ -394,7 +394,9 @@ class AdvancedClientAnalytics:
                 'F1-Score': metrics['f1_score'],
                 'Precision': metrics['precision'],
                 'Recall': metrics['recall'],
-                'Data Size': metrics['data_size']
+                'Data Size': metrics['data_size'],
+                'Performance Score': (metrics['accuracy'] + metrics['f1_score']) / 2,
+                'Facility Type': f"Type {(client_id % 3) + 1}"  # Group facilities by type
             })
         
         df_performance = pd.DataFrame(performance_data)
@@ -402,29 +404,143 @@ class AdvancedClientAnalytics:
         col1, col2 = st.columns(2)
         
         with col1:
-            fig_bar = px.bar(
-                df_performance, 
-                x='Facility', 
-                y=['Accuracy', 'F1-Score', 'Precision', 'Recall'],
-                title="Performance Metrics by Medical Facility",
-                barmode='group'
+            # Enhanced grouped bar chart with better styling
+            fig_bar = go.Figure()
+            
+            metrics_to_plot = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
+            colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+            
+            for i, metric in enumerate(metrics_to_plot):
+                fig_bar.add_trace(go.Bar(
+                    name=metric,
+                    x=df_performance['Facility'],
+                    y=df_performance[metric],
+                    marker_color=colors[i],
+                    text=[f"{val:.3f}" for val in df_performance[metric]],
+                    textposition='outside',
+                    textfont=dict(size=10)
+                ))
+            
+            fig_bar.update_layout(
+                title={
+                    'text': "Performance Metrics by Medical Facility",
+                    'x': 0.5,
+                    'font': {'size': 16, 'family': 'Arial Black'}
+                },
+                xaxis_title="Medical Facilities",
+                yaxis_title="Performance Score",
+                barmode='group',
+                height=450,
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(showgrid=True, gridcolor='lightgray'),
+                yaxis=dict(showgrid=True, gridcolor='lightgray', range=[0, 1])
             )
-            fig_bar.update_layout(height=400)
+            
             import time
             st.plotly_chart(fig_bar, use_container_width=True, key=f"facility_performance_bar_{int(time.time() * 1000000)}")
         
         with col2:
-            fig_scatter = px.scatter(
-                df_performance,
-                x='Accuracy',
-                y='F1-Score',
-                size='Data Size',
-                hover_name='Facility',
-                title="Accuracy vs F1-Score Distribution",
-                color='Facility'
+            # Enhanced scatter plot with better annotations and styling
+            fig_scatter = go.Figure()
+            
+            # Add scatter points with custom styling
+            fig_scatter.add_trace(go.Scatter(
+                x=df_performance['Accuracy'],
+                y=df_performance['F1-Score'],
+                mode='markers+text',
+                marker=dict(
+                    size=df_performance['Data Size'] / 5,  # Scale marker size
+                    color=df_performance.index,
+                    colorscale='viridis',
+                    showscale=True,
+                    colorbar=dict(title="Facility ID"),
+                    line=dict(width=2, color='white')
+                ),
+                text=df_performance['Facility'],
+                textposition="top center",
+                textfont=dict(size=10, color='black'),
+                hovertemplate='<b>%{text}</b><br>' +
+                             'Accuracy: %{x:.3f}<br>' +
+                             'F1-Score: %{y:.3f}<br>' +
+                             'Data Size: %{marker.size}<br>' +
+                             '<extra></extra>',
+                name='Medical Facilities'
+            ))
+            
+            # Add diagonal reference line (perfect correlation)
+            min_val = min(df_performance['Accuracy'].min(), df_performance['F1-Score'].min()) - 0.05
+            max_val = max(df_performance['Accuracy'].max(), df_performance['F1-Score'].max()) + 0.05
+            
+            fig_scatter.add_trace(go.Scatter(
+                x=[min_val, max_val],
+                y=[min_val, max_val],
+                mode='lines',
+                line=dict(dash='dash', color='red', width=2),
+                name='Perfect Correlation',
+                hovertemplate='Perfect Accuracy-F1 Correlation<extra></extra>'
+            ))
+            
+            fig_scatter.update_layout(
+                title={
+                    'text': "Accuracy vs F1-Score Distribution",
+                    'x': 0.5,
+                    'font': {'size': 16, 'family': 'Arial Black'}
+                },
+                xaxis_title="Accuracy Score",
+                yaxis_title="F1-Score",
+                height=450,
+                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(
+                    showgrid=True, 
+                    gridcolor='lightgray',
+                    range=[min_val, max_val]
+                ),
+                yaxis=dict(
+                    showgrid=True, 
+                    gridcolor='lightgray',
+                    range=[min_val, max_val]
+                ),
+                showlegend=True,
+                legend=dict(
+                    orientation="v",
+                    yanchor="top",
+                    y=0.99,
+                    xanchor="left",
+                    x=0.01
+                )
             )
-            fig_scatter.update_layout(height=400)
+            
             st.plotly_chart(fig_scatter, use_container_width=True, key=f"facility_scatter_overview_{int(time.time() * 1000000)}")
+        
+        # Add performance summary table
+        st.subheader("📋 Detailed Performance Summary")
+        
+        # Create enhanced summary table
+        summary_df = df_performance.copy()
+        summary_df['Performance Grade'] = summary_df['Performance Score'].apply(
+            lambda x: 'A+' if x >= 0.9 else 'A' if x >= 0.8 else 'B+' if x >= 0.7 else 'B' if x >= 0.6 else 'C'
+        )
+        summary_df['Status'] = summary_df['Performance Score'].apply(
+            lambda x: '🟢 Excellent' if x >= 0.8 else '🟡 Good' if x >= 0.7 else '🟠 Fair' if x >= 0.6 else '🔴 Needs Improvement'
+        )
+        
+        # Format numerical columns
+        for col in ['Accuracy', 'F1-Score', 'Precision', 'Recall', 'Performance Score']:
+            summary_df[col] = summary_df[col].apply(lambda x: f"{x:.3f}")
+        
+        st.dataframe(
+            summary_df[['Facility', 'Accuracy', 'F1-Score', 'Precision', 'Recall', 'Performance Grade', 'Status']],
+            use_container_width=True,
+            hide_index=True
+        )
     
     def _create_performance_evolution(self):
         """Create performance evolution visualization"""
