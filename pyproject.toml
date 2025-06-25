@@ -17,4 +17,5 @@ dependencies = [
     "requests>=2.25.0",
     "reportlab>=4.4.2",
     "trafilatura>=2.0.0",
+    "statsmodels>=0.14.4",
 ]

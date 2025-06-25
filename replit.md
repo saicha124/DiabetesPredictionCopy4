@@ -106,6 +106,9 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- December 25, 2024. Successfully migrated project from Replit Agent to standard Replit environment
+- December 25, 2024. Installed all required Python dependencies including statsmodels for correlation analysis
+- December 25, 2024. Verified Streamlit application runs correctly on port 5000 with all features functional
 - June 24, 2025. Extended Local Training Epochs configuration from 1-10 to 1-100 range for enhanced training flexibility
 - June 24, 2025. Fixed loss calculation to provide individual client variation instead of simple accuracy inverse
 - June 24, 2025. Enhanced client evaluation with proper log loss calculation for realistic metrics
