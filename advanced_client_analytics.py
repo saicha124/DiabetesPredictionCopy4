@@ -805,6 +805,7 @@ class AdvancedClientAnalytics:
         
         # Generate prediction data if not available
         if not y_true or not y_pred or len(y_true) == 0:
+            import numpy as np
             accuracy = selected_metrics.get('accuracy', 0.7)
             precision = selected_metrics.get('precision', accuracy * 0.95)
             recall = selected_metrics.get('recall', accuracy * 1.05)
@@ -829,6 +830,7 @@ class AdvancedClientAnalytics:
         
         # Calculate confusion matrix metrics
         if len(y_true) > 0 and len(y_pred) > 0:
+            import numpy as np
             from sklearn.metrics import confusion_matrix
             cm = confusion_matrix(y_true, y_pred)
             

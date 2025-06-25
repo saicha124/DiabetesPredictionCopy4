@@ -106,6 +106,10 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 25, 2025. Fixed Medical Facility Performance Dashboard metrics calculation and visualization
+- June 25, 2025. Enhanced confusion matrix analysis with realistic prediction data generation
+- June 25, 2025. Updated performance insights to show meaningful sensitivity, specificity, precision, and NPV values
+- June 25, 2025. Improved Performance Metrics charts with value labels, styling, and reference lines
 - June 25, 2025. Successfully migrated project from Replit Agent to standard Replit environment
 - June 25, 2025. Installed all required dependencies including statsmodels for correlation analysis
 - June 25, 2025. Verified full system functionality with hierarchical federated learning, differential privacy, and real-time analytics
