@@ -16,4 +16,5 @@ dependencies = [
     "cryptography>=40.0.0",
     "requests>=2.25.0",
     "reportlab>=4.4.2",
+    "trafilatura>=2.0.0",
 ]
