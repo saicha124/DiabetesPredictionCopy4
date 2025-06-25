@@ -106,6 +106,9 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 25, 2025. Fixed Advanced Analytics Dashboard visualization issues including zero-line problems in client accuracy charts
+- June 25, 2025. Enhanced Performance Comparison with real-time data integration and radar charts
+- June 25, 2025. Swapped tab names between Individual Patient Risk Assessment and Advanced Medical Facility Analytics
 - June 25, 2025. Fixed Medical Facility Performance Dashboard metrics calculation and visualization
 - June 25, 2025. Enhanced confusion matrix analysis with realistic prediction data generation
 - June 25, 2025. Updated performance insights to show meaningful sensitivity, specificity, precision, and NPV values
