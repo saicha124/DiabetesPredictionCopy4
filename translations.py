@@ -15,8 +15,8 @@ TRANSLATIONS = {
         "tab_visualization": "📊 Journey Visualization",
         "tab_analytics": "📈 Client Analytics",
         "tab_explainer": "🩺 Patient Risk Prediction Explainer",
-        "tab_facility": "🏥 Advanced Medical Facility Analytics",
-        "tab_risk": "🩺 Individual Patient Risk Assessment",
+        "tab_facility": "🩺 Individual Patient Risk Assessment",
+        "tab_risk": "🏥 Advanced Medical Facility Analytics",
         "tab_advanced_analytics": "📊 Advanced Analytics",
         
         # Training controls
@@ -514,8 +514,8 @@ TRANSLATIONS = {
         "tab_visualization": "📊 Visualisation du Parcours",
         "tab_analytics": "📈 Analytiques Client",
         "tab_explainer": "🩺 Explicateur de Prédiction de Risque Patient",
-        "tab_facility": "🏥 Analytiques Avancées Établissement Médical",
-        "tab_risk": "🩺 Évaluation Risque Patient Individuel",
+        "tab_facility": "🩺 Évaluation Risque Patient Individuel",
+        "tab_risk": "🏥 Analytiques Avancées Établissement Médical",
         "tab_graph_viz": "🔗 Visualisation Réseau",
         "tab_advanced_analytics": "📊 Analytiques Avancées",
         

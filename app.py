@@ -5800,10 +5800,8 @@ def main():
         # Individual Patient Risk Assessment Tab
         if st.session_state.language == 'fr':
             st.header("🏥 Évaluation des Risques des Patients")
-            st.markdown("### 🔍 Analyse Personnalisée des Risques de Diabète")
         else:
             st.header("🏥 Individual Patient Risk Assessment")
-            st.markdown("### 🔍 Personalized Diabetes Risk Analysis")
         
         # Patient input form
         if st.session_state.language == 'fr':
