@@ -75,13 +75,24 @@ class InteractiveJourneyVisualizer:
         if session_state.get('training_completed', False) or (hasattr(session_state, 'results') and session_state.results):
             self.current_stage = 8  # Results Analysis - final stage
         elif session_state.get('training_in_progress', False) or (hasattr(session_state, 'training_metrics') and session_state.training_metrics):
-            # Check training progress
+            # Check training progress with early stopping detection
             if hasattr(session_state, 'training_metrics') and session_state.training_metrics:
                 rounds = len(session_state.training_metrics)
                 max_rounds = session_state.get('max_rounds', 20)
                 
-                if rounds >= max_rounds:
+                # Check if training completed naturally (reached max rounds)
+                training_completed_naturally = rounds >= max_rounds
+                
+                # Check if early stopping occurred (look for early stopping indicators)
+                early_stopped = (hasattr(session_state, 'fl_manager') and 
+                               hasattr(session_state.fl_manager, 'early_stopped') and 
+                               session_state.fl_manager.early_stopped)
+                
+                if training_completed_naturally:
                     self.current_stage = 8  # Results Analysis
+                elif early_stopped:
+                    # If early stopped, we're still in convergence phase but incomplete
+                    self.current_stage = 6  # Global Convergence (incomplete)
                 elif rounds >= max(8, int(max_rounds * 0.8)):
                     self.current_stage = 7  # Model Evaluation
                 elif rounds >= max(5, int(max_rounds * 0.5)):
@@ -125,8 +136,13 @@ class InteractiveJourneyVisualizer:
                 total_rounds = session_state.get('max_rounds', 20)
                 current_round = len(session_state.get('training_metrics', []))
                 
+                # Check if early stopping occurred
+                early_stopped = (hasattr(session_state, 'fl_manager') and 
+                               hasattr(session_state.fl_manager, 'early_stopped') and 
+                               session_state.fl_manager.early_stopped)
+                
                 # Calculate gradual progress based on current stage
-                base_progress = 0  # Initialize to fix LSP issue
+                base_progress = 0
                 if self.current_stage == 4:  # Training Initiation
                     # Progress from 0% to 30% based on rounds completed
                     base_progress = min(30, (current_round / max(1, total_rounds * 0.1)) * 30)
@@ -135,11 +151,18 @@ class InteractiveJourneyVisualizer:
                     round_ratio = current_round / total_rounds
                     base_progress = 30 + min(40, round_ratio * 40)
                 elif self.current_stage == 6:  # Global Convergence
-                    # Progress from 70% to 95% based on rounds completed
-                    round_ratio = current_round / total_rounds
-                    base_progress = 70 + min(25, round_ratio * 25)
+                    # Progress calculation for convergence stage
+                    if early_stopped:
+                        # If early stopped, show partial progress based on rounds completed
+                        # but cap at 60% to indicate incomplete convergence
+                        round_ratio = current_round / total_rounds
+                        base_progress = min(60, 30 + (round_ratio * 30))
+                    else:
+                        # Normal progress from 70% to 95% based on rounds completed
+                        round_ratio = current_round / total_rounds
+                        base_progress = 70 + min(25, round_ratio * 25)
                 
-                return min(95, base_progress)  # Cap at 95% until truly complete
+                return min(95, base_progress) if not early_stopped else base_progress
             return 10 if self.current_stage == 4 else 0
         elif self.current_stage == 8:  # Results Analysis
             # Check if training is truly completed
@@ -454,7 +477,28 @@ class InteractiveJourneyVisualizer:
         from translations import get_translation
         if st.session_state.get('training_metrics'):
             metrics = st.session_state.training_metrics
-            if len(metrics) > 3:
+            current_round = len(metrics)
+            max_rounds = st.session_state.get('max_rounds', 20)
+            
+            # Check if early stopping occurred
+            early_stopped = (hasattr(st.session_state, 'fl_manager') and 
+                           hasattr(st.session_state.fl_manager, 'early_stopped') and 
+                           st.session_state.fl_manager.early_stopped)
+            
+            if early_stopped:
+                st.warning(f"⚠️ Early Stopping Triggered")
+                st.write(f"🛑 Training stopped at round {current_round}/{max_rounds}")
+                st.write(f"📉 No improvement detected for multiple rounds")
+                st.write(f"🔄 Best model restored from earlier round")
+                
+                # Show best performance achieved
+                if metrics:
+                    best_acc = max([m['accuracy'] for m in metrics])
+                    st.write(f"🏆 Best accuracy achieved: {best_acc:.3f}")
+            elif current_round >= max_rounds:
+                st.success(f"✅ {get_translation('model_converging', st.session_state.language)}")
+                st.write(f"📈 Training completed full {max_rounds} rounds")
+            elif len(metrics) > 3:
                 recent_accuracies = [m['accuracy'] for m in metrics[-3:]]
                 convergence_trend = np.diff(recent_accuracies)
                 
