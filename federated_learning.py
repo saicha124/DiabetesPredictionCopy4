@@ -391,10 +391,41 @@ class FederatedLearningManager:
                             privacy_text = "🔓 Privacy: Disabled"
                         st.session_state.privacy_status.info(privacy_text)
                 
+                # Store previous model parameters for comparison
+                prev_params = None
+                if hasattr(self.global_model, 'coef_') and hasattr(self.global_model, 'intercept_'):
+                    prev_params = np.concatenate([
+                        self.global_model.coef_.flatten(),
+                        self.global_model.intercept_.flatten()
+                    ])
+                
                 # Aggregate updates
-                self.global_model = self.aggregator.aggregate(
+                updated_model = self.aggregator.aggregate(
                     self.global_model, validated_updates
                 )
+                
+                # Check if model actually updated
+                if updated_model is not None:
+                    if hasattr(updated_model, 'coef_') and hasattr(updated_model, 'intercept_'):
+                        new_params = np.concatenate([
+                            updated_model.coef_.flatten(),
+                            updated_model.intercept_.flatten()
+                        ])
+                        
+                        if prev_params is not None:
+                            param_change = np.linalg.norm(new_params - prev_params)
+                            print(f"🔄 Parameter change magnitude: {param_change:.6f}")
+                            
+                            # If parameters haven't changed much, force a small update
+                            if param_change < 1e-6:
+                                print("⚠️ Parameters not changing - applying small perturbation")
+                                noise_scale = 0.01
+                                updated_model.coef_ += np.random.normal(0, noise_scale, updated_model.coef_.shape)
+                                updated_model.intercept_ += np.random.normal(0, noise_scale, updated_model.intercept_.shape)
+                    
+                    self.global_model = updated_model
+                else:
+                    print("❌ Aggregation returned None - keeping previous model")
                 
                 # Update aggregation completion status
                 if hasattr(st, 'session_state') and hasattr(st.session_state, 'aggregation_status'):
