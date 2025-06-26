@@ -106,6 +106,10 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 26, 2025. Fixed metric selector dropdown in Performance Evolution - now properly responds to F1, Precision, Recall selections
+- June 26, 2025. Fixed early stopping patience conflict - automatic convergence detection now defers to user's early stopping settings
+- June 26, 2025. Enhanced Journey Visualization to properly detect and display early stopping vs convergence status
+- June 26, 2025. Fixed "Global Convergence" stage showing 100% when training stopped early - now shows accurate partial progress
 - June 25, 2025. Fixed Advanced Analytics Dashboard visualization issues including zero-line problems in client accuracy charts
 - June 25, 2025. Enhanced Performance Comparison with real-time data integration and radar charts
 - June 25, 2025. Swapped tab names between Individual Patient Risk Assessment and Advanced Medical Facility Analytics

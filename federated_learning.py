@@ -1174,7 +1174,12 @@ class FederatedLearningManager:
             bool: True if convergence detected, False otherwise
         """
         
-        # STEP 1: Check if we have sufficient training history
+        # STEP 1: Check if early stopping is enabled and should take precedence
+        # If early stopping is enabled, use that mechanism instead of automatic convergence
+        if hasattr(self, 'enable_early_stopping') and self.enable_early_stopping:
+            return False  # Let early stopping handle convergence detection
+        
+        # STEP 2: Check if we have sufficient training history
         # Need at least 3 rounds to detect convergence trends
         min_rounds_for_convergence = 3
         if len(self.training_history) < min_rounds_for_convergence:
