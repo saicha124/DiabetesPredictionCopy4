@@ -997,6 +997,8 @@ def main():
                     
                     # Extract differential privacy effects
                     epsilon_used = real_metrics.get('epsilon_used', st.session_state.get('epsilon', 1.0))
+                    if epsilon_used is None:
+                        epsilon_used = 1.0  # Default value when privacy is disabled
                     dp_noise_applied = real_metrics.get('dp_noise_applied', 0)
                     avg_noise_magnitude = real_metrics.get('avg_noise_magnitude', 0.0)
                     

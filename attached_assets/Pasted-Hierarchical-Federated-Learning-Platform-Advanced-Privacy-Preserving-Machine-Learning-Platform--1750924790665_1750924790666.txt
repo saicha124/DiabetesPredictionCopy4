@@ -1,0 +1,194 @@
+Hierarchical Federated Learning Platform
+Advanced Privacy-Preserving Machine Learning Platform
+
+🚀 Training Control
+
+
+🛡️ Committee Security
+
+
+🏥 Medical Station Monitoring
+
+
+📊 Journey Visualization
+
+
+📈 Client Analytics
+
+
+🩺 Individual Patient Risk Assessment
+
+
+🏥 Advanced Medical Facility Analytics
+
+
+📊 Advanced Analytics Dashboard
+
+
+📊 Performance Evolution
+
+
+🎯 Real Security Analysis
+
+
+📋 Incident Reports
+
+
+🔄 Round Progress
+
+🎛️ 🚀 Training Control
+🏥 Medical Network Configuration
+Number of Medical Stations
+
+3
+20
+Maximum Training Rounds
+
+10
+150
+🛑 Early Stopping Configuration
+
+Patience (rounds)
+
+3
+50
+Early Stop Metric
+
+accuracy
+Minimum Improvement
+
+0.001
+
+
+Training will stop if accuracy doesn't improve by 0.001 for 25 consecutive rounds
+
+🛡️ Committee-Based Security Configuration
+
+Security Committee Size
+
+3
+7
+🔒 Security Features Enabled: • Reputation-weighted committee selection • Periodic role rotation • Sybil & Byzantine attack detection • Cryptographic verification • Differential privacy protection
+
+🧠 Model Selection
+Machine Learning Model
+
+Deep Learning (Neural Network)
+🔄 Local Training Configuration
+Local Training Epochs
+
+1
+100
+💡 Each medical station will perform 26 epoch(s) of local training before sending the model to fog nodes.
+
+🌫️ Fog Computing Setup
+
+Number of Fog Nodes
+
+2
+20
+Fog Aggregation Method
+
+FedAvg
+🔒 Privacy Configuration
+
+📊 Data Distribution
+Distribution Strategy
+
+IID
+🔐 Training-Level Secret Sharing
+
+Secret Sharing Threshold
+
+2
+6
+Using 6 fog nodes for secret sharing distribution
+
+Secret sharing: 4/6 threshold scheme
+
+
+100% - fl_manager_ready
+
+✅ Training Complete
+
+Training initialized! Switch to Live Monitoring tab to see progress.
+
+
+
+90% - data_processing_complete_starting_training
+
+🔄 data_ready_federated_learning_in_progress
+
+Data preprocessed: 768 samples, 8 features
+
+Creating 10 medical facility cohorts from real patient data
+
+Created 10 authentic medical facility cohorts
+
+Authentic Medical Facility Distribution:
+
+• major_teaching_hospital: 255 patients, 34.9% diabetes_prevalence
+
+• regional_medical_center: 127 patients, 34.6% diabetes_prevalence
+
+• community_health_center: 31 patients, 35.5% diabetes_prevalence
+
+• primary_care_clinic: 29 patients, 34.5% diabetes_prevalence
+
+• specialty_diabetes_clinic: 26 patients, 34.6% diabetes_prevalence
+
+• major_teaching_hospital: 24 patients, 33.3% diabetes_prevalence
+
+• regional_medical_center: 22 patients, 36.4% diabetes_prevalence
+
+• community_health_center: 20 patients, 35.0% diabetes_prevalence
+
+• primary_care_clinic: 18 patients, 33.3% diabetes_prevalence
+
+• specialty_diabetes_clinic: 17 patients, 35.3% diabetes_prevalence
+
+data_distributed_to_clients
+
+client_data_type: <class 'list'>
+
+client_data_length: 10
+
+Found 10 valid clients out of 10 total
+
+Starting training with 10 valid clients
+
+🔄 Federated Learning Training Progress
+🎯 100% - Analysis complete
+
+✅ Risk analysis completed
+
+✅ Using converged global federated model
+
+Model converged after 26 rounds
+
+🔄 Training Round 26 of 77
+
+🎯 Final Accuracy
+
+78.8%
+Best: Round 1
+🔄 Round
+
+26/77
+✅ All Medical Facilities Complete
+
+🎯 Final Aggregation Complete
+
+🔒 Privacy Guaranteed (ε=None)
+
+🎯 Early Stopped (Optimal at Round 1)
+
+Training failed: unsupported operand type(s) for -: 'NoneType' and 'float'
+
+🔍 Error Details (for debugging)
+
+Traceback (most recent call last):
+  File "/home/runner/workspace/app.py", line 1068, in main
+    'privacy_budget': max(0, epsilon_used - (current_round * 0.1))
+                             ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~
+TypeError: unsupported operand type(s) for -: 'NoneType' and 'float'
