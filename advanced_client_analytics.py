@@ -585,7 +585,7 @@ class AdvancedClientAnalytics:
                 markers=True
             )
             fig_evolution.update_layout(height=400)
-            st.plotly_chart(fig_evolution, use_container_width=True, key=f"performance_evolution_timeline_{selected_metric}")
+            st.plotly_chart(fig_evolution, use_container_width=True, key=f"perf_timeline_{selected_metric}_{int(time.time() * 1000000)}")
         
         with col2:
             # Heatmap for performance matrix
@@ -603,7 +603,7 @@ class AdvancedClientAnalytics:
                 aspect='auto'
             )
             fig_heatmap.update_layout(height=400)
-            st.plotly_chart(fig_heatmap, use_container_width=True, key=f"performance_heatmap_{selected_metric}")
+            st.plotly_chart(fig_heatmap, use_container_width=True, key=f"perf_heatmap_{selected_metric}_{int(time.time() * 1000000)}")
         
         # Performance improvement analysis
         st.subheader("📊 Performance Improvement Analysis")
