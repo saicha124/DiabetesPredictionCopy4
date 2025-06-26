@@ -1300,14 +1300,20 @@ class FederatedLearningManager:
         
         # Check if current metric is better than best
         is_better = False
-        if self.early_stop_metric == 'loss':
-            # For loss, lower is better
-            if current_value < (self.best_metric_value - self.min_improvement):
-                is_better = True
-        else:
-            # For accuracy, f1_score, etc., higher is better
-            if current_value > (self.best_metric_value + self.min_improvement):
-                is_better = True
+        
+        # Ensure min_improvement has a valid value
+        min_improvement = getattr(self, 'min_improvement', 0.001) or 0.001
+        
+        # Ensure best_metric_value is not None
+        if self.best_metric_value is not None:
+            if self.early_stop_metric == 'loss':
+                # For loss, lower is better
+                if current_value < (self.best_metric_value - min_improvement):
+                    is_better = True
+            else:
+                # For accuracy, f1_score, etc., higher is better
+                if current_value > (self.best_metric_value + min_improvement):
+                    is_better = True
         
         if is_better:
             # New best metric found
