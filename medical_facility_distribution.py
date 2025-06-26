@@ -3,6 +3,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from typing import List, Dict, Tuple, Any
 import random
+import json
+import os
+from datetime import datetime
 
 class MedicalFacilityDistribution:
     """
@@ -331,3 +334,66 @@ class MedicalFacilityDistribution:
         summary += f"• Number of Facilities: {len(facility_info)} (all unique)\n"
         
         return summary
+    
+    def save_distribution_to_file(self, facility_info: List[Dict[str, Any]], filename: str = "") -> str:
+        """Save facility distribution to a text file"""
+        
+        if not filename:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"medical_facility_distribution_{timestamp}.txt"
+        
+        summary = self.get_distribution_summary(facility_info)
+        
+        # Add JSON data for reconstruction
+        config_data = {
+            "timestamp": datetime.now().isoformat(),
+            "num_clients": self.num_clients,
+            "random_state": self._original_random_state,
+            "facility_info": facility_info
+        }
+        
+        full_content = f"{summary}\n\nConfiguration Data (JSON):\n{json.dumps(config_data, indent=2)}"
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(full_content)
+        
+        return filename
+    
+    def load_distribution_from_file(self, filename: str) -> Tuple[List[Dict[str, Any]], bool]:
+        """Load facility distribution from a text file"""
+        
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Extract JSON configuration
+            if "Configuration Data (JSON):" in content:
+                json_part = content.split("Configuration Data (JSON):")[1].strip()
+                config_data = json.loads(json_part)
+                
+                # Update instance parameters
+                self.num_clients = config_data["num_clients"]
+                self._original_random_state = config_data["random_state"]
+                
+                # Cache the loaded facility assignments
+                self._facility_assignments_cache = None
+                
+                return config_data["facility_info"], True
+            else:
+                return [], False
+                
+        except Exception as e:
+            print(f"Error loading distribution file: {e}")
+            return [], False
+    
+    def get_available_saved_distributions(self) -> List[str]:
+        """Get list of available saved distribution files"""
+        
+        files = []
+        for filename in os.listdir('.'):
+            if filename.startswith('medical_facility_distribution_') and filename.endswith('.txt'):
+                files.append(filename)
+            elif filename == 'saved_medical_facility_distributions.txt':
+                files.append(filename)
+        
+        return sorted(files, reverse=True)  # Most recent first

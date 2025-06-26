@@ -445,6 +445,79 @@ def main():
                 st.session_state.distribution_strategy = distribution_options[selected_strategy]
                 
                 if distribution_options[selected_strategy] == "medical_facility":
+                    # Medical Facility Distribution Controls
+                    col1_med, col2_med = st.columns(2)
+                    
+                    with col1_med:
+                        # Save Distribution Button
+                        if st.button("💾 Save Current Distribution", help="Save the current medical facility distribution to a file"):
+                            from medical_facility_distribution import MedicalFacilityDistribution
+                            
+                            if 'medical_facility_info' in st.session_state and st.session_state.medical_facility_info:
+                                med_dist = MedicalFacilityDistribution(num_clients, random_state=42)
+                                filename = med_dist.save_distribution_to_file(st.session_state.medical_facility_info)
+                                st.success(f"Distribution saved to: {filename}")
+                                st.session_state.last_saved_distribution = filename
+                            else:
+                                st.warning("No distribution data to save. Run training first to generate distribution.")
+                    
+                    with col2_med:
+                        # Load Distribution Options
+                        from medical_facility_distribution import MedicalFacilityDistribution
+                        med_dist_temp = MedicalFacilityDistribution(num_clients, random_state=42)
+                        available_files = med_dist_temp.get_available_saved_distributions()
+                        
+                        if available_files:
+                            selected_file = st.selectbox(
+                                "📂 Load Saved Distribution",
+                                ["None"] + available_files,
+                                help="Load a previously saved medical facility distribution"
+                            )
+                            
+                            if selected_file != "None" and st.button("📥 Load Distribution"):
+                                facility_info, success = med_dist_temp.load_distribution_from_file(selected_file)
+                                if success:
+                                    st.session_state.medical_facility_info = facility_info
+                                    st.session_state.use_loaded_distribution = True
+                                    st.success(f"Successfully loaded distribution from: {selected_file}")
+                                else:
+                                    st.error("Failed to load distribution file")
+                        else:
+                            st.info("No saved distributions found")
+                    
+                    # File Upload for Distribution
+                    uploaded_file = st.file_uploader(
+                        "📤 Upload Distribution File", 
+                        type=['txt'],
+                        help="Upload a previously saved medical facility distribution file"
+                    )
+                    
+                    if uploaded_file is not None:
+                        # Save uploaded file temporarily
+                        temp_filename = f"temp_{uploaded_file.name}"
+                        with open(temp_filename, "wb") as f:
+                            f.write(uploaded_file.getvalue())
+                        
+                        # Load the distribution
+                        med_dist_upload = MedicalFacilityDistribution(num_clients, random_state=42)
+                        facility_info, success = med_dist_upload.load_distribution_from_file(temp_filename)
+                        
+                        if success:
+                            st.session_state.medical_facility_info = facility_info
+                            st.session_state.use_loaded_distribution = True
+                            st.success(f"Successfully loaded distribution from uploaded file")
+                            
+                            # Display loaded distribution summary
+                            summary = med_dist_upload.get_distribution_summary(facility_info)
+                            st.text_area("Loaded Distribution Summary", summary, height=200)
+                        else:
+                            st.error("Failed to load uploaded distribution file")
+                        
+                        # Clean up temp file
+                        if os.path.exists(temp_filename):
+                            os.remove(temp_filename)
+                    
+                    # Distribution Info Display
                     if st.session_state.language == 'fr':
                         st.info("🏥 **Distribution Médicale Authentique Activée**\n\n"
                                "• Types d'établissements uniques et réalistes\n"

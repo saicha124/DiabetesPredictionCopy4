@@ -1,0 +1,19 @@
+Authentic Medical Facility Distribution - Configuration 1
+Generated: 2025-06-26
+=================================================
+
+• major_teaching_hospital: 136 patients, 38.2% diabetes prevalence
+• regional_medical_center: 68 patients, 38.2% diabetes prevalence
+• community_health_center: 20 patients, 40.0% diabetes prevalence
+• primary_care_clinic: 18 patients, 38.9% diabetes prevalence
+• specialty_diabetes_clinic: 16 patients, 37.5% diabetes prevalence
+• major_teaching_hospital: 14 patients, 35.7% diabetes prevalence
+• regional_medical_center: 13 patients, 38.5% diabetes prevalence
+• community_health_center: 11 patients, 36.4% diabetes prevalence
+
+Distribution Summary:
+• Total Patients: 296
+• Average Diabetes Rate: 37.9%
+• Number of Facilities: 8 (all unique)
+
+=================================================

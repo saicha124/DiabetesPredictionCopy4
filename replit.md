@@ -106,6 +106,11 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 26, 2025. Successfully completed migration from Replit Agent to standard Replit environment with enhanced medical facility distribution system
+- June 26, 2025. Added save/load functionality for medical facility distributions with file upload support and persistent data configuration
+- June 26, 2025. Enhanced MedicalFacilityDistribution class with caching system to ensure consistent data distribution across different configurations
+- June 26, 2025. Moved Fog Computing Setup section to appear after Medical Network Configuration > Number of Medical Stations for better UI flow
+- June 26, 2025. Created comprehensive file management system for medical facility distributions with JSON-based configuration storage
 - June 26, 2025. Implemented enhanced medical facility distribution system that eliminates duplicate facility types and provides balanced patient allocation
 - June 26, 2025. Added configurable data distribution strategies: Authentic Medical Facility, Standard IID, and Pathological Non-IID
 - June 26, 2025. Enhanced Medical Facility Analytics tab with comprehensive facility distribution analysis and quality indicators
