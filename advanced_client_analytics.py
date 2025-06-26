@@ -568,9 +568,9 @@ class AdvancedClientAnalytics:
         
         df_evolution = pd.DataFrame(evolution_data)
         
-        # Metric selector
+        # Metric selector with persistent key
         metric_options = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
-        selected_metric = st.selectbox(get_translation('select_metric_to_track', st.session_state.language), metric_options, index=0, key=f"performance_evolution_metric_selector_{int(time.time() * 1000000)}")
+        selected_metric = st.selectbox(get_translation('select_metric_to_track', st.session_state.language), metric_options, index=0, key="performance_evolution_metric_selector")
         
         col1, col2 = st.columns(2)
         
@@ -585,7 +585,7 @@ class AdvancedClientAnalytics:
                 markers=True
             )
             fig_evolution.update_layout(height=400)
-            st.plotly_chart(fig_evolution, use_container_width=True, key=f"performance_evolution_timeline_{selected_metric}_{int(time.time() * 1000000)}")
+            st.plotly_chart(fig_evolution, use_container_width=True, key=f"performance_evolution_timeline_{selected_metric}")
         
         with col2:
             # Heatmap for performance matrix
@@ -603,7 +603,7 @@ class AdvancedClientAnalytics:
                 aspect='auto'
             )
             fig_heatmap.update_layout(height=400)
-            st.plotly_chart(fig_heatmap, use_container_width=True, key=f"performance_heatmap_{selected_metric}_{int(time.time() * 1000000)}")
+            st.plotly_chart(fig_heatmap, use_container_width=True, key=f"performance_heatmap_{selected_metric}")
         
         # Performance improvement analysis
         st.subheader("📊 Performance Improvement Analysis")
