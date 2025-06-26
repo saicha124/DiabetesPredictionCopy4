@@ -568,9 +568,9 @@ class AdvancedClientAnalytics:
         
         df_evolution = pd.DataFrame(evolution_data)
         
-        # Metric selector with persistent key
+        # Metric selector with unique key
         metric_options = ['Accuracy', 'F1-Score', 'Precision', 'Recall']
-        selected_metric = st.selectbox(get_translation('select_metric_to_track', st.session_state.language), metric_options, index=0, key="advanced_analytics_metric_selector")
+        selected_metric = st.selectbox(get_translation('select_metric_to_track', st.session_state.language), metric_options, index=0, key=f"perf_evolution_metric_{int(time.time() * 1000000)}")
         
         col1, col2 = st.columns(2)
         
