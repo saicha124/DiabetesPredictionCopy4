@@ -119,22 +119,79 @@ class FederatedLearningManager:
         distribution_strategy = getattr(st.session_state, 'distribution_strategy', 'medical_facility')
         
         if distribution_strategy == 'medical_facility':
-            # Use authentic medical facility distribution (eliminates duplicates and balances patient allocation)
-            facility_distributor = MedicalFacilityDistribution(
-                num_clients=self.num_clients,
-                random_state=42
-            )
-            
-            # Get realistic medical facility data distribution
-            client_data, facility_info = facility_distributor.distribute_data(X, y)
-            
-            # Store facility information for display
-            if hasattr(st, 'session_state'):
-                st.session_state.facility_info = facility_info
+            # Check if user has loaded a specific medical facility distribution
+            if (hasattr(st, 'session_state') and 
+                hasattr(st.session_state, 'use_loaded_distribution') and 
+                st.session_state.use_loaded_distribution and
+                hasattr(st.session_state, 'medical_facility_info') and
+                st.session_state.medical_facility_info):
                 
-                # Generate and store distribution summary
+                # Use the loaded facility distribution
+                facility_info = st.session_state.medical_facility_info
+                
+                # Create client data based on loaded facility configuration
+                client_data = []
+                facility_distributor = MedicalFacilityDistribution(
+                    num_clients=len(facility_info),
+                    random_state=42
+                )
+                
+                # Use the exact distribution from the loaded file
+                for facility in facility_info:
+                    train_samples = facility.get('train_samples', 10)
+                    test_samples = facility.get('test_samples', 3)
+                    total_samples = train_samples + test_samples
+                    
+                    # Select data samples for this facility
+                    if len(X) >= total_samples:
+                        indices = np.random.choice(len(X), total_samples, replace=False)
+                        facility_X = X[indices]
+                        facility_y = y[indices]
+                        
+                        # Split according to loaded configuration
+                        X_train = facility_X[:train_samples]
+                        X_test = facility_X[train_samples:]
+                        y_train = facility_y[:train_samples]
+                        y_test = facility_y[train_samples:]
+                    else:
+                        # Fallback for small datasets
+                        split_idx = max(1, len(X) * 8 // 10)
+                        X_train = X[:split_idx]
+                        X_test = X[split_idx:]
+                        y_train = y[:split_idx]
+                        y_test = y[split_idx:]
+                    
+                    client_data.append({
+                        'X_train': X_train,
+                        'X_test': X_test,
+                        'y_train': y_train,
+                        'y_test': y_test
+                    })
+                
+                # Store the exact loaded facility information
+                st.session_state.facility_info = facility_info
                 distribution_summary = facility_distributor.get_distribution_summary(facility_info)
                 st.session_state.facility_distribution_summary = distribution_summary
+                st.session_state.medical_facility_info = facility_info  # Keep the loaded data
+                
+            else:
+                # Generate new authentic medical facility distribution
+                facility_distributor = MedicalFacilityDistribution(
+                    num_clients=self.num_clients,
+                    random_state=42
+                )
+                
+                # Get realistic medical facility data distribution
+                client_data, facility_info = facility_distributor.distribute_data(X, y)
+                
+                # Store facility information for display
+                if hasattr(st, 'session_state'):
+                    st.session_state.facility_info = facility_info
+                    st.session_state.medical_facility_info = facility_info  # Store for saving
+                    
+                    # Generate and store distribution summary
+                    distribution_summary = facility_distributor.get_distribution_summary(facility_info)
+                    st.session_state.facility_distribution_summary = distribution_summary
         else:
             # Use traditional data partitioning methods
             client_data = self._partition_data(X, y)

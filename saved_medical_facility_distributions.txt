@@ -1,6 +1,4 @@
-Authentic Medical Facility Distribution - Configuration 1
-Generated: 2025-06-26
-=================================================
+🏥 Authentic Medical Facility Distribution:
 
 • major_teaching_hospital: 136 patients, 38.2% diabetes prevalence
 • regional_medical_center: 68 patients, 38.2% diabetes prevalence
@@ -11,9 +9,96 @@ Generated: 2025-06-26
 • regional_medical_center: 13 patients, 38.5% diabetes prevalence
 • community_health_center: 11 patients, 36.4% diabetes prevalence
 
-Distribution Summary:
+📊 Distribution Summary:
 • Total Patients: 296
 • Average Diabetes Rate: 37.9%
 • Number of Facilities: 8 (all unique)
 
-=================================================
+Configuration Data (JSON):
+{
+  "timestamp": "2025-06-26T09:30:00.000Z",
+  "num_clients": 8,
+  "random_state": 42,
+  "facility_info": [
+    {
+      "facility_id": 0,
+      "facility_type": "major_teaching_hospital",
+      "total_patients": 136,
+      "target_diabetes_rate": 0.349,
+      "actual_diabetes_rate": 0.382,
+      "complexity_factor": 1.2,
+      "train_samples": 109,
+      "test_samples": 27
+    },
+    {
+      "facility_id": 1,
+      "facility_type": "regional_medical_center",
+      "total_patients": 68,
+      "target_diabetes_rate": 0.332,
+      "actual_diabetes_rate": 0.382,
+      "complexity_factor": 1.1,
+      "train_samples": 54,
+      "test_samples": 14
+    },
+    {
+      "facility_id": 2,
+      "facility_type": "community_health_center",
+      "total_patients": 20,
+      "target_diabetes_rate": 0.385,
+      "actual_diabetes_rate": 0.400,
+      "complexity_factor": 1.0,
+      "train_samples": 16,
+      "test_samples": 4
+    },
+    {
+      "facility_id": 3,
+      "facility_type": "primary_care_clinic",
+      "total_patients": 18,
+      "target_diabetes_rate": 0.285,
+      "actual_diabetes_rate": 0.389,
+      "complexity_factor": 0.9,
+      "train_samples": 14,
+      "test_samples": 4
+    },
+    {
+      "facility_id": 4,
+      "facility_type": "specialty_diabetes_clinic",
+      "total_patients": 16,
+      "target_diabetes_rate": 0.750,
+      "actual_diabetes_rate": 0.375,
+      "complexity_factor": 1.3,
+      "train_samples": 13,
+      "test_samples": 3
+    },
+    {
+      "facility_id": 5,
+      "facility_type": "major_teaching_hospital",
+      "total_patients": 14,
+      "target_diabetes_rate": 0.350,
+      "actual_diabetes_rate": 0.357,
+      "complexity_factor": 1.2,
+      "train_samples": 11,
+      "test_samples": 3
+    },
+    {
+      "facility_id": 6,
+      "facility_type": "regional_medical_center",
+      "total_patients": 13,
+      "target_diabetes_rate": 0.330,
+      "actual_diabetes_rate": 0.385,
+      "complexity_factor": 1.1,
+      "train_samples": 10,
+      "test_samples": 3
+    },
+    {
+      "facility_id": 7,
+      "facility_type": "community_health_center",
+      "total_patients": 11,
+      "target_diabetes_rate": 0.380,
+      "actual_diabetes_rate": 0.364,
+      "complexity_factor": 1.0,
+      "train_samples": 9,
+      "test_samples": 2
+    }
+  ]
+}
