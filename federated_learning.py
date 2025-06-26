@@ -16,6 +16,7 @@ from differential_privacy import DifferentialPrivacyManager
 from data_preprocessing import DataPreprocessor
 from utils import calculate_metrics
 from committee_security import SecureFederatedLearning, CommitteeManager, NodeReputation
+from medical_facility_distribution import MedicalFacilityDistribution
 
 class FederatedLearningManager:
     """Main federated learning orchestrator"""
@@ -104,7 +105,7 @@ class FederatedLearningManager:
             self.secure_fl = None
     
     def setup_clients(self, data):
-        """Setup federated clients with data partitions"""
+        """Setup federated clients with realistic medical facility distribution"""
         # Preprocess data
         processed_data = self.preprocessor.fit_transform(data)
         if isinstance(processed_data, tuple):
@@ -114,16 +115,49 @@ class FederatedLearningManager:
             X = processed_data.drop('Outcome', axis=1) if 'Outcome' in processed_data.columns else processed_data.iloc[:, :-1]
             y = processed_data['Outcome'] if 'Outcome' in processed_data.columns else processed_data.iloc[:, -1]
         
-        # Create data partitions for clients
-        client_data = self._partition_data(X, y)
+        # Select distribution strategy based on user preference
+        distribution_strategy = getattr(st.session_state, 'distribution_strategy', 'medical_facility')
         
-        # Initialize clients
+        if distribution_strategy == 'medical_facility':
+            # Use authentic medical facility distribution (eliminates duplicates and balances patient allocation)
+            facility_distributor = MedicalFacilityDistribution(
+                num_clients=self.num_clients,
+                random_state=42
+            )
+            
+            # Get realistic medical facility data distribution
+            client_data, facility_info = facility_distributor.distribute_data(X, y)
+            
+            # Store facility information for display
+            if hasattr(st, 'session_state'):
+                st.session_state.facility_info = facility_info
+                
+                # Generate and store distribution summary
+                distribution_summary = facility_distributor.get_distribution_summary(facility_info)
+                st.session_state.facility_distribution_summary = distribution_summary
+        else:
+            # Use traditional data partitioning methods
+            client_data = self._partition_data(X, y)
+            
+            # Clear facility information for non-medical distributions
+            if hasattr(st, 'session_state'):
+                st.session_state.facility_info = None
+                st.session_state.facility_distribution_summary = None
+        
+        # Initialize clients with facility-specific data
         self.clients = []
         for i in range(self.num_clients):
+            # Get facility information for this client
+            facility_data = facility_info[i] if i < len(facility_info) else {
+                'facility_type': f'medical_facility_{i}',
+                'complexity_factor': 1.0
+            }
+            
             client = ClientSimulator(
                 client_id=i,
                 data=client_data[i],
-                model_type='logistic_regression'
+                model_type=self.model_type,
+                facility_info=facility_data
             )
             self.clients.append(client)
         

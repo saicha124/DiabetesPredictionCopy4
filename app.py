@@ -394,6 +394,50 @@ def main():
                 else:
                     st.info(f"💡 Each medical station will perform **{local_epochs}** epoch(s) of local training before sending the model to fog nodes.")
                 
+                # Data Distribution Strategy Configuration
+                st.subheader("🏥 " + get_translation("medical_facility_distribution", st.session_state.language, default="Medical Facility Distribution"))
+                
+                if st.session_state.language == 'fr':
+                    distribution_options = {
+                        "Répartition Médicale Authentique": "medical_facility",
+                        "Distribution IID Standard": "iid", 
+                        "Non-IID Pathologique": "pathological"
+                    }
+                    selected_strategy = st.selectbox(
+                        "Stratégie de Distribution des Données",
+                        list(distribution_options.keys()),
+                        index=0,
+                        help="Sélectionnez comment distribuer les données parmi les établissements médicaux"
+                    )
+                else:
+                    distribution_options = {
+                        "Authentic Medical Facility": "medical_facility",
+                        "Standard IID Distribution": "iid",
+                        "Pathological Non-IID": "pathological"
+                    }
+                    selected_strategy = st.selectbox(
+                        "Data Distribution Strategy",
+                        list(distribution_options.keys()),
+                        index=0,
+                        help="Select how to distribute data among medical facilities"
+                    )
+                
+                st.session_state.distribution_strategy = distribution_options[selected_strategy]
+                
+                if distribution_options[selected_strategy] == "medical_facility":
+                    if st.session_state.language == 'fr':
+                        st.info("🏥 **Distribution Médicale Authentique Activée**\n\n"
+                               "• Types d'établissements uniques et réalistes\n"
+                               "• Tailles de patients équilibrées par type d'établissement\n"
+                               "• Taux de diabète variables selon la spécialité\n"
+                               "• Aucun doublon d'établissement")
+                    else:
+                        st.info("🏥 **Authentic Medical Facility Distribution Enabled**\n\n"
+                               "• Unique, realistic facility types\n"
+                               "• Balanced patient sizes by facility type\n"
+                               "• Variable diabetes rates by specialty\n"
+                               "• No duplicate facilities")
+                
                 st.subheader(get_translation("fog_computing_setup", st.session_state.language))
                 default_fog = True if 'reset_requested' not in st.session_state else True
                 enable_fog = st.checkbox(get_translation("enable_fog_nodes", st.session_state.language), value=st.session_state.get('enable_fog', default_fog))
@@ -4637,7 +4681,147 @@ def main():
                 """)
 
     with tab6:
-        st.header(f"🩺 {get_translation('individual_patient_risk_assessment', st.session_state.language)}")
+        st.header(f"🏥 {get_translation('advanced_medical_facility_analytics', st.session_state.language)}")
+        
+        # Enhanced Medical Facility Distribution Display
+        st.subheader(f"🏗️ {get_translation('medical_facility_distribution_analysis', st.session_state.language, default='Medical Facility Distribution Analysis')}")
+        
+        # Display improved facility distribution summary if available
+        if hasattr(st.session_state, 'facility_distribution_summary') and st.session_state.facility_distribution_summary:
+            with st.expander(f"📋 {get_translation('facility_distribution_details', st.session_state.language, default='Facility Distribution Details')}", expanded=True):
+                st.text(st.session_state.facility_distribution_summary)
+        
+        # Display facility information if available
+        if hasattr(st.session_state, 'facility_info') and st.session_state.facility_info:
+            facility_info = st.session_state.facility_info
+            
+            # Create facility overview dashboard
+            st.subheader(f"📊 {get_translation('facility_overview_dashboard', st.session_state.language, default='Facility Overview Dashboard')}")
+            
+            # Facility metrics
+            total_facilities = len(facility_info)
+            total_patients = sum(f.get('total_patients', 0) for f in facility_info)
+            avg_diabetes_rate = np.mean([f.get('actual_diabetes_rate', 0) for f in facility_info]) * 100
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric(get_translation("total_facilities", st.session_state.language, default="Total Facilities"), total_facilities)
+            with col2:
+                st.metric(get_translation("total_patients", st.session_state.language, default="Total Patients"), total_patients)
+            with col3:
+                st.metric(get_translation("avg_diabetes_rate", st.session_state.language, default="Avg Diabetes Rate"), f"{avg_diabetes_rate:.1f}%")
+            with col4:
+                unique_types = len(set(f.get('facility_type', 'Unknown') for f in facility_info))
+                st.metric(get_translation("unique_facility_types", st.session_state.language, default="Unique Facility Types"), unique_types)
+            
+            # Facility distribution visualization
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Patient distribution by facility type
+                facility_types = [f.get('facility_type', 'Unknown') for f in facility_info]
+                patient_counts = [f.get('total_patients', 0) for f in facility_info]
+                
+                fig_patients = go.Figure(data=[
+                    go.Bar(
+                        x=facility_types,
+                        y=patient_counts,
+                        marker_color='lightblue',
+                        text=patient_counts,
+                        textposition='auto'
+                    )
+                ])
+                fig_patients.update_layout(
+                    title=get_translation("patient_distribution_by_facility", st.session_state.language, default="Patient Distribution by Facility Type"),
+                    xaxis_title=get_translation("facility_type", st.session_state.language, default="Facility Type"),
+                    yaxis_title=get_translation("number_of_patients", st.session_state.language, default="Number of Patients"),
+                    xaxis_tickangle=-45
+                )
+                st.plotly_chart(fig_patients, use_container_width=True)
+            
+            with col2:
+                # Diabetes prevalence by facility
+                diabetes_rates = [f.get('actual_diabetes_rate', 0) * 100 for f in facility_info]
+                
+                fig_diabetes = go.Figure(data=[
+                    go.Bar(
+                        x=facility_types,
+                        y=diabetes_rates,
+                        marker_color='salmon',
+                        text=[f"{rate:.1f}%" for rate in diabetes_rates],
+                        textposition='auto'
+                    )
+                ])
+                fig_diabetes.update_layout(
+                    title=get_translation("diabetes_prevalence_by_facility", st.session_state.language, default="Diabetes Prevalence by Facility"),
+                    xaxis_title=get_translation("facility_type", st.session_state.language, default="Facility Type"),
+                    yaxis_title=get_translation("diabetes_rate_percent", st.session_state.language, default="Diabetes Rate (%)"),
+                    xaxis_tickangle=-45
+                )
+                st.plotly_chart(fig_diabetes, use_container_width=True)
+            
+            # Detailed facility table
+            st.subheader(f"📋 {get_translation('detailed_facility_breakdown', st.session_state.language, default='Detailed Facility Breakdown')}")
+            
+            facility_df = pd.DataFrame([
+                {
+                    get_translation("facility_id", st.session_state.language, default="Facility ID"): f.get('facility_id', i),
+                    get_translation("facility_type", st.session_state.language, default="Facility Type"): f.get('facility_type', 'Unknown'),
+                    get_translation("total_patients", st.session_state.language, default="Total Patients"): f.get('total_patients', 0),
+                    get_translation("diabetes_rate", st.session_state.language, default="Diabetes Rate"): f"{f.get('actual_diabetes_rate', 0) * 100:.1f}%",
+                    get_translation("train_samples", st.session_state.language, default="Train Samples"): f.get('train_samples', 0),
+                    get_translation("test_samples", st.session_state.language, default="Test Samples"): f.get('test_samples', 0)
+                }
+                for i, f in enumerate(facility_info)
+            ])
+            
+            st.dataframe(facility_df, use_container_width=True, hide_index=True)
+            
+            # Distribution quality indicators
+            st.subheader(f"✅ {get_translation('distribution_quality_indicators', st.session_state.language, default='Distribution Quality Indicators')}")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Check for duplicate facility types
+                facility_type_counts = {}
+                for f in facility_info:
+                    ftype = f.get('facility_type', 'Unknown')
+                    facility_type_counts[ftype] = facility_type_counts.get(ftype, 0) + 1
+                
+                duplicates_found = any(count > 1 for count in facility_type_counts.values())
+                
+                if duplicates_found:
+                    st.error(f"❌ {get_translation('duplicate_facility_types_found', st.session_state.language, default='Duplicate facility types found')}")
+                    for ftype, count in facility_type_counts.items():
+                        if count > 1:
+                            st.write(f"• {ftype}: {count} instances")
+                else:
+                    st.success(f"✅ {get_translation('all_facility_types_unique', st.session_state.language, default='All facility types are unique')}")
+            
+            with col2:
+                # Check patient distribution balance
+                if patient_counts:
+                    min_patients = min(patient_counts)
+                    max_patients = max(patient_counts)
+                    ratio = max_patients / min_patients if min_patients > 0 else float('inf')
+                    
+                    if ratio <= 3.0:
+                        st.success(f"✅ {get_translation('balanced_patient_distribution', st.session_state.language, default='Balanced patient distribution')}")
+                        st.write(f"Ratio: {ratio:.1f}:1 (Max: {max_patients}, Min: {min_patients})")
+                    else:
+                        st.warning(f"⚠️ {get_translation('unbalanced_patient_distribution', st.session_state.language, default='Unbalanced patient distribution')}")
+                        st.write(f"Ratio: {ratio:.1f}:1 (Max: {max_patients}, Min: {min_patients})")
+        else:
+            st.info(f"📊 {get_translation('facility_info_available_after_training', st.session_state.language, default='Facility distribution information will be available after training starts')}")
+        
+        # Advanced Analytics Section
+        if st.session_state.training_completed:
+            # Use existing advanced client analytics
+            if hasattr(st.session_state, 'client_analytics') and st.session_state.client_analytics:
+                st.markdown("---")
+                st.session_state.client_analytics.create_medical_facility_dashboard()
         
         if st.session_state.training_completed:
             st.subheader(f"🔍 {get_translation('patient_risk_analysis', st.session_state.language)}")

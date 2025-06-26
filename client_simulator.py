@@ -13,10 +13,11 @@ import pickle
 class ClientSimulator:
     """Simulates a federated learning client"""
     
-    def __init__(self, client_id, data, model_type='logistic_regression'):
+    def __init__(self, client_id, data, model_type='logistic_regression', facility_info=None):
         self.client_id = client_id
         self.data = data
         self.model_type = model_type
+        self.facility_info = facility_info or {}
         self.local_model = None
         self.global_model = None
         self.training_history = []
