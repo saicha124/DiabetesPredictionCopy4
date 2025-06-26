@@ -1230,11 +1230,19 @@ def main():
                     st.session_state.aggregation_status.success(agg_complete)
                 
                 if hasattr(st.session_state, 'privacy_status'):
-                    epsilon_value = st.session_state.get('epsilon', 1.0)
-                    if st.session_state.language == 'fr':
-                        privacy_complete = f"🔒 Confidentialité Préservée (ε={epsilon_value})"
+                    # Check if differential privacy is enabled
+                    if hasattr(fl_manager, 'dp_manager') and fl_manager.dp_manager is not None:
+                        epsilon_value = getattr(fl_manager.dp_manager, 'epsilon', 1.0)
+                        if st.session_state.language == 'fr':
+                            privacy_complete = f"🔒 Confidentialité Préservée (ε={epsilon_value})"
+                        else:
+                            privacy_complete = f"🔒 Privacy Preserved (ε={epsilon_value})"
                     else:
-                        privacy_complete = f"🔒 Privacy Preserved (ε={epsilon_value})"
+                        # Privacy is disabled
+                        if st.session_state.language == 'fr':
+                            privacy_complete = "🔓 Confidentialité: Désactivée"
+                        else:
+                            privacy_complete = "🔓 Privacy: Disabled"
                     st.session_state.privacy_status.success(privacy_complete)
                 
                 if hasattr(st.session_state, 'convergence_status'):
