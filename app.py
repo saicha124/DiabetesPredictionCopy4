@@ -1139,7 +1139,8 @@ def main():
                     if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
                         # Only update if FL manager doesn't have early stopping or better accuracy
                         if not hasattr(st.session_state.fl_manager, 'early_stopped') or not st.session_state.fl_manager.early_stopped:
-                            if global_accuracy > st.session_state.fl_manager.best_accuracy:
+                            fl_best_accuracy = getattr(st.session_state.fl_manager, 'best_accuracy', 0.0) or 0.0
+                            if global_accuracy is not None and global_accuracy > fl_best_accuracy:
                                 st.session_state.fl_manager.best_accuracy = global_accuracy
                 
                 # Training completed - all rounds executed
@@ -1159,15 +1160,16 @@ def main():
                     final_accuracy = 0
                     rounds_completed = 0
                     
-                    # Get accuracy from FL manager results
+                    # Get accuracy from FL manager results with None checking
                     if hasattr(st.session_state, 'fl_manager') and st.session_state.fl_manager:
                         if hasattr(st.session_state.fl_manager, 'best_accuracy'):
-                            final_accuracy = st.session_state.fl_manager.best_accuracy
+                            final_accuracy = getattr(st.session_state.fl_manager, 'best_accuracy', 0.0) or 0.0
                         elif hasattr(st.session_state.fl_manager, 'training_history') and st.session_state.fl_manager.training_history:
-                            final_accuracy = st.session_state.fl_manager.training_history[-1].get('accuracy', 0)
+                            history_acc = st.session_state.fl_manager.training_history[-1].get('accuracy', 0.0)
+                            final_accuracy = history_acc if history_acc is not None else 0.0
                         
                         if hasattr(st.session_state.fl_manager, 'current_round'):
-                            rounds_completed = st.session_state.fl_manager.current_round
+                            rounds_completed = getattr(st.session_state.fl_manager, 'current_round', 0) or 0
                     
                     # Fallback to session state results
                     if final_accuracy == 0 and hasattr(st.session_state, 'results'):
@@ -1279,9 +1281,20 @@ def main():
                 }
                 
             except Exception as e:
+                import traceback
+                error_traceback = traceback.format_exc()
+                print(f"❌ Training error details:")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error message: {str(e)}")
+                print(f"Full traceback:\n{error_traceback}")
+                
                 st.session_state.training_started = False
                 st.session_state.training_in_progress = False
                 st.error(f"Training failed: {str(e)}")
+                
+                # Display detailed error info for debugging
+                with st.expander("🔍 Error Details (for debugging)"):
+                    st.code(error_traceback)
 
     with tab2:
         if st.session_state.language == 'fr':
