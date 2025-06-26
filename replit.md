@@ -106,7 +106,10 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- June 26, 2025. Successfully migrated from Replit Agent to standard Replit environment
 - June 26, 2025. Fixed critical "Training failed: unsupported operand type(s) for -: 'NoneType' and 'float'" error in privacy status display
+- June 26, 2025. Enhanced parameter aggregation algorithm to ensure proper model evolution between federated learning rounds
+- June 26, 2025. Fixed duplicate key error in Advanced Analytics Dashboard (StreamlitDuplicateElementKey)
 - June 26, 2025. Enhanced parameter change tracking and forced model evolution to prevent accuracy values stuck at same percentage
 - June 26, 2025. Fixed metric selector dropdown in Performance Evolution - now properly responds to F1, Precision, Recall selections
 - June 26, 2025. Fixed early stopping patience conflict - automatic convergence detection now defers to user's early stopping settings
