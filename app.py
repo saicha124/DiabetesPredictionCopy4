@@ -298,6 +298,26 @@ def main():
                 num_clients = st.slider(get_translation("num_medical_stations", st.session_state.language), 3, 20, default_clients)
                 max_rounds = st.slider(get_translation("max_training_rounds", st.session_state.language), 10, 150, default_rounds)
                 
+                # Fog Computing Setup - moved here after Medical Network Configuration
+                st.subheader(get_translation("fog_computing_setup", st.session_state.language))
+                default_fog = True if 'reset_requested' not in st.session_state else True
+                enable_fog = st.checkbox(get_translation("enable_fog_nodes", st.session_state.language), value=st.session_state.get('enable_fog', default_fog))
+                st.session_state.enable_fog = enable_fog
+                
+                if enable_fog:
+                    default_fog_nodes = 3 if 'reset_requested' not in st.session_state else 3
+                    num_fog_nodes = st.slider(get_translation("num_fog_nodes", st.session_state.language), 2, 20, st.session_state.get('num_fog_nodes', default_fog_nodes))
+                    st.session_state.num_fog_nodes = num_fog_nodes
+                    
+                    default_fog_method = "FedAvg" if 'reset_requested' not in st.session_state else "FedAvg"
+                    fog_methods = ["FedAvg", "FedProx", "Weighted", "Median", "Mixed Methods"]
+                    current_method = st.session_state.get('fog_method', default_fog_method)
+                    fog_method = st.selectbox(get_translation("fog_aggregation_method", st.session_state.language), fog_methods, index=fog_methods.index(current_method))
+                    st.session_state.fog_method = fog_method
+                else:
+                    num_fog_nodes = 0
+                    fog_method = "FedAvg"
+                
                 # Early stopping configuration
                 st.subheader("🛑 " + get_translation("early_stopping_configuration", st.session_state.language))
                 
@@ -437,25 +457,6 @@ def main():
                                "• Balanced patient sizes by facility type\n"
                                "• Variable diabetes rates by specialty\n"
                                "• No duplicate facilities")
-                
-                st.subheader(get_translation("fog_computing_setup", st.session_state.language))
-                default_fog = True if 'reset_requested' not in st.session_state else True
-                enable_fog = st.checkbox(get_translation("enable_fog_nodes", st.session_state.language), value=st.session_state.get('enable_fog', default_fog))
-                st.session_state.enable_fog = enable_fog
-                
-                if enable_fog:
-                    default_fog_nodes = 3 if 'reset_requested' not in st.session_state else 3
-                    num_fog_nodes = st.slider(get_translation("num_fog_nodes", st.session_state.language), 2, 20, st.session_state.get('num_fog_nodes', default_fog_nodes))
-                    st.session_state.num_fog_nodes = num_fog_nodes
-                    
-                    default_fog_method = "FedAvg" if 'reset_requested' not in st.session_state else "FedAvg"
-                    fog_methods = ["FedAvg", "FedProx", "Weighted", "Median", "Mixed Methods"]
-                    current_method = st.session_state.get('fog_method', default_fog_method)
-                    fog_method = st.selectbox(get_translation("fog_aggregation_method", st.session_state.language), fog_methods, index=fog_methods.index(current_method))
-                    st.session_state.fog_method = fog_method
-                else:
-                    num_fog_nodes = 0
-                    fog_method = "FedAvg"
             
             with col2:
                 st.subheader(get_translation("privacy_configuration", st.session_state.language))

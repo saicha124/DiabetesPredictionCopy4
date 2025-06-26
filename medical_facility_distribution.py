@@ -13,8 +13,10 @@ class MedicalFacilityDistribution:
     def __init__(self, num_clients: int = 9, random_state: int = 42):
         self.num_clients = num_clients
         self.random_state = random_state
-        np.random.seed(random_state)
-        random.seed(random_state)
+        # Store the original random state for consistent data distribution
+        self._original_random_state = random_state
+        self._facility_assignments_cache = None
+        self._reset_random_state()
         
         # Define realistic medical facility types with expected characteristics
         self.facility_types = {
@@ -74,8 +76,20 @@ class MedicalFacilityDistribution:
             }
         }
     
+    def _reset_random_state(self):
+        """Reset random state to ensure consistent data distribution"""
+        np.random.seed(self._original_random_state)
+        random.seed(self._original_random_state)
+    
     def create_facility_assignments(self) -> List[Dict[str, Any]]:
-        """Create unique facility assignments for each client"""
+        """Create unique facility assignments for each client with consistent distribution"""
+        
+        # Use cached assignments if available for consistent data distribution
+        if self._facility_assignments_cache is not None:
+            return self._facility_assignments_cache
+        
+        # Reset random state for consistent assignment
+        self._reset_random_state()
         
         # Sort facility types by priority to ensure balanced distribution
         sorted_facilities = sorted(
@@ -154,6 +168,8 @@ class MedicalFacilityDistribution:
                     'complexity_factor': base_config['complexity_factor']
                 })
         
+        # Cache the assignments for consistent distribution
+        self._facility_assignments_cache = facility_assignments
         return facility_assignments
     
     def distribute_data(self, X: np.ndarray, y: np.ndarray) -> Tuple[List[Dict[str, np.ndarray]], List[Dict[str, Any]]]:
