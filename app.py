@@ -4237,31 +4237,42 @@ def main():
                                     st.write(f"🟢 {factor}")
                         
                         with col3:
-                            # Simple risk display without gauge
-                            st.markdown(f"**📊 {get_translation('risk_meter', st.session_state.language)}**")
-                            
-                            # Risk level with color coding
-                            risk_percentage = risk_score * 100
-                            if risk_percentage < 25:
-                                risk_color = "🟢"
-                                risk_level_text = "Low Risk"
-                            elif risk_percentage < 50:
-                                risk_color = "🟡"
-                                risk_level_text = "Medium Risk"
-                            elif risk_percentage < 75:
-                                risk_color = "🟠"
-                                risk_level_text = "High Risk"
+                            # Model confidence display
+                            confidence_score = confidence * 100
+                            if st.session_state.language == 'fr':
+                                st.metric("🎯 Confiance du Modèle", f"{confidence_score:.1f}%")
                             else:
-                                risk_color = "🔴"
-                                risk_level_text = "Very High Risk"
-                            
-                            st.markdown(f"""
-                            <div style="text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                                <h2 style="margin: 0; color: #333;">{risk_color}</h2>
-                                <h3 style="margin: 5px 0; color: #333;">{risk_percentage:.1f}%</h3>
-                                <p style="margin: 0; color: #666; font-size: 14px;">{risk_level_text}</p>
-                            </div>
-                            """, unsafe_allow_html=True)
+                                st.metric("🎯 Model Confidence", f"{confidence_score:.1f}%")
+                        
+                        # Risk meter on new line with full width
+                        st.markdown("---")
+                        st.subheader(f"📊 {get_translation('risk_meter', st.session_state.language)}")
+                        
+                        # Create risk gauge visualization with full width
+                        fig_gauge = go.Figure(go.Indicator(
+                            mode = "gauge+number+delta",
+                            value = risk_score * 100,
+                            domain = {'x': [0, 1], 'y': [0, 1]},
+                            title = {'text': "Risk %" if st.session_state.language == 'en' else "Risque %"},
+                            delta = {'reference': 25},
+                            gauge = {
+                                'axis': {'range': [None, 100]},
+                                'bar': {'color': "darkblue"},
+                                'steps': [
+                                    {'range': [0, 25], 'color': "lightgreen"},
+                                    {'range': [25, 50], 'color': "yellow"},
+                                    {'range': [50, 75], 'color': "orange"},
+                                    {'range': [75, 100], 'color': "red"}
+                                ],
+                                'threshold': {
+                                    'line': {'color': "red", 'width': 4},
+                                    'thickness': 0.75,
+                                    'value': 75
+                                }
+                            }
+                        ))
+                        fig_gauge.update_layout(height=400)
+                        st.plotly_chart(fig_gauge, use_container_width=True)
                         
                         # Complete the progress bar to 100%
                         analysis_progress.progress(1.0, text=f"100% - {get_translation('analysis_complete', st.session_state.language)}")
@@ -5099,28 +5110,41 @@ def main():
                                 st.write(f"🟢 {factor}")
                     
                     with col3:
-                        # Simple risk display without gauge
-                        st.markdown(f"**📊 {get_translation('risk_meter', st.session_state.language)}**")
-                        
-                        # Risk level with color coding
-                        risk_percentage = risk_score * 100
-                        if risk_percentage < 40:
-                            risk_color = "🟢"
-                            risk_level_text = "Low Risk"
-                        elif risk_percentage < 70:
-                            risk_color = "🟡"
-                            risk_level_text = "Medium Risk"
+                        # Model confidence display
+                        confidence_score = confidence * 100
+                        if st.session_state.language == 'fr':
+                            st.metric("🎯 Confiance du Modèle", f"{confidence_score:.1f}%")
                         else:
-                            risk_color = "🔴"
-                            risk_level_text = "High Risk"
-                        
-                        st.markdown(f"""
-                        <div style="text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                            <h2 style="margin: 0; color: #333;">{risk_color}</h2>
-                            <h3 style="margin: 5px 0; color: #333;">{risk_percentage:.1f}%</h3>
-                            <p style="margin: 0; color: #666; font-size: 14px;">{risk_level_text}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                            st.metric("🎯 Model Confidence", f"{confidence_score:.1f}%")
+                    
+                    # Risk meter on new line with full width
+                    st.markdown("---")
+                    st.subheader(f"📊 {get_translation('risk_meter', st.session_state.language)}")
+                    
+                    # Create risk gauge visualization with full width
+                    fig_gauge = go.Figure(go.Indicator(
+                        mode = "gauge+number+delta",
+                        value = risk_score * 100,
+                        domain = {'x': [0, 1], 'y': [0, 1]},
+                        title = {'text': "Risk %" if st.session_state.language == 'en' else "Risque %"},
+                        delta = {'reference': 40},
+                        gauge = {
+                            'axis': {'range': [None, 100]},
+                            'bar': {'color': "darkblue"},
+                            'steps': [
+                                {'range': [0, 40], 'color': "lightgreen"},
+                                {'range': [40, 70], 'color': "yellow"},
+                                {'range': [70, 100], 'color': "red"}
+                            ],
+                            'threshold': {
+                                'line': {'color': "red", 'width': 4},
+                                'thickness': 0.75,
+                                'value': 70
+                            }
+                        }
+                    ))
+                    fig_gauge.update_layout(height=400)
+                    st.plotly_chart(fig_gauge, use_container_width=True)
         else:
             st.warning(get_translation("complete_federated_training", st.session_state.language))
             st.info(get_translation("risk_assessment_uses_trained_model", st.session_state.language))
