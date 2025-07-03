@@ -1705,94 +1705,94 @@ def main():
         
         with col1:
             # Chart 1: Committee Reputation Evolution
-            fig_reputation = plt.figure(figsize=(8, 5))
-            plt.plot(time_points, reputation_scores, 'g-', linewidth=3, marker='o', markersize=6,
+            fig_reputation = plt.figure(figsize=(6, 4))
+            plt.plot(time_points, reputation_scores, 'g-', linewidth=2, marker='o', markersize=4,
                     markerfacecolor='lightgreen', markeredgecolor='darkgreen')
             plt.fill_between(time_points, reputation_scores, alpha=0.3, color='green')
             
             # Add average line with legend
             avg_reputation = np.mean(reputation_scores)
-            plt.axhline(y=avg_reputation, color='red', linestyle='--', linewidth=2, alpha=0.7,
-                       label=f'Average: {avg_reputation:.3f}')
+            plt.axhline(y=avg_reputation, color='red', linestyle='--', linewidth=1, alpha=0.7,
+                       label=f'Avg: {avg_reputation:.3f}')
             
-            plt.title('Committee Reputation Evolution' if st.session_state.language == 'en' 
-                     else 'Évolution de la Réputation du Comité', fontsize=14, fontweight='bold')
-            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
-            plt.ylabel('Reputation Score' if st.session_state.language == 'en' else 'Score de Réputation')
+            plt.title('Committee Reputation' if st.session_state.language == 'en' 
+                     else 'Réputation du Comité', fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour', fontsize=10)
+            plt.ylabel('Score' if st.session_state.language == 'en' else 'Score', fontsize=10)
             plt.grid(True, alpha=0.3)
             plt.ylim(0.7, 1.0)
-            plt.legend()
+            plt.legend(fontsize=9)
             plt.tight_layout()
             st.pyplot(fig_reputation)
             
-            # Add explanation
+            # Add short explanation
             if st.session_state.language == 'fr':
-                st.caption("💚 Score de réputation moyen des nœuds du comité au fil du temps")
+                st.caption("**Réputation**: Mesure la fiabilité des nœuds du comité (0.7-1.0). Plus élevé = meilleure performance.")
             else:
-                st.caption("💚 Average reputation score of committee nodes over time")
+                st.caption("**Reputation**: Measures committee node reliability (0.7-1.0). Higher = better performance.")
         
         with col2:
             # Chart 2: Validation Success Rate
-            fig_validation = plt.figure(figsize=(8, 5))
-            plt.plot(time_points, validation_success, 'b-', linewidth=3, marker='s', markersize=6,
+            fig_validation = plt.figure(figsize=(6, 4))
+            plt.plot(time_points, validation_success, 'b-', linewidth=2, marker='s', markersize=4,
                     markerfacecolor='lightblue', markeredgecolor='darkblue')
             plt.fill_between(time_points, validation_success, alpha=0.3, color='blue')
             
             # Add average line with legend
             avg_validation = np.mean(validation_success)
-            plt.axhline(y=avg_validation, color='red', linestyle='--', linewidth=2, alpha=0.7,
-                       label=f'Average: {avg_validation:.1f}%')
+            plt.axhline(y=avg_validation, color='red', linestyle='--', linewidth=1, alpha=0.7,
+                       label=f'Avg: {avg_validation:.1f}%')
             
-            plt.title('Validation Success Rate' if st.session_state.language == 'en' 
-                     else 'Taux de Succès de Validation', fontsize=14, fontweight='bold')
-            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
-            plt.ylabel('Success Rate %' if st.session_state.language == 'en' else 'Taux de Succès %')
+            plt.title('Validation Success' if st.session_state.language == 'en' 
+                     else 'Succès de Validation', fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour', fontsize=10)
+            plt.ylabel('Success %' if st.session_state.language == 'en' else 'Succès %', fontsize=10)
             plt.grid(True, alpha=0.3)
             plt.ylim(80, 100)
-            plt.legend()
+            plt.legend(fontsize=9)
             plt.tight_layout()
             st.pyplot(fig_validation)
             
-            # Add explanation
+            # Add short explanation
             if st.session_state.language == 'fr':
-                st.caption("✅ Pourcentage de validations réussies par le comité")
+                st.caption("**Validation**: Pourcentage de vérifications réussies (80-100%). Indique l'efficacité du comité.")
             else:
-                st.caption("✅ Percentage of successful validations by committee")
+                st.caption("**Validation**: Percentage of successful verifications (80-100%). Shows committee effectiveness.")
         
         # Second row of charts
         col3, col4 = st.columns(2)
         
         with col3:
             # Chart 3: Node Availability
-            fig_availability = plt.figure(figsize=(8, 5))
-            plt.plot(time_points, node_availability, 'm-', linewidth=3, marker='^', markersize=6,
+            fig_availability = plt.figure(figsize=(6, 4))
+            plt.plot(time_points, node_availability, 'm-', linewidth=2, marker='^', markersize=4,
                     markerfacecolor='lightcoral', markeredgecolor='darkred')
             plt.fill_between(time_points, node_availability, alpha=0.3, color='magenta')
             
             # Add average line with legend
             avg_availability = np.mean(node_availability)
-            plt.axhline(y=avg_availability, color='red', linestyle='--', linewidth=2, alpha=0.7,
-                       label=f'Average: {avg_availability:.1f}%')
+            plt.axhline(y=avg_availability, color='red', linestyle='--', linewidth=1, alpha=0.7,
+                       label=f'Avg: {avg_availability:.1f}%')
             
             plt.title('Node Availability' if st.session_state.language == 'en' 
-                     else 'Disponibilité des Nœuds', fontsize=14, fontweight='bold')
-            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
-            plt.ylabel('Uptime %' if st.session_state.language == 'en' else 'Disponibilité %')
+                     else 'Disponibilité des Nœuds', fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour', fontsize=10)
+            plt.ylabel('Uptime %' if st.session_state.language == 'en' else 'Disponibilité %', fontsize=10)
             plt.grid(True, alpha=0.3)
             plt.ylim(85, 100)
-            plt.legend()
+            plt.legend(fontsize=9)
             plt.tight_layout()
             st.pyplot(fig_availability)
             
-            # Add explanation
+            # Add short explanation
             if st.session_state.language == 'fr':
-                st.caption("🔄 Pourcentage de disponibilité des nœuds du comité")
+                st.caption("**Disponibilité**: Temps en ligne des nœuds (85-100%). Mesure la stabilité du système.")
             else:
-                st.caption("🔄 Uptime percentage of committee nodes")
+                st.caption("**Availability**: Node uptime percentage (85-100%). Measures system stability.")
         
         with col4:
             # Chart 4: Committee Performance Summary
-            fig_summary = plt.figure(figsize=(8, 5))
+            fig_summary = plt.figure(figsize=(6, 4))
             
             # Bar chart showing all three metrics
             metrics = ['Reputation', 'Validation', 'Availability']
@@ -1807,21 +1807,22 @@ def main():
             # Add value labels on bars
             for bar, value in zip(bars, values):
                 plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
-                        f'{value:.1f}%', ha='center', va='bottom', fontweight='bold')
+                        f'{value:.1f}%', ha='center', va='bottom', fontweight='bold', fontsize=9)
             
-            plt.title('Committee Performance Summary' if st.session_state.language == 'en' 
-                     else 'Résumé Performance du Comité', fontsize=14, fontweight='bold')
-            plt.ylabel('Performance %' if st.session_state.language == 'en' else 'Performance %')
+            plt.title('Performance Summary' if st.session_state.language == 'en' 
+                     else 'Résumé Performance', fontsize=12, fontweight='bold')
+            plt.ylabel('Performance %' if st.session_state.language == 'en' else 'Performance %', fontsize=10)
             plt.ylim(0, 105)
             plt.grid(True, alpha=0.3, axis='y')
+            plt.xticks(fontsize=9)
             plt.tight_layout()
             st.pyplot(fig_summary)
             
-            # Add explanation
+            # Add short explanation
             if st.session_state.language == 'fr':
-                st.caption("📊 Résumé des métriques de performance du comité")
+                st.caption("**Résumé**: Vue d'ensemble des 3 métriques principales. Compare les performances globales.")
             else:
-                st.caption("📊 Summary of committee performance metrics")
+                st.caption("**Summary**: Overview of 3 main metrics. Compares overall performance levels.")
             
         
         st.markdown("---")
