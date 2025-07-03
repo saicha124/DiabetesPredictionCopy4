@@ -4237,18 +4237,21 @@ def main():
                                     st.write(f"🟢 {factor}")
                         
                         with col3:
-                            st.subheader(f"📊 {get_translation('risk_meter', st.session_state.language)}")
+                            # Compact risk meter display
+                            st.markdown(f"**📊 {get_translation('risk_meter', st.session_state.language)}**")
                             
-                            # Create risk gauge visualization
+                            # Create smaller risk gauge visualization
                             fig_gauge = go.Figure(go.Indicator(
-                                mode = "gauge+number+delta",
+                                mode = "gauge+number",
                                 value = risk_score * 100,
                                 domain = {'x': [0, 1], 'y': [0, 1]},
-                                title = {'text': "Risk %"},
-                                delta = {'reference': 25},
+                                title = {'text': "Risk %", 'font': {'size': 14}},
                                 gauge = {
-                                    'axis': {'range': [None, 100]},
+                                    'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
                                     'bar': {'color': "darkblue"},
+                                    'bgcolor': "white",
+                                    'borderwidth': 2,
+                                    'bordercolor': "gray",
                                     'steps': [
                                         {'range': [0, 25], 'color': "lightgreen"},
                                         {'range': [25, 50], 'color': "yellow"},
@@ -4256,13 +4259,13 @@ def main():
                                         {'range': [75, 100], 'color': "red"}
                                     ],
                                     'threshold': {
-                                        'line': {'color': "red", 'width': 4},
+                                        'line': {'color': "red", 'width': 3},
                                         'thickness': 0.75,
                                         'value': 75
                                     }
                                 }
                             ))
-                            fig_gauge.update_layout(height=300)
+                            fig_gauge.update_layout(height=200, margin=dict(l=20, r=20, t=30, b=20))
                             st.plotly_chart(fig_gauge, use_container_width=True)
                         
                         # Complete the progress bar to 100%
@@ -5101,31 +5104,34 @@ def main():
                                 st.write(f"🟢 {factor}")
                     
                     with col3:
-                        st.subheader(f"📊 {get_translation('risk_meter', st.session_state.language)}")
+                        # Compact risk meter display
+                        st.markdown(f"**📊 {get_translation('risk_meter', st.session_state.language)}**")
                         
-                        # Create risk gauge visualization
+                        # Create smaller risk gauge visualization
                         fig_gauge = go.Figure(go.Indicator(
-                            mode = "gauge+number+delta",
+                            mode = "gauge+number",
                             value = risk_score * 100,
                             domain = {'x': [0, 1], 'y': [0, 1]},
-                            title = {'text': "Risk %"},
-                            delta = {'reference': 25},
+                            title = {'text': "Risk %", 'font': {'size': 14}},
                             gauge = {
-                                'axis': {'range': [None, 100]},
+                                'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
                                 'bar': {'color': "darkblue"},
+                                'bgcolor': "white",
+                                'borderwidth': 2,
+                                'bordercolor': "gray",
                                 'steps': [
                                     {'range': [0, 40], 'color': "lightgreen"},
                                     {'range': [40, 70], 'color': "yellow"},
                                     {'range': [70, 100], 'color': "red"}
                                 ],
                                 'threshold': {
-                                    'line': {'color': "red", 'width': 4},
+                                    'line': {'color': "red", 'width': 3},
                                     'thickness': 0.75,
                                     'value': 70
                                 }
                             }
                         ))
-                        fig_gauge.update_layout(height=300)
+                        fig_gauge.update_layout(height=200, margin=dict(l=20, r=20, t=30, b=20))
                         st.plotly_chart(fig_gauge, use_container_width=True)
         else:
             st.warning(get_translation("complete_federated_training", st.session_state.language))
