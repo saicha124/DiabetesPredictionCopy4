@@ -1616,11 +1616,50 @@ def main():
                     column_config={col: st.column_config.TextColumn(col, width="medium") for col in committee_df.columns},
                     hide_index=True)
         
-        # Security Metrics Visualization
+        # Reorganized Security Metrics Layout
+        st.markdown("---")
+        
+        # Section 1: Quick Performance Overview
         if st.session_state.language == 'fr':
-            st.subheader("📈 Métriques de Sécurité en Temps Réel")
+            st.subheader("⚡ Aperçu Performance Rapide")
         else:
-            st.subheader("📈 Real-Time Security Metrics")
+            st.subheader("⚡ Quick Performance Overview")
+        
+        # Key metrics overview cards
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            if st.session_state.language == 'fr':
+                st.metric("🛡️ État Sécurité", "ACTIF", delta="SÉCURISÉ")
+            else:
+                st.metric("🛡️ Security Status", "ACTIVE", delta="SECURE")
+        
+        with col2:
+            committee_size = st.session_state.get('committee_size', 5)
+            if st.session_state.language == 'fr':
+                st.metric("👥 Taille Comité", f"{committee_size} nœuds", delta="+2")
+            else:
+                st.metric("👥 Committee Size", f"{committee_size} nodes", delta="+2")
+        
+        with col3:
+            if st.session_state.language == 'fr':
+                st.metric("🔄 Rotation", "10 tours", delta="Auto")
+            else:
+                st.metric("🔄 Rotation", "10 rounds", delta="Auto")
+        
+        with col4:
+            if st.session_state.language == 'fr':
+                st.metric("🔐 Chiffrement", "RSA-2048", delta="Actif")
+            else:
+                st.metric("🔐 Encryption", "RSA-2048", delta="Active")
+        
+        st.markdown("---")
+        
+        # Section 2: Main Security Dashboard
+        if st.session_state.language == 'fr':
+            st.subheader("📊 Tableau de Bord Sécurité Principal")
+        else:
+            st.subheader("📊 Main Security Dashboard")
         
         # Enhanced security simulation with improving detection capabilities
         time_points = list(range(1, 21))  # 20 rounds
@@ -2030,14 +2069,16 @@ def main():
                 - Green line = attacks successfully blocked
                 """)
         
-        # Graph Explanations
+        # Enhanced Graph Explanations Section
         st.markdown("---")
         if st.session_state.language == 'fr':
-            st.subheader("📊 Explication des Graphiques de Sécurité")
+            st.subheader("📖 Guide des Visualisations de Sécurité")
         else:
-            st.subheader("📊 Security Graph Explanations")
+            st.subheader("📖 Security Visualization Guide")
         
-        col1, col2 = st.columns(2)
+        # Create expandable sections for better organization
+        with st.expander("📈 Chart Understanding Guide", expanded=False):
+            col1, col2 = st.columns(2)
         
         with col1:
             if st.session_state.language == 'fr':
