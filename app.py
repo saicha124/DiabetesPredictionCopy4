@@ -2271,142 +2271,135 @@ def main():
         initial_defense = actual_accuracy * 100  # Start at your model accuracy
         defense_progression = [min(98, initial_defense + i * 1.5) for i in rounds]
         
-        fig_simple = plt.figure(figsize=(8, 4))
+        # Create two-column layout for better display
+        col1, col2 = st.columns(2)
         
-        plt.plot(rounds, defense_progression, 'o-', linewidth=3, markersize=8, 
-                color='#2E86AB', markerfacecolor='gold', markeredgecolor='white', markeredgewidth=2)
-        plt.fill_between(rounds, defense_progression, alpha=0.3, color='#2E86AB')
-        
-        # Highlight your actual accuracy point
-        plt.axhline(y=actual_accuracy * 100, color='red', linestyle='--', linewidth=2, 
-                   label=f'Your Model Base: {actual_accuracy:.1%}')
-        
-        plt.title(f'Security Defense Learning - Based on Your {actual_accuracy:.1%} Model' 
-                 if st.session_state.language == 'en' 
-                 else f'Apprentissage Défense Sécurité - Basé sur Votre Modèle {actual_accuracy:.1%}', 
-                 fontsize=14, fontweight='bold')
-        plt.xlabel('Training Round' if st.session_state.language == 'en' else 'Tour d\'Entraînement')
-        plt.ylabel('Defense Rate (%)' if st.session_state.language == 'en' else 'Taux de Défense (%)')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        plt.ylim(75, 100)
-        
-        plt.tight_layout()
-        st.pyplot(fig_simple)
-        
-        with col3:
-            # Enhanced Network Intrusion Analysis
-            fig_intrusion = plt.figure(figsize=(8, 6))
+        with col1:
+            # Defense Evolution Chart
+            fig_simple = plt.figure(figsize=(6, 3))
             
-            # Calculate intrusion characteristics
-            intrusion_source_diversity = []
-            intrusion_impact_score = []
+            plt.plot(rounds, defense_progression, 'o-', linewidth=2, markersize=6, 
+                    color='#2E86AB', markerfacecolor='gold', markeredgecolor='white', markeredgewidth=1)
+            plt.fill_between(rounds, defense_progression, alpha=0.2, color='#2E86AB')
             
-            for i in range(len(network_intrusions)):
-                diversity = np.random.randint(1, 6)  # Number of different attack sources
-                impact = network_intrusions[i] * np.random.uniform(0.5, 1.5)
-                intrusion_source_diversity.append(diversity)
-                intrusion_impact_score.append(impact)
+            # Highlight your actual accuracy point
+            plt.axhline(y=actual_accuracy * 100, color='red', linestyle='--', linewidth=2, 
+                       label=f'Your Model Base: {actual_accuracy:.1%}')
             
-            # Advanced subplot configuration
-            gs = fig_intrusion.add_gridspec(3, 1, height_ratios=[2, 1, 1], hspace=0.4)
-            
-            # Main intrusion analysis with source tracking
-            ax1 = fig_intrusion.add_subplot(gs[0])
-            
-            # Stacked bars for different intrusion types
-            internal_intrusions = [max(0, int(ni * 0.3)) for ni in network_intrusions]
-            external_intrusions = [ni - ii for ni, ii in zip(network_intrusions, internal_intrusions)]
-            
-            bars1 = ax1.bar(time_points, internal_intrusions, color='#cc66ff', alpha=0.8, width=0.7, 
-                           label='Internal' if st.session_state.language == 'en' else 'Interne')
-            bars2 = ax1.bar(time_points, external_intrusions, bottom=internal_intrusions, 
-                           color='#8844cc', alpha=0.8, width=0.7,
-                           label='External' if st.session_state.language == 'en' else 'Externe')
-            
-            # Source diversity overlay
-            ax1_twin = ax1.twinx()
-            diversity_line = ax1_twin.plot(time_points, intrusion_source_diversity, 
-                                         color='yellow', linewidth=3, marker='*', markersize=8,
-                                         label='Source Diversity', alpha=0.9)
-            ax1_twin.set_ylabel('Attack Sources' if st.session_state.language == 'en' else 'Sources d\'Attaque', 
-                              fontsize=10, color='yellow')
-            ax1_twin.set_ylim(0, 7)
-            
-            # Trend analysis
-            z_intrusion = np.polyfit(time_points, network_intrusions, 1)
-            p_intrusion = np.poly1d(z_intrusion)
-            ax1.plot(time_points, p_intrusion(time_points), "--", alpha=0.8, color='purple', linewidth=3)
-            
-            ax1.set_title('Network Intrusion Analysis & Sources' if st.session_state.language == 'en' else 'Analyse d\'Intrusions Réseau et Sources', 
-                         fontsize=13, fontweight='bold')
-            ax1.set_ylabel('Intrusion Count' if st.session_state.language == 'en' else 'Nombre d\'Intrusions', fontsize=11)
-            ax1.legend(loc='upper left', fontsize=9)
-            ax1.grid(True, alpha=0.3)
-            ax1.set_xlim(0.5, 20.5)
-            
-            # Statistics with threat classification
-            avg_intrusion = np.mean(network_intrusions)
-            max_intrusion = max(network_intrusions)
-            avg_sources = np.mean(intrusion_source_diversity)
-            threat_level = "HIGH" if avg_intrusion > 2 else "MEDIUM" if avg_intrusion > 1 else "LOW"
-            if st.session_state.language == 'fr':
-                threat_level = "ÉLEVÉ" if avg_intrusion > 2 else "MOYEN" if avg_intrusion > 1 else "FAIBLE"
-            
-            ax1.text(0.02, 0.98, f'Avg: {avg_intrusion:.1f}\nMax: {max_intrusion}\nSources: {avg_sources:.1f}\nThreat: {threat_level}', 
-                    transform=ax1.transAxes, fontsize=9, fontweight='bold',
-                    bbox=dict(boxstyle='round,pad=0.4', facecolor='plum', alpha=0.9),
-                    verticalalignment='top')
-            
-            # Intrusion detection efficiency
-            ax2 = fig_intrusion.add_subplot(gs[1])
-            ax2.fill_between(time_points, intrusion_detection_efficiency, alpha=0.6, color='cyan')
-            ax2.plot(time_points, intrusion_detection_efficiency, 'c-', linewidth=2, marker='v', markersize=4)
-            ax2.set_ylabel('Detection %' if st.session_state.language == 'en' else 'Détection %', fontsize=10)
-            ax2.grid(True, alpha=0.3)
-            ax2.set_xlim(0.5, 20.5)
-            ax2.set_ylim(75, 100)
-            
-            # Impact severity analysis
-            ax3 = fig_intrusion.add_subplot(gs[2])
-            colors = ['red' if impact > np.mean(intrusion_impact_score) else 'orange' for impact in intrusion_impact_score]
-            ax3.scatter(time_points, intrusion_impact_score, c=colors, s=60, alpha=0.7, edgecolors='black')
-            ax3.plot(time_points, intrusion_impact_score, 'k--', alpha=0.5, linewidth=1)
-            ax3.set_xlabel('Round' if st.session_state.language == 'en' else 'Tour', fontsize=11)
-            ax3.set_ylabel('Impact Score' if st.session_state.language == 'en' else 'Score d\'Impact', fontsize=10)
-            ax3.grid(True, alpha=0.3)
-            ax3.set_xlim(0.5, 20.5)
+            plt.title('Defense Learning Progress' if st.session_state.language == 'en' 
+                     else 'Progrès d\'Apprentissage Défense', 
+                     fontsize=12, fontweight='bold')
+            plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
+            plt.ylabel('Defense Rate (%)' if st.session_state.language == 'en' else 'Taux (%)')
+            plt.legend(fontsize=9)
+            plt.grid(True, alpha=0.3)
+            plt.ylim(70, 100)
             
             plt.tight_layout()
-            st.pyplot(fig_intrusion)
+            st.pyplot(fig_simple)
+        
+        with col2:
+            # Defense Effectiveness Summary
+            st.markdown("#### 🎯 Defense Summary" if st.session_state.language == 'en' else "#### 🎯 Résumé Défense")
             
-            # Advanced metrics dashboard
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.session_state.language == 'fr':
-                    st.metric("Total Intrusions", f"{sum(network_intrusions)}")
-                    st.metric("Détection Moyenne", f"{np.mean(intrusion_detection_efficiency):.1f}%")
-                    st.metric("Sources Uniques", f"{int(np.mean(intrusion_source_diversity))}")
-                else:
-                    st.metric("Total Intrusions", f"{sum(network_intrusions)}")
-                    st.metric("Avg Detection", f"{np.mean(intrusion_detection_efficiency):.1f}%")
-                    st.metric("Unique Sources", f"{int(np.mean(intrusion_source_diversity))}")
-            
-            with col_b:
-                internal_pct = sum(internal_intrusions) / sum(network_intrusions) * 100 if sum(network_intrusions) > 0 else 0
-                if st.session_state.language == 'fr':
-                    st.metric("Impact Moyen", f"{np.mean(intrusion_impact_score):.1f}")
-                    st.metric("Menaces Internes", f"{internal_pct:.0f}%")
-                    st.metric("Niveau Menace", threat_level)
-                else:
-                    st.metric("Avg Impact", f"{np.mean(intrusion_impact_score):.1f}")
-                    st.metric("Internal Threats", f"{internal_pct:.0f}%")
-                    st.metric("Threat Level", threat_level)
+            current_defense_rate = defense_progression[-1]
+            improvement = current_defense_rate - defense_progression[0]
             
             if st.session_state.language == 'fr':
-                st.caption("🟣 **Intrusions Réseau**: Tentatives d'accès non autorisé aux communications")
+                st.metric("Taux Final", f"{current_defense_rate:.1f}%", delta=f"+{improvement:.1f}%")
+                st.metric("Base Modèle", f"{actual_accuracy:.1%}")
+                st.metric("Amélioration", f"{improvement:.1f}%")
             else:
-                st.caption("🟣 **Network Intrusions**: Unauthorized access attempts to communications")
+                st.metric("Final Rate", f"{current_defense_rate:.1f}%", delta=f"+{improvement:.1f}%")
+                st.metric("Model Base", f"{actual_accuracy:.1%}")
+                st.metric("Improvement", f"{improvement:.1f}%")
+            
+            if st.session_state.language == 'fr':
+                st.markdown(f"""
+                **Progression de la Défense:**
+                - Démarrage: {defense_progression[0]:.1f}%
+                - Maximum: {max(defense_progression):.1f}%
+                - Tendance: {"↗️ Croissante" if improvement > 0 else "→ Stable"}
+                """)
+            else:
+                st.markdown(f"""
+                **Defense Progress:**
+                - Starting: {defense_progression[0]:.1f}%
+                - Peak: {max(defense_progression):.1f}%
+                - Trend: {"↗️ Improving" if improvement > 0 else "→ Stable"}
+                """)
+        
+        # Network Intrusion Analysis below the defense evolution
+        st.markdown("---")
+        if st.session_state.language == 'fr':
+            st.markdown("### 🌐 Analyse des Intrusions Réseau")
+        else:
+            st.markdown("### 🌐 Network Intrusion Analysis")
+        
+        # Enhanced Network Intrusion Analysis
+        fig_intrusion = plt.figure(figsize=(10, 4))
+        
+        # Calculate intrusion characteristics
+        intrusion_source_diversity = []
+        intrusion_impact_score = []
+        
+        for i in range(len(network_intrusions)):
+            diversity = np.random.randint(1, 6)  # Number of different attack sources
+            impact = network_intrusions[i] * np.random.uniform(0.5, 1.5)
+            intrusion_source_diversity.append(diversity)
+            intrusion_impact_score.append(impact)
+        
+        # Simplified intrusion chart with single plot
+        plt.plot(time_points, network_intrusions, 'r-', linewidth=2, marker='D', markersize=5, 
+                label='Network Intrusions' if st.session_state.language == 'en' else 'Intrusions Réseau')
+        plt.fill_between(time_points, network_intrusions, alpha=0.2, color='red')
+        
+        # Show detection effectiveness
+        intrusion_blocked = [int(ni * 0.93) for ni in network_intrusions]  # 93% blocked rate
+        plt.plot(time_points, intrusion_blocked, 'g-', linewidth=2, marker='o', markersize=4,
+                label='Blocked' if st.session_state.language == 'en' else 'Bloquées')
+        
+        plt.title('Network Security Status' if st.session_state.language == 'en' 
+                 else 'État de Sécurité Réseau', fontsize=12, fontweight='bold')
+        plt.xlabel('Round' if st.session_state.language == 'en' else 'Tour')
+        plt.ylabel('Count' if st.session_state.language == 'en' else 'Nombre')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.xlim(0.5, 20.5)
+        
+        plt.tight_layout()
+        st.pyplot(fig_intrusion)
+        
+        # Simple network security metrics
+        col_a, col_b = st.columns(2)
+        with col_a:
+            avg_intrusions = np.mean(network_intrusions)
+            total_intrusions = sum(network_intrusions)
+            blocked_rate = 93.0  # 93% blocked rate
+            
+            if st.session_state.language == 'fr':
+                st.metric("Total Intrusions", f"{total_intrusions}")
+                st.metric("Taux de Blocage", f"{blocked_rate:.1f}%")
+                st.metric("Moyenne/Tour", f"{avg_intrusions:.1f}")
+            else:
+                st.metric("Total Intrusions", f"{total_intrusions}")
+                st.metric("Block Rate", f"{blocked_rate:.1f}%")
+                st.metric("Avg/Round", f"{avg_intrusions:.1f}")
+        
+        with col_b:
+            threat_level = "LOW" if avg_intrusions < 1.5 else "MEDIUM" if avg_intrusions < 2.5 else "HIGH"
+            if st.session_state.language == 'fr':
+                threat_level = "FAIBLE" if avg_intrusions < 1.5 else "MOYEN" if avg_intrusions < 2.5 else "ÉLEVÉ"
+                st.metric("Niveau Menace", threat_level)
+                st.metric("Sources Attaque", f"{len(set(intrusion_source_diversity))}")
+            else:
+                st.metric("Threat Level", threat_level)
+                st.metric("Attack Sources", f"{len(set(intrusion_source_diversity))}")
+        
+        if st.session_state.language == 'fr':
+            st.caption("🟣 **Intrusions Réseau**: Tentatives d'accès non autorisé aux communications")
+        else:
+            st.caption("🟣 **Network Intrusions**: Unauthorized access attempts to communications")
         
         # Detection System Learning Explanation
         st.markdown("---")
@@ -2460,9 +2453,11 @@ def main():
         else:
             st.subheader("⏱️ Security Learning Timeline")
         
-        # Create modern, professional learning timeline visualization
-        fig_timeline = plt.figure(figsize=(8, 4))
-        plt.style.use('seaborn-v0_8-darkgrid')
+        # Create compact security learning visualization
+        fig_timeline = plt.figure(figsize=(10, 3))
+        
+        # Use a cleaner style
+        plt.style.use('default')
         
         # Calculate detection rates using ACTUAL training performance data
         detection_rates = []
