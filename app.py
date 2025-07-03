@@ -4158,7 +4158,7 @@ def main():
                             }
                         
                         # Display comprehensive results
-                        col1, col2, col3 = st.columns([2, 2, 1])
+                        col1, col2 = st.columns([1, 1])
                         
                         with col1:
                             st.subheader(get_translation("risk_assessment", st.session_state.language))
@@ -4191,6 +4191,13 @@ def main():
                             
                             st.progress(risk_score)
                             st.caption(f"{get_translation('model_confidence', st.session_state.language)}: {confidence:.1%}")
+                            
+                            # Model confidence display - moved here for better positioning
+                            confidence_score = confidence * 100
+                            if st.session_state.language == 'fr':
+                                st.markdown(f"**🎯 Confiance du Modèle: {confidence_score:.1f}%**")
+                            else:
+                                st.markdown(f"**🎯 Model Confidence: {confidence_score:.1f}%**")
                             
                         with col2:
                             st.subheader(get_translation("clinical_guidance", st.session_state.language))
@@ -4235,16 +4242,6 @@ def main():
                                 st.markdown(f"**{get_translation('protective_factors', st.session_state.language)}**")
                                 for factor in protective_factors:
                                     st.write(f"🟢 {factor}")
-                        
-                        with col3:
-                            # Model confidence display with proper formatting
-                            confidence_score = confidence * 100
-                            
-                            # Display confidence on single line
-                            if st.session_state.language == 'fr':
-                                st.markdown(f"**🎯 Confiance du Modèle: {confidence_score:.1f}%**")
-                            else:
-                                st.markdown(f"**🎯 Model Confidence: {confidence_score:.1f}%**")
                         
                         # Risk meter on new line with full width
                         st.markdown("---")
@@ -5032,7 +5029,7 @@ def main():
                         return
                     
                     # Display results
-                    col1, col2, col3 = st.columns([1, 1, 1])
+                    col1, col2 = st.columns([1, 1])
                     
                     with col1:
                         st.subheader("🎯 Risk Assessment")
@@ -5051,6 +5048,13 @@ def main():
                         st.metric(get_translation("risk_level", st.session_state.language), f"{risk_color} {risk_level}")
                         st.metric(get_translation("risk_score", st.session_state.language), f"{risk_score:.3f}")
                         st.metric(get_translation("model_confidence", st.session_state.language), f"{confidence:.3f}")
+                        
+                        # Model confidence display - moved here for better positioning
+                        confidence_score = confidence * 100
+                        if st.session_state.language == 'fr':
+                            st.markdown(f"**🎯 Confiance du Modèle: {confidence_score:.1f}%**")
+                        else:
+                            st.markdown(f"**🎯 Model Confidence: {confidence_score:.1f}%**")
                         
                         # Clinical interpretation
                         st.subheader("🏥 " + get_translation("clinical_interpretation", st.session_state.language))
@@ -5110,16 +5114,6 @@ def main():
                             st.markdown(f"**{get_translation('protective_factors', st.session_state.language)}:**")
                             for factor in protective_factors:
                                 st.write(f"🟢 {factor}")
-                    
-                    with col3:
-                        # Model confidence display with proper formatting
-                        confidence_score = confidence * 100
-                        
-                        # Display confidence on single line
-                        if st.session_state.language == 'fr':
-                            st.markdown(f"**🎯 Confiance du Modèle: {confidence_score:.1f}%**")
-                        else:
-                            st.markdown(f"**🎯 Model Confidence: {confidence_score:.1f}%**")
                     
                     # Risk meter on new line with full width
                     st.markdown("---")
