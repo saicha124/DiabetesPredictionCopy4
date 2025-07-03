@@ -1723,8 +1723,8 @@ def main():
         
         with col1:
             # Simple Security Status Overview
-            fig_simple = plt.figure(figsize=(10, 6))
-            gs = fig_simple.add_gridspec(2, 2, height_ratios=[1, 1], hspace=0.3, wspace=0.3)
+            fig_simple = plt.figure(figsize=(10, 8))
+            gs = fig_simple.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.3, wspace=0.3)
             
             # Top Left: Simple Security Score Meter
             ax1 = fig_simple.add_subplot(gs[0, 0])
