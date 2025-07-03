@@ -4237,12 +4237,17 @@ def main():
                                     st.write(f"🟢 {factor}")
                         
                         with col3:
-                            # Model confidence display
+                            # Model confidence display with proper formatting
                             confidence_score = confidence * 100
-                            if st.session_state.language == 'fr':
-                                st.metric("🎯 Confiance du Modèle", f"{confidence_score:.1f}%")
-                            else:
-                                st.metric("🎯 Model Confidence", f"{confidence_score:.1f}%")
+                            
+                            # Use container to ensure proper width
+                            with st.container():
+                                if st.session_state.language == 'fr':
+                                    st.markdown(f"**🎯 Confiance du Modèle**")
+                                    st.markdown(f"<h2 style='text-align: center; color: #1f77b4; margin: 0;'>{confidence_score:.1f}%</h2>", unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f"**🎯 Model Confidence**")
+                                    st.markdown(f"<h2 style='text-align: center; color: #1f77b4; margin: 0;'>{confidence_score:.1f}%</h2>", unsafe_allow_html=True)
                         
                         # Risk meter on new line with full width
                         st.markdown("---")
@@ -5110,12 +5115,17 @@ def main():
                                 st.write(f"🟢 {factor}")
                     
                     with col3:
-                        # Model confidence display
+                        # Model confidence display with proper formatting
                         confidence_score = confidence * 100
-                        if st.session_state.language == 'fr':
-                            st.metric("🎯 Confiance du Modèle", f"{confidence_score:.1f}%")
-                        else:
-                            st.metric("🎯 Model Confidence", f"{confidence_score:.1f}%")
+                        
+                        # Use container to ensure proper width
+                        with st.container():
+                            if st.session_state.language == 'fr':
+                                st.markdown(f"**🎯 Confiance du Modèle**")
+                                st.markdown(f"<h2 style='text-align: center; color: #1f77b4; margin: 0;'>{confidence_score:.1f}%</h2>", unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"**🎯 Model Confidence**")
+                                st.markdown(f"<h2 style='text-align: center; color: #1f77b4; margin: 0;'>{confidence_score:.1f}%</h2>", unsafe_allow_html=True)
                     
                     # Risk meter on new line with full width
                     st.markdown("---")
