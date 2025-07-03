@@ -1,0 +1,117 @@
+🏥 Authentic Medical Facility Distribution:
+
+• medical_facility_0: 255 patients, 35.0% diabetes prevalence
+• medical_facility_1: 127 patients, 35.0% diabetes prevalence
+• medical_facility_2: 31 patients, 35.0% diabetes prevalence
+• medical_facility_3: 29 patients, 35.0% diabetes prevalence
+• medical_facility_4: 26 patients, 35.0% diabetes prevalence
+• medical_facility_5: 24 patients, 35.0% diabetes prevalence
+• medical_facility_6: 22 patients, 35.0% diabetes prevalence
+• medical_facility_7: 20 patients, 35.0% diabetes prevalence
+• medical_facility_8: 18 patients, 35.0% diabetes prevalence
+• medical_facility_9: 17 patients, 35.0% diabetes prevalence
+
+📊 Distribution Summary:
+• Total Patients: 569
+• Average Diabetes Rate: 35.0%
+• Number of Facilities: 10 (all unique)
+
+
+Configuration Data (JSON):
+{
+  "timestamp": "2025-07-03T07:14:50.598766",
+  "num_clients": 10,
+  "random_state": 42,
+  "facility_info": [
+    {
+      "facility_id": 0,
+      "facility_type": "medical_facility_0",
+      "total_patients": 255,
+      "train_samples": 204,
+      "test_samples": 51,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 1,
+      "facility_type": "medical_facility_1",
+      "total_patients": 127,
+      "train_samples": 101,
+      "test_samples": 26,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 2,
+      "facility_type": "medical_facility_2",
+      "total_patients": 31,
+      "train_samples": 24,
+      "test_samples": 7,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 3,
+      "facility_type": "medical_facility_3",
+      "total_patients": 29,
+      "train_samples": 23,
+      "test_samples": 6,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 4,
+      "facility_type": "medical_facility_4",
+      "total_patients": 26,
+      "train_samples": 20,
+      "test_samples": 6,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 5,
+      "facility_type": "medical_facility_5",
+      "total_patients": 24,
+      "train_samples": 19,
+      "test_samples": 5,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 6,
+      "facility_type": "medical_facility_6",
+      "total_patients": 22,
+      "train_samples": 17,
+      "test_samples": 5,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 7,
+      "facility_type": "medical_facility_7",
+      "total_patients": 20,
+      "train_samples": 16,
+      "test_samples": 4,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 8,
+      "facility_type": "medical_facility_8",
+      "total_patients": 18,
+      "train_samples": 14,
+      "test_samples": 4,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    },
+    {
+      "facility_id": 9,
+      "facility_type": "medical_facility_9",
+      "total_patients": 17,
+      "train_samples": 13,
+      "test_samples": 4,
+      "actual_diabetes_rate": 0.35,
+      "complexity_factor": 1.0
+    }
+  ]
+}
