@@ -106,6 +106,8 @@ This is a comprehensive Streamlit-based hierarchical federated learning platform
 
 ```
 Changelog:
+- July 3, 2025. Fixed UnboundLocalError in Performance Comparison tab by ensuring all variables are properly initialized with default values
+- July 3, 2025. Fixed "No distribution data to save" issue by ensuring medical facility distribution data is properly stored in session state after training setup
 - June 26, 2025. Successfully completed migration from Replit Agent to standard Replit environment with enhanced medical facility distribution system
 - June 26, 2025. Added save/load functionality for medical facility distributions with file upload support and persistent data configuration
 - June 26, 2025. Enhanced MedicalFacilityDistribution class with caching system to ensure consistent data distribution across different configurations

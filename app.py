@@ -1101,6 +1101,31 @@ def main():
                 # Setup clients with the actual distributed data
                 fl_manager.setup_clients_with_data(client_data)
                 
+                # Ensure medical facility distribution data is stored for saving
+                if hasattr(st.session_state, 'facility_info') and st.session_state.facility_info:
+                    st.session_state.medical_facility_info = st.session_state.facility_info
+                elif hasattr(fl_manager, 'clients') and fl_manager.clients:
+                    # Extract facility info from FL manager clients if available
+                    facility_info = []
+                    for i, client in enumerate(fl_manager.clients):
+                        if hasattr(client, 'facility_info') and client.facility_info:
+                            facility_info.append(client.facility_info)
+                        else:
+                            # Create default facility info based on client data
+                            client_data_item = client_data[i] if i < len(client_data) else {}
+                            train_samples = len(client_data_item.get('X_train', []))
+                            test_samples = len(client_data_item.get('X_test', []))
+                            facility_info.append({
+                                'facility_id': i,
+                                'facility_type': f'medical_facility_{i}',
+                                'total_patients': train_samples + test_samples,
+                                'train_samples': train_samples,
+                                'test_samples': test_samples,
+                                'actual_diabetes_rate': 0.35,  # Default rate
+                                'complexity_factor': 1.0
+                            })
+                    st.session_state.medical_facility_info = facility_info
+                
                 # Execute training with dummy data (clients already have real data)
                 training_results = fl_manager.train(dummy_data)
                 
