@@ -1723,7 +1723,7 @@ def main():
         
         with col1:
             # Simple Security Status Overview
-            fig_simple = plt.figure(figsize=(10, 8))
+            fig_simple = plt.figure(figsize=(8, 6))
             gs = fig_simple.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.3, wspace=0.3)
             
             # Top Left: Simple Security Score Meter
@@ -2271,7 +2271,7 @@ def main():
         initial_defense = actual_accuracy * 100  # Start at your model accuracy
         defense_progression = [min(98, initial_defense + i * 1.5) for i in rounds]
         
-        fig_simple = plt.figure(figsize=(10, 4))
+        fig_simple = plt.figure(figsize=(8, 4))
         
         plt.plot(rounds, defense_progression, 'o-', linewidth=3, markersize=8, 
                 color='#2E86AB', markerfacecolor='gold', markeredgecolor='white', markeredgewidth=2)
@@ -2461,7 +2461,7 @@ def main():
             st.subheader("⏱️ Security Learning Timeline")
         
         # Create modern, professional learning timeline visualization
-        fig_timeline = plt.figure(figsize=(12, 5))
+        fig_timeline = plt.figure(figsize=(8, 4))
         plt.style.use('seaborn-v0_8-darkgrid')
         
         # Calculate detection rates using ACTUAL training performance data
@@ -2708,7 +2708,7 @@ def main():
         
         with col1:
             # Donut Chart for Defense Success Rates
-            fig1 = plt.figure(figsize=(8, 6))
+            fig1 = plt.figure(figsize=(6, 4))
             
             attack_types = ['Sybil Attacks', 'Byzantine Attacks', 'Network Intrusions']
             if st.session_state.language == 'fr':
@@ -2799,7 +2799,7 @@ def main():
         
         with col2:
             # Stacked Area Chart for Attack Trends
-            fig2 = plt.figure(figsize=(10, 8))
+            fig2 = plt.figure(figsize=(6, 4))
             gs2 = fig2.add_gridspec(2, 1, height_ratios=[2, 1], hspace=0.4)
             
             # Top: Stacked area chart showing attack composition
